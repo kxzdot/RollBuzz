@@ -154,6 +154,22 @@ button { cursor: pointer; }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
+/* ---------- выбор цвета и ткани ---------- */
+.pick { width: 100%; min-width: 0; height: 52px; padding: 0 12px 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem; color: inherit; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
+.pick .pv { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick .ph { color: var(--muted); }
+.pick .chev { color: var(--muted); flex: none; }
+.pick:active { border-color: var(--accent); }
+#pickRoot .scrim { z-index: 30; }
+#pickRoot .sheet { max-height: 85%; }
+.pk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pk-chip, .pk-row, .pk-add, .pk-clear { border: 2px solid var(--line); background: var(--bg); color: inherit; border-radius: 10px; min-height: 48px; padding: 8px 12px; font-size: 1rem; text-align: left; display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.pk-chip.on, .pk-row.on { border-color: var(--accent); font-weight: 600; }
+.pk-rows { display: grid; gap: 8px; }
+.pk-add { width: 100%; margin-bottom: 8px; border-style: dashed; font-weight: 600; color: var(--accent); }
+.pk-clear { width: 100%; margin-bottom: 8px; color: var(--muted); }
+.pk-chip:active, .pk-row:active, .pk-add:active, .pk-clear:active { background: var(--surface-2); }
+
 /* ---------- окна снизу ---------- */
 .scrim { position: fixed; inset: 0; z-index: 20; background: rgba(8, 10, 20, 0.5); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
@@ -345,6 +361,7 @@ form { display: grid; gap: 14px; }
   </div>
 </div>
 <div id="sheetRoot"></div>
+<div id="pickRoot"></div>
 <div id="toastRoot" role="status" aria-live="polite"></div>
 
 <script src="config.js"></script>
@@ -352,7 +369,7 @@ form { display: grid; gap: 14px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.2";
+  var APP_VERSION = "1.3";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -368,7 +385,8 @@ form { display: grid; gap: 14px; }
   var state = {
     rolls: new Map(), q: "", tab: "active", sheet: null, online: navigator.onLine,
     mode: "auth", loaded: false, user: null, authTab: "login", authNote: "",
-    busy: false, selecting: false, sel: new Set(), seen: new Set()
+    busy: false, selecting: false, sel: new Set(), seen: new Set(),
+    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null
   };
   var repo = null, session = null, refreshing = null;
   var toastTimer = null, lpTimer = null, lpFired = false, lastListHtml = null;
@@ -400,6 +418,7 @@ form { display: grid; gap: 14px; }
   function colorHex(name) {
     var n = String(name || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/ - /g, "-").trim();
     if (!n) return "";
+    if (state.listHex[n]) return state.listHex[n];
     for (var i = 0; i < COLOR_KEYS.length; i++) { if (n.indexOf(COLOR_KEYS[i]) !== -1) return COLOR_MAP[COLOR_KEYS[i]]; }
     return "";
   }
@@ -408,6 +427,27 @@ form { display: grid; gap: 14px; }
     var h = colorHex(name);
     return (h ? '<i class="sw" style="background:' + h + '"></i>' : "") + esc(name);
   }
+  /* ---------- списки цветов и тканей ---------- */
+  var DEFAULT_COLORS = [["Белый", "#f5f5f2"], ["Молочный", "#f3ecd9"], ["Экрю", "#efe6cf"], ["Кремовый", "#f3e5b8"], ["Слоновая кость", "#f1e7cd"], ["Бежевый", "#d8c3a0"], ["Песочный", "#d6bf94"], ["Светло-серый", "#c4c6cc"], ["Серый", "#8e9099"], ["Темно-серый", "#4f525a"], ["Графитовый", "#3b3e45"], ["Черный", "#16161a"], ["Красный", "#c62828"], ["Бордовый", "#6d1a2c"], ["Вишневый", "#7b1230"], ["Розовый", "#f19ab6"], ["Пудровый", "#e8c9c4"], ["Малиновый", "#b3175e"], ["Оранжевый", "#f08a24"], ["Терракотовый", "#c4623f"], ["Желтый", "#f4d03f"], ["Горчичный", "#d2a02a"], ["Зеленый", "#2e8b57"], ["Изумрудный", "#0b8a63"], ["Оливковый", "#7b7d3a"], ["Хаки", "#8a8456"], ["Мятный", "#a5dcc4"], ["Бирюзовый", "#1fb5ad"], ["Голубой", "#6bb7ee"], ["Васильковый", "#5a7fdc"], ["Темно-синий", "#16275f"], ["Синий", "#2c5fc4"], ["Индиго", "#34327f"], ["Фиолетовый", "#7a3fb0"], ["Лиловый", "#b08fd1"], ["Сиреневый", "#c3a6e0"], ["Коричневый", "#6a4328"], ["Шоколадный", "#4b2e20"], ["Кофейный", "#7a5538"]];
+  var DEFAULT_FABRICS = ["Супрем", "Резинка Кашкарсе", "Лакосте", "Флис", "Начёс"];
+  function norm(x) { return String(x || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim(); }
+  function capital(x) { x = String(x || "").replace(/\s+/g, " ").trim(); return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+  function setLists(colors, fabrics) {
+    state.lists = { colors: colors || [], fabrics: fabrics || [] };
+    var h = {};
+    state.lists.colors.forEach(function (c) { if (c.hex) h[norm(c.name)] = c.hex; });
+    state.listHex = h;
+  }
+  function defaultLists() {
+    setLists(DEFAULT_COLORS.map(function (c) { return { name: c[0], hex: c[1] }; }), DEFAULT_FABRICS.map(function (n) { return { name: n }; }));
+  }
+  function loadLists() {
+    if (!repo || !repo.lists) return;
+    repo.lists().then(function (r) {
+      if (r && (r.colors.length || r.fabrics.length)) { setLists(r.colors, r.fabrics); lastListHtml = null; render(); }
+    })["catch"](function () {});
+  }
+  defaultLists();
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
   function vib() { try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {} }
@@ -467,6 +507,7 @@ form { display: grid; gap: 14px; }
     return refresh().then(function () { return session.access_token; });
   }
   function signOut(note) {
+    state.pick = null; var pr = document.getElementById("pickRoot"); if (pr) pr.innerHTML = "";
     writeSession(null);
     if (repo && repo.stop) repo.stop();
     repo = null;
@@ -555,6 +596,14 @@ form { display: grid; gap: 14px; }
       removeMany: function (ids) {
         return api("rolls?id=" + inList(ids), { method: "DELETE", prefer: "return=minimal" }).then(function () { return load(); });
       },
+      lists: function () {
+        return Promise.all([
+          api("colors?select=name,hex&order=sort.asc,name.asc&limit=1000"),
+          api("fabrics?select=name&order=sort.asc,name.asc&limit=1000")
+        ]).then(function (r) { return { colors: r[0] || [], fabrics: r[1] || [] }; });
+      },
+      addColor: function (name) { return api("colors", { method: "POST", body: { name: name, hex: "", sort: 1000 }, prefer: "return=minimal" }); },
+      addFabric: function (name) { return api("fabrics", { method: "POST", body: { name: name, sort: 1000 }, prefer: "return=minimal" }); },
       history: function (id) {
         return api("roll_log?select=action,by_name,details,at&roll_id=eq." + encodeURIComponent(id) + "&order=at.desc&limit=15");
       }
@@ -592,6 +641,9 @@ form { display: grid; gap: 14px; }
         emit(); return Promise.resolve();
       },
       removeMany: function (ids) { ids.forEach(function (id) { m.delete(id); }); emit(); return Promise.resolve(); },
+      lists: function () { return Promise.resolve({ colors: [], fabrics: [] }); },
+      addColor: function () { return Promise.resolve(); },
+      addFabric: function () { return Promise.resolve(); },
       history: function (id) { return Promise.resolve(logs[id] || []); }
     };
   }
@@ -609,7 +661,7 @@ form { display: grid; gap: 14px; }
     render();
   }
   function onDataError() { state.loaded = true; state.mode = "error"; render(); }
-  function startRepo() { repo.subscribe(onData, onDataError); }
+  function startRepo() { repo.subscribe(onData, onDataError); loadLists(); }
 
   /* ---------- сообщения ---------- */
   function toast(msg, isErr) {
@@ -777,14 +829,14 @@ form { display: grid; gap: 14px; }
     }
   }
   function closeSheet(now) {
-    state.sheet = null;
+    state.sheet = null; closePicker(true);
     var root = $("#sheetRoot"), scrim = root.querySelector(".scrim");
     if (!scrim) return;
     if (now) { root.innerHTML = ""; return; }
     scrim.classList.add("out");
     setTimeout(function () { if (!state.sheet) root.innerHTML = ""; }, 210);
   }
-  function drawSheet() {
+  function drawSheet(noAnim) {
     var s = state.sheet, root = $("#sheetRoot");
     if (!s) return;
     var scrim = root.querySelector(".scrim");
@@ -793,7 +845,7 @@ form { display: grid; gap: 14px; }
     } else scrim.classList.remove("out");
     var body = $("#sheetBody");
     body.innerHTML = sheetHtml(s);
-    body.classList.remove("swap"); void body.offsetWidth; body.classList.add("swap");
+    if (!noAnim) { body.classList.remove("swap"); void body.offsetWidth; body.classList.add("swap"); }
     if (s.type === "detail") loadHistory(s.id);
   }
   function head(title, act) {
@@ -845,13 +897,88 @@ form { display: grid; gap: 14px; }
     }
     h += '<div class="two"><div class="field"><label for="f-rack">Номер стеллажа</label><input id="f-rack" type="text" value="' + esc(v.rack || "") + '"><div class="err" id="e-rack"></div></div>' +
       '<div class="field"><label for="f-floor">Этаж</label><input id="f-floor" type="text" inputmode="numeric" placeholder="не обязательно" value="' + esc(v.floor || "") + '"><div class="err" id="e-floor"></div></div></div>';
-    if (bulk) h += '<label class="check" for="f-nofloor"><input type="checkbox" id="f-nofloor">Убрать этаж у выбранных рулонов</label>';
-    h += '<div class="two"><div class="field"><label for="f-fabric">Ткань</label><input id="f-fabric" type="text" value="' + esc(v.fabric || "") + '"></div>' +
-      '<div class="field"><label for="f-color">Цвет</label><input id="f-color" type="text" value="' + esc(v.color || "") + '"></div></div>' +
+    if (bulk) h += '<label class="check" for="f-nofloor"><input type="checkbox" id="f-nofloor"' + (v.nofloor ? " checked" : "") + '>Убрать этаж у выбранных рулонов</label>';
+    h += '<div class="two"><div class="field"><label for="f-fabric">Ткань</label>' + pickBtn("fabric", v.fabric) + '</div>' +
+      '<div class="field"><label for="f-color">Цвет</label>' + pickBtn("color", v.color) + '</div></div>' +
       '<div class="form-err" id="form-err" role="alert"></div>' +
       '<div class="actions"><button type="button" class="btn" data-act="' + (editing ? "back-detail" : "close") + '">Отмена</button><button type="submit" class="btn primary" id="saveBtn">Сохранить</button></div></form>';
     return h;
   }
+  /* ---------- выбор из списка ---------- */
+  function pickBtn(kind, value) {
+    var shown = value ? (kind === "color" ? colorHtml(value) : esc(value)) : '<span class="ph">Выбрать</span>';
+    return '<button type="button" class="pick" id="f-' + kind + '" data-act="pick-' + kind + '" value="' + esc(value || "") + '"><span class="pv">' + shown + '</span><span class="chev" aria-hidden="true">▾</span></button>';
+  }
+  function snapshotForm() {
+    var s = state.sheet; if (!s || !$("#form")) return;
+    var v = s.values = s.values || {};
+    ["roll", "rack", "floor", "fabric", "color"].forEach(function (k) { var el = $("#f-" + k); if (el) v[k] = el.value.trim(); });
+    var nf = $("#f-nofloor"); if (nf) v.nofloor = nf.checked;
+  }
+  function openPicker(kind) {
+    snapshotForm();
+    state.pick = { kind: kind, q: "" };
+    var root = $("#pickRoot");
+    root.innerHTML = '<div class="scrim" data-act="pk-scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-body" id="pickBody"></div></div></div>';
+    $("#pickBody").innerHTML = '<div class="sheet-head"><h2>' + (kind === "color" ? "Выберите цвет" : "Выберите ткань") + '</h2><button class="x" type="button" data-act="pk-close" aria-label="Закрыть">✕</button></div>' +
+      '<div class="field"><input id="pk-q" type="search" placeholder="Поиск или новое название" autocomplete="off"></div><div id="pkList"></div>';
+    $("#pk-q").addEventListener("input", function (e) { state.pick.q = e.target.value; drawPickerList(); });
+    drawPickerList();
+  }
+  function drawPickerList() {
+    var pk = state.pick, el = $("#pkList"); if (!pk || !el) return;
+    var cur = ((state.sheet && state.sheet.values) || {})[pk.kind] || "";
+    var q = norm(pk.q), isColor = pk.kind === "color";
+    var all = isColor ? state.lists.colors : state.lists.fabrics;
+    var items = all.filter(function (x) { return !q || norm(x.name).indexOf(q) !== -1; });
+    var exact = all.some(function (x) { return norm(x.name) === q; });
+    var h = "";
+    if (!q) h += '<button type="button" class="pk-clear" data-pk-val="">' + (state.sheet && state.sheet.type === "bulk" ? "Не менять" : "Не указывать") + '</button>';
+    if (q && !exact && pk.q.trim().length <= 60) h += '<button type="button" class="pk-add" data-pk-add="1">+ Добавить «' + esc(capital(pk.q)) + '»</button>';
+    if (isColor) {
+      h += '<div class="pk-grid">' + items.map(function (x) {
+        return '<button type="button" class="pk-chip' + (norm(x.name) === norm(cur) ? " on" : "") + '" data-pk-val="' + esc(x.name) + '">' + (x.hex ? '<i class="sw" style="background:' + esc(x.hex) + '"></i>' : "") + esc(x.name) + '</button>';
+      }).join("") + "</div>";
+    } else {
+      h += '<div class="pk-rows">' + items.map(function (x) {
+        return '<button type="button" class="pk-row' + (norm(x.name) === norm(cur) ? " on" : "") + '" data-pk-val="' + esc(x.name) + '">' + esc(x.name) + '</button>';
+      }).join("") + "</div>";
+    }
+    if (!items.length && !q) h += '<p class="hint">Список пока пуст. Введите название выше и добавьте его.</p>';
+    el.innerHTML = h;
+  }
+  function closePicker(now) {
+    var root = $("#pickRoot"); if (!root) return;
+    state.pick = null;
+    var scrim = root.querySelector(".scrim");
+    if (!scrim) return;
+    if (now) { root.innerHTML = ""; return; }
+    scrim.classList.add("out");
+    setTimeout(function () { if (!state.pick) root.innerHTML = ""; }, 210);
+  }
+  function choosePick(val) {
+    var pk = state.pick; if (!pk || !state.sheet) return;
+    (state.sheet.values = state.sheet.values || {})[pk.kind] = val;
+    closePicker();
+    var btn = $("#f-" + pk.kind);
+    if (btn) {
+      btn.value = val;
+      btn.querySelector(".pv").innerHTML = val ? (pk.kind === "color" ? colorHtml(val) : esc(val)) : '<span class="ph">Выбрать</span>';
+    }
+  }
+  function addPick() {
+    var pk = state.pick; if (!pk) return;
+    var name = capital(pk.q); if (!name) return;
+    var kind = pk.kind, list = kind === "color" ? state.lists.colors : state.lists.fabrics;
+    var found = list.filter(function (x) { return norm(x.name) === norm(name); })[0];
+    if (found) { choosePick(found.name); return; }
+    list.push(kind === "color" ? { name: name, hex: "" } : { name: name });
+    choosePick(name);
+    if (repo) {
+      (kind === "color" ? repo.addColor(name) : repo.addFabric(name)).then(loadLists)["catch"](function () { toast("Не удалось добавить в общий список. Проверьте, что выполнен update-2.sql.", true); });
+    }
+  }
+
   function loadHistory(id) {
     if (!repo) return;
     repo.history(id).then(function (rows) {
@@ -1048,10 +1175,17 @@ form { display: grid; gap: 14px; }
     var at = t.closest("[data-auth-tab]");
     if (at) { state.authTab = at.getAttribute("data-auth-tab"); state.authNote = ""; render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
+    var pv = t.closest("[data-pk-val]");
+    if (pv && state.pick) { choosePick(pv.getAttribute("data-pk-val")); return; }
+    if (t.closest("[data-pk-add]") && state.pick) { addPick(); return; }
     var el = t.closest("[data-act]");
     if (!el) return;
     var act = el.getAttribute("data-act"), s = state.sheet;
     switch (act) {
+      case "pk-scrim": if (t === el) closePicker(); return;
+      case "pk-close": closePicker(); return;
+      case "pick-fabric": openPicker("fabric"); return;
+      case "pick-color": openPicker("color"); return;
       case "scrim": if (t === el) closeSheet(); return;
       case "close": closeSheet(); return;
       case "account": openSheet({ type: "account" }); return;
@@ -1104,6 +1238,7 @@ form { display: grid; gap: 14px; }
 
   /* кнопка «назад» на Android */
   function backAction() {
+    if (state.pick) { closePicker(); return true; }
     if (state.sheet) { closeSheet(); return true; }
     if (state.selecting) { exitSelect(); return true; }
     if (state.q) { state.q = ""; $("#q").value = ""; render(); return true; }
