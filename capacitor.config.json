@@ -1,0 +1,8 @@
+{
+  "appId": "com.sklad.tkani",
+  "appName": "Склад тканей",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
