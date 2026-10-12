@@ -1,0 +1,1123 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Склад тканей</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #eef0f5;
+  --surface: #ffffff;
+  --surface-2: #f4f5f9;
+  --fg: #151a2b;
+  --muted: #586079;
+  --line: #d6dae6;
+  --accent: #2b3a8c;
+  --accent-fg: #ffffff;
+  --accent-soft: #e4e8fb;
+  --tag: #ffd84d;
+  --tag-fg: #1b1b1b;
+  --danger: #b3261e;
+  --ok: #1f7a4d;
+  --shadow: 0 8px 28px rgba(21, 26, 43, 0.18);
+  --card-shadow: 0 1px 2px rgba(21, 26, 43, 0.06), 0 6px 16px rgba(21, 26, 43, 0.06);
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1220; --surface: #181c2e; --surface-2: #1f2438; --fg: #e8eaf3; --muted: #98a0b8; --line: #2a3050;
+    --accent: #8e9cff; --accent-fg: #0f1220; --accent-soft: #262c52; --tag: #f2cb3a; --tag-fg: #1b1b1b;
+    --danger: #ff8a80; --ok: #6fd3a0; --shadow: 0 8px 28px rgba(0, 0, 0, 0.5); --card-shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1220; --surface: #181c2e; --surface-2: #1f2438; --fg: #e8eaf3; --muted: #98a0b8; --line: #2a3050;
+  --accent: #8e9cff; --accent-fg: #0f1220; --accent-soft: #262c52; --tag: #f2cb3a; --tag-fg: #1b1b1b;
+  --danger: #ff8a80; --ok: #6fd3a0; --shadow: 0 8px 28px rgba(0, 0, 0, 0.5); --card-shadow: none;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.4; -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.app { max-width: 560px; margin-inline: auto; padding-inline: 16px; padding-block: 0 120px; }
+
+/* ---------- шапка ---------- */
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 14px 10px; display: grid; gap: 10px; }
+.brand, .selbar { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.brand h1 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; flex: 1; min-width: 0; }
+.net { display: inline-flex; align-items: center; gap: 7px; font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
+.net i { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.net.off { color: var(--danger); font-weight: 600; }
+.net.off i { background: var(--danger); }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; border: 0; flex: none;
+  background: var(--accent); color: var(--accent-fg); font-weight: 600; font-size: 1.0625rem;
+}
+.selbar { justify-content: space-between; }
+.selbar .count-sel { font-weight: 600; font-size: 1.125rem; flex: 1; }
+.icon-btn { width: 44px; height: 44px; border-radius: 10px; border: 0; background: var(--surface-2); color: var(--fg); font-size: 1.25rem; flex: none; }
+.text-btn { height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; flex: none; }
+
+.search { position: relative; }
+.search input {
+  width: 100%; height: 54px; padding: 0 52px 0 16px; border-radius: 10px; border: 2px solid var(--line);
+  background: var(--surface); font-family: var(--f-mono); font-size: 1.25rem; letter-spacing: 0.02em;
+}
+.search input::placeholder { font-family: var(--f-body); font-size: 1rem; letter-spacing: 0; color: var(--muted); }
+.search input:focus { border-color: var(--accent); outline: none; }
+.search button { position: absolute; right: 6px; top: 6px; height: 42px; width: 42px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.25rem; }
+
+.tabs { display: flex; gap: 6px; }
+.tab { flex: 1; min-height: 42px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 0.9375rem; }
+.tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+
+.banner { margin-block: 4px 0; padding: 10px 12px; border-radius: 8px; font-size: 0.875rem; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line); }
+.banner.err { color: var(--danger); border-color: var(--danger); background: transparent; font-weight: 600; }
+
+.count-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; margin: 4px 0 6px; }
+.count { font-size: 0.8125rem; color: var(--muted); margin: 0 2px; }
+.link-btn { border: 0; background: transparent; color: var(--accent); font-weight: 600; padding: 8px 4px; font-size: 0.9375rem; }
+
+/* ---------- список ---------- */
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.row {
+  width: 100%; text-align: left; display: flex; align-items: center;
+  padding: 12px 12px 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+  min-height: 72px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.row.sel { border-color: var(--accent); background: var(--accent-soft); }
+.row .info { min-width: 0; flex: 1; display: grid; gap: 1px; }
+.row .num { font-family: var(--f-mono); font-size: 1.125rem; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.row .meta { color: var(--muted); font-size: 0.875rem; overflow-wrap: anywhere; }
+.row .who { color: var(--muted); font-size: 0.75rem; overflow-wrap: anywhere; opacity: 0.85; }
+.row .rack { margin-left: 12px; flex: none; }
+
+.chk { flex: none; width: 0; opacity: 0; overflow: hidden; height: 26px; }
+.chk svg { width: 26px; height: 26px; display: block; }
+.chk circle { fill: transparent; stroke: var(--muted); stroke-width: 2; }
+.chk path { fill: none; stroke: var(--accent-fg); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; }
+.list.selecting .chk { width: 26px; opacity: 1; margin-right: 12px; }
+.row.sel .chk circle { fill: var(--accent); stroke: var(--accent); }
+.row.sel .chk path { stroke-dashoffset: 0; }
+
+.rack {
+  display: inline-grid; justify-items: center; align-content: center; min-width: 64px; padding: 6px 10px; gap: 1px;
+  background: var(--tag); color: var(--tag-fg); border-radius: 6px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.12);
+}
+.rack small { font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; opacity: 0.8; }
+.rack b { font-family: var(--f-mono); font-size: 1.5rem; line-height: 1.1; font-weight: 700; overflow-wrap: anywhere; }
+.rack em { font-style: normal; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 600; background: rgba(0,0,0,0.14); border-radius: 99px; padding: 0 8px; margin-top: 2px; }
+.rack.none { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+.rack.big { min-width: 112px; padding: 12px 14px; }
+.rack.big b { font-size: 3rem; }
+.rack.big small { font-size: 0.75rem; }
+.rack.big em { font-size: 0.9375rem; padding: 1px 10px; }
+
+.chip { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 500; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); vertical-align: 2px; }
+.empty { padding: 28px 4px; color: var(--muted); }
+.empty strong { display: block; color: var(--fg); font-size: 1.0625rem; margin-bottom: 4px; }
+
+/* ---------- кнопки внизу ---------- */
+.fab {
+  position: fixed; right: max(16px, calc(50% - 280px + 16px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  z-index: 6; height: 60px; padding: 0 22px 0 18px; border-radius: 30px; border: 0;
+  background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow);
+  display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.0625rem;
+}
+.fab span { font-size: 1.75rem; line-height: 1; margin-top: -2px; }
+.actionbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 7; background: var(--surface); border-top: 1px solid var(--line);
+  box-shadow: var(--shadow); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.actionbar .inner { max-width: 560px; margin-inline: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.btn { min-height: 52px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; padding: 0 14px; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- окна снизу ---------- */
+.scrim { position: fixed; inset: 0; z-index: 20; background: rgba(8, 10, 20, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; max-width: 560px; max-height: 92%; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface); border-radius: 16px 16px 0 0; box-shadow: var(--shadow);
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.sheet-body { display: grid; gap: 16px; }
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sheet-head h2 { margin: 0; font-size: 1.125rem; font-weight: 600; align-self: center; }
+.x { border: 0; background: var(--surface-2); width: 40px; height: 40px; border-radius: 8px; font-size: 1.25rem; color: var(--muted); flex: none; }
+.big-num { font-family: var(--f-mono); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.where { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
+.facts { margin: 0; display: grid; gap: 2px; min-width: 0; }
+.facts dt { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+.facts dt:first-child { margin-top: 0; }
+.facts dd { margin: 0; font-size: 1.0625rem; overflow-wrap: anywhere; }
+.byline { font-size: 0.9375rem; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+.byline b { font-weight: 600; }
+.muted { color: var(--muted); font-size: 0.875rem; }
+.hist h3 { margin: 0 0 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.hist-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hist-list li { padding-left: 12px; border-left: 2px solid var(--line); }
+.hist-list .h1 { display: flex; justify-content: space-between; gap: 10px; font-size: 0.9375rem; }
+.hist-list time { color: var(--muted); font-size: 0.8125rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hist-list .h2 { color: var(--muted); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.warn { margin: 0; font-size: 1rem; }
+.warn b { font-family: var(--f-mono); }
+.hint { margin: 0; font-size: 0.875rem; color: var(--muted); }
+
+form { display: grid; gap: 14px; }
+.field { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.field label { font-size: 0.875rem; font-weight: 600; }
+.field input[type="text"], .field input[type="password"], .field input[type="search"], .field input:not([type]) {
+  width: 100%; min-width: 0; height: 52px; padding: 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem;
+}
+.field input:focus { border-color: var(--accent); outline: none; }
+.field input.bad { border-color: var(--danger); }
+.field input[readonly] { color: var(--muted); }
+.field input.mono { font-family: var(--f-mono); font-size: 1.1875rem; letter-spacing: 0.02em; }
+.field .err { color: var(--danger); font-size: 0.875rem; min-height: 0; }
+.field .err:empty { display: none; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.two > * { min-width: 0; }
+.check { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; min-height: 44px; }
+.check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.form-err { color: var(--danger); font-size: 0.9375rem; font-weight: 500; }
+.form-err:empty { display: none; }
+.pw { position: relative; }
+.pw input { padding-right: 96px !important; }
+.pw button { position: absolute; right: 6px; top: 6px; height: 40px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--accent); font-weight: 600; }
+
+/* ---------- вход ---------- */
+.auth { max-width: 460px; margin-inline: auto; padding: 36px 16px 40px; display: grid; gap: 22px; }
+.auth h1 { margin: 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.auth .lead { margin: 4px 0 0; color: var(--muted); }
+.auth-card { display: grid; gap: 18px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 40;
+  background: var(--fg); color: var(--bg); padding: 11px 16px; border-radius: 10px; font-size: 0.9375rem; width: max-content; max-width: calc(100% - 32px); text-align: center;
+  box-shadow: var(--shadow);
+}
+.toast.err { background: var(--danger); color: var(--surface); }
+
+
+/* ---------- оформление ---------- */
+.logo { width: 38px; height: 38px; border-radius: 10px; flex: none; display: block; }
+.brand .title { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.brand h1 { flex: 0 1 auto; }
+.search .mag { position: absolute; left: 15px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: var(--muted); pointer-events: none; }
+.search input { padding-left: 46px; border-radius: 14px; }
+.row { border-radius: 14px; box-shadow: var(--card-shadow); min-height: 78px; padding: 12px 12px 12px 16px; }
+.row .num { font-size: 1.1875rem; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.5); }
+.rack { position: relative; padding: 15px 10px 7px; border-radius: 9px; }
+.rack::before { content: ""; position: absolute; top: 5px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--hole, var(--surface)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28); }
+.row.sel .rack { --hole: var(--accent-soft); }
+.rack.big { padding: 24px 16px 12px; border-radius: 12px; }
+.rack.big::before { top: 8px; width: 10px; height: 10px; margin-left: -5px; }
+.rack.none::before { display: none; }
+.rack.none { padding: 7px 10px; }
+.tabs.seg { background: var(--surface-2); padding: 4px; border-radius: 12px; gap: 4px; }
+.tabs.seg .tab { border: 0; border-radius: 9px; }
+.hero { display: grid; justify-items: start; gap: 14px; }
+.hero-logo { width: 84px; height: 84px; border-radius: 22px; box-shadow: var(--shadow); display: block; }
+.hero h1 { margin: 0; }
+.auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: var(--card-shadow); }
+.auth-card form { gap: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-logo { animation: pop 0.45s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
+  .logo { animation: pop 0.4s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
+}
+
+/* ---------- анимации ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .item.enter { animation: rise 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 30ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+  .row { transition: background-color 0.2s, border-color 0.2s, transform 0.12s; }
+  .row:active { transform: scale(0.985); }
+  .chk { transition: width 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s, margin-right 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .chk circle { transition: fill 0.18s, stroke 0.18s; }
+  .chk path { transition: stroke-dashoffset 0.26s ease-out 0.05s; }
+
+  .tab, .btn, .fab, .icon-btn, .text-btn, .avatar { transition: transform 0.12s, background-color 0.18s, color 0.18s, border-color 0.18s, opacity 0.18s; }
+  .btn:active, .fab:active, .icon-btn:active, .text-btn:active, .avatar:active, .tab:active { transform: scale(0.96); }
+  .field input { transition: border-color 0.15s; }
+
+  .fab { animation: pop 0.3s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.6) translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .selbar { animation: drop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .brand { animation: fadein 0.2s ease-out both; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+  .actionbar { animation: slideup 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
+
+  .scrim { animation: fadein 0.2s ease-out both; }
+  .scrim.out { animation: fadeout 0.18s ease-in both; pointer-events: none; }
+  .sheet { animation: sheetup 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+  .scrim.out .sheet { animation: sheetdown 0.2s ease-in both; }
+  @keyframes sheetup { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
+  @keyframes sheetdown { from { transform: none; opacity: 1; } to { transform: translateY(60px); opacity: 0; } }
+  .sheet-body.swap { animation: swap 0.22s ease-out both; }
+  @keyframes swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .toast { animation: toastin 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  .toast.out { animation: toastout 0.22s ease-in both; }
+  @keyframes toastin { from { opacity: 0; transform: translate(-50%, 16px) scale(0.96); } to { opacity: 1; transform: translateX(-50%); } }
+  @keyframes toastout { from { opacity: 1; transform: translateX(-50%); } to { opacity: 0; transform: translate(-50%, 10px); } }
+
+  .auth-card { animation: swap 0.3s ease-out both; }
+  .form-err:not(:empty) { animation: shake 0.3s ease-out; }
+  @keyframes shake { 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 108 108"><defs><clipPath id="lc"><rect width="108" height="108" rx="24"/></clipPath></defs><g clip-path="url(#lc)"><rect width="108" height="108" fill="#232F78"/><g transform="translate(54 54) scale(1.2) translate(-52 -49)">
+  <path d="M46 66 H80 Q84 66 84 69 V72 Q84 75 80 75 H46 Z" transform="translate(-6 -3) scale(1)" fill="#E3B52B"/>
+  <circle cx="46" cy="46" r="20" fill="#FFD84D"/>
+  <path d="M46.00 42.50 L46.37 42.42 L46.75 42.38 L47.14 42.39 L47.54 42.43 L47.95 42.52 L48.35 42.66 L48.74 42.84 L49.12 43.07 L49.48 43.35 L49.81 43.67 L50.12 44.02 L50.39 44.42 L50.62 44.85 L50.81 45.32 L50.95 45.81 L51.04 46.32 L51.08 46.85 L51.06 47.38 L50.98 47.93 L50.84 48.47 L50.65 49.00 L50.39 49.52 L50.08 50.02 L49.71 50.49 L49.29 50.92 L48.82 51.32 L48.30 51.67 L47.73 51.97 L47.13 52.21 L46.50 52.39 L45.85 52.50 L45.17 52.55 L44.49 52.52 L43.80 52.43 L43.12 52.26 L42.44 52.01 L41.79 51.70 L41.17 51.31 L40.58 50.86 L40.03 50.33 L39.54 49.75 L39.10 49.11 L38.73 48.43 L38.42 47.69 L38.20 46.92 L38.04 46.12 L37.98 45.31 L37.99 44.47 L38.10 43.64 L38.29 42.81 L38.57 41.99 L38.94 41.20 L39.39 40.44 L39.92 39.73 L40.53 39.07 L41.22 38.46 L41.97 37.93 L42.78 37.47 L43.64 37.09 L44.54 36.80 L45.48 36.60 L46.45 36.50 L47.43 36.50 L48.41 36.60 L49.39 36.81 L50.35 37.12 L51.29 37.52 L52.18 38.03 L53.03 38.63 L53.82 39.32 L54.54 40.10 L55.18 40.95 L55.74 41.88 L56.20 42.86 L56.56 43.90 L56.81 44.98 L56.96 46.09 L56.99 47.21 L56.90 48.35 L56.70 49.48 L56.38 50.59 L55.94 51.67 L55.39 52.71 L54.73 53.70 L53.97 54.62 L53.10 55.46 L52.15 56.22 L51.12 56.88 L50.02 57.44 L48.85 57.88 L47.64 58.21 L46.39 58.41 L45.12 58.48 L43.83 58.42 L42.55 58.23 L41.29 57.90 L40.05 57.44 L38.87 56.86 L37.74 56.15 L36.68 55.32 L35.70 54.39 L34.82 53.35 L34.04 52.21 L33.38 51.00 L32.84 49.71 L32.44 48.37 L32.17 46.98 L32.04 45.56 L32.07 44.13 L32.23 42.70 L32.55 41.28 L33.02 39.89 L33.62 38.55 L34.37 37.27 L35.25 36.06 L36.25 34.95 L37.38 33.93 L38.60 33.03 L39.92 32.26 L41.33 31.62 L42.80 31.12 L44.32 30.77 L45.88 30.58 L47.46 30.56 L49.05 30.69 L50.62 30.99 L52.16 31.45 L53.66 32.07 L55.10 32.84 L56.45 33.76 L57.72 34.82 L58.87 36.02 L59.90 37.33 L60.80 38.75 L61.55 40.26 L62.15 41.85 L62.59 43.51 L62.85 45.21 L62.94 46.93 L62.85 48.67 L62.59 50.40 L62.14 52.10 L61.52 53.76 L60.73 55.35 L59.78 56.86 L58.67 58.28 L57.42 59.58 L56.03 60.75 L54.52 61.78 L52.90 62.66 L51.19 63.37 L49.42 63.90 L47.58 64.25 L45.71 64.42 L43.82 64.39 L41.94 64.16 L40.08 63.75 L38.26 63.14 L36.51 62.35 L34.83 61.37" fill="none" stroke="#1A1F45" stroke-opacity="0.55" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="46" cy="46" r="3.2" fill="#232F78"/>
+</g></g></symbol></svg>
+<div class="auth" id="auth" hidden></div>
+
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="brand" id="brandBar">
+      <div class="title"><svg class="logo" aria-hidden="true"><use href="#logo"/></svg><h1>Склад тканей</h1></div>
+      <span class="net" id="net"><i></i><span id="netText">Онлайн</span></span>
+      <button class="avatar" id="userBtn" type="button" data-act="account" aria-label="Профиль"></button>
+    </div>
+    <div class="selbar" id="selBar" hidden>
+      <button class="icon-btn" type="button" data-act="sel-cancel" aria-label="Отменить выбор">✕</button>
+      <span class="count-sel" id="selCount" aria-live="polite"></span>
+      <button class="text-btn" type="button" data-act="sel-all">Все</button>
+    </div>
+    <div class="search">
+      <svg class="mag" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Номер рулона" aria-label="Поиск по номеру рулона">
+      <button id="qClear" type="button" aria-label="Очистить поиск" hidden>✕</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabActive" aria-selected="true" data-tab="active">Рулоны</button>
+      <button class="tab" role="tab" id="tabTrash" aria-selected="false" data-tab="trash">Удалённые</button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+  <div class="count-row">
+    <p class="count" id="count" aria-live="polite"></p>
+    <button class="link-btn" id="selStart" type="button" data-act="sel-start" hidden>Выбрать</button>
+  </div>
+  <ul class="list" id="list"></ul>
+</div>
+
+<button class="fab" id="add" type="button" data-act="add" aria-label="Добавить рулон" hidden><span>+</span>Добавить</button>
+<div class="actionbar" id="actionBar" hidden>
+  <div class="inner">
+    <button class="btn" id="actA" type="button" disabled>Изменить</button>
+    <button class="btn danger" id="actB" type="button" disabled>Удалить</button>
+  </div>
+</div>
+<div id="sheetRoot"></div>
+<div id="toastRoot" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var CFG = window.SKLAD_CONFIG || {};
+  var DOMAIN = CFG.emailDomain || "sklad-tkani.com";
+  var SESSION_KEY = "sklad_session_v1";
+
+  var state = {
+    rolls: new Map(), q: "", tab: "active", sheet: null, online: navigator.onLine,
+    mode: "auth", loaded: false, user: null, authTab: "login", authNote: "",
+    busy: false, selecting: false, sel: new Set(), seen: new Set()
+  };
+  var repo = null, session = null, refreshing = null;
+  var toastTimer = null, lpTimer = null, lpFired = false, lastListHtml = null;
+
+  /* ---------- мелочи ---------- */
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmt(id) { return String(id).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+  function ago(ts) {
+    if (!ts) return "";
+    var m = Math.floor((Date.now() - ts) / 60000);
+    if (m < 1) return "только что";
+    if (m < 60) return m + " мин назад";
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + " ч назад";
+    return Math.floor(h / 24) + " дн. назад";
+  }
+  function dt(iso) {
+    var d = new Date(iso);
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    return p(d.getDate()) + "." + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  function place(r) { return r.rack + " стеллаж" + (r.floor ? " (" + r.floor + " этаж)" : ""); }
+  var COLOR_MAP = { "белый":"#f5f5f2","молочный":"#f3ecd9","экрю":"#efe6cf","кремовый":"#f3e5b8","слоновая кость":"#f1e7cd","бежевый":"#d8c3a0","песочный":"#d6bf94","светло-серый":"#c4c6cc","серый":"#8e9099","темно-серый":"#4f525a","графитовый":"#3b3e45","черный":"#16161a","красный":"#c62828","бордовый":"#6d1a2c","вишневый":"#7b1230","розовый":"#f19ab6","пудровый":"#e8c9c4","малиновый":"#b3175e","оранжевый":"#f08a24","терракотовый":"#c4623f","желтый":"#f4d03f","горчичный":"#d2a02a","зеленый":"#2e8b57","изумрудный":"#0b8a63","оливковый":"#7b7d3a","хаки":"#8a8456","мятный":"#a5dcc4","бирюзовый":"#1fb5ad","голубой":"#6bb7ee","васильковый":"#5a7fdc","темно-синий":"#16275f","синий":"#2c5fc4","индиго":"#34327f","фиолетовый":"#7a3fb0","лиловый":"#b08fd1","сиреневый":"#c3a6e0","коричневый":"#6a4328","шоколадный":"#4b2e20","кофейный":"#7a5538" };
+  var COLOR_KEYS = Object.keys(COLOR_MAP).sort(function (a, b) { return b.length - a.length; });
+  function colorHex(name) {
+    var n = String(name || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/ - /g, "-").trim();
+    if (!n) return "";
+    for (var i = 0; i < COLOR_KEYS.length; i++) { if (n.indexOf(COLOR_KEYS[i]) !== -1) return COLOR_MAP[COLOR_KEYS[i]]; }
+    return "";
+  }
+  function colorHtml(name) {
+    if (!name) return "";
+    var h = colorHex(name);
+    return (h ? '<i class="sw" style="background:' + h + '"></i>' : "") + esc(name);
+  }
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+  function vib() { try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {} }
+  function configured() {
+    return !!(CFG.url && CFG.key && /^https?:\/\//.test(CFG.url) && CFG.key.indexOf("ВСТАВЬТЕ") === -1);
+  }
+
+  /* ---------- вход (Supabase Auth) ---------- */
+  function readSession() {
+    try {
+      var s = JSON.parse(lsGet(SESSION_KEY) || "null");
+      return s && s.access_token && s.refresh_token ? s : null;
+    } catch (e) { return null; }
+  }
+  function writeSession(s) { session = s; lsSet(SESSION_KEY, s ? JSON.stringify(s) : null); }
+  function authCall(path, body) {
+    return fetch(CFG.url.replace(/\/$/, "") + "/auth/v1/" + path, {
+      method: "POST", headers: { apikey: CFG.key, "Content-Type": "application/json" }, body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.text().then(function (t) {
+        var j = null;
+        try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!r.ok) {
+          var err = new Error((j && (j.msg || j.message || j.error_description)) || ("HTTP " + r.status));
+          err.status = r.status;
+          err.code = j && (j.error_code || j.error);
+          throw err;
+        }
+        return j;
+      });
+    });
+  }
+  function toSession(r) {
+    var u = r.user || {}, m = u.user_metadata || {};
+    return {
+      access_token: r.access_token, refresh_token: r.refresh_token,
+      expires_at: r.expires_at || (Math.floor(Date.now() / 1000) + (r.expires_in || 3600)),
+      user: { id: u.id, login: m.login || "", name: m.full_name || m.login || "Сотрудник" }
+    };
+  }
+  function refresh() {
+    if (!session) return Promise.reject(new Error("no session"));
+    if (!refreshing) {
+      refreshing = authCall("token?grant_type=refresh_token", { refresh_token: session.refresh_token })
+        .then(function (r) { writeSession(toSession(r)); })
+        .catch(function (e) {
+          if (e.status && e.status >= 400 && e.status < 500) signOut("Сессия закончилась. Войдите снова.");
+          throw e;
+        })
+        .then(function () { refreshing = null; }, function (e) { refreshing = null; throw e; });
+    }
+    return refreshing;
+  }
+  function ensureToken() {
+    if (!session) return Promise.resolve(CFG.key);
+    if (session.expires_at * 1000 - Date.now() > 60000) return Promise.resolve(session.access_token);
+    return refresh().then(function () { return session.access_token; });
+  }
+  function signOut(note) {
+    writeSession(null);
+    if (repo && repo.stop) repo.stop();
+    repo = null;
+    state.user = null; state.mode = "auth"; state.rolls = new Map(); state.loaded = false;
+    state.sel = new Set(); state.selecting = false; state.authTab = "login"; state.authNote = note || "";
+    state.q = ""; state.tab = "active"; lastListHtml = null;
+    $("#q").value = "";
+    $("#auth").setAttribute("data-mode", "");
+    closeSheet(true);
+    render();
+  }
+
+  /* ---------- база: обмен с Supabase ---------- */
+  function api(path, opts, retried) {
+    opts = opts || {};
+    return ensureToken().then(function (tok) {
+      var h = { apikey: CFG.key, Authorization: "Bearer " + tok, "Content-Type": "application/json" };
+      if (opts.prefer) h.Prefer = opts.prefer;
+      return fetch(CFG.url.replace(/\/$/, "") + "/rest/v1/" + path, {
+        method: opts.method || "GET", headers: h, body: opts.body ? JSON.stringify(opts.body) : undefined
+      });
+    }).then(function (r) {
+      if (r.status === 401 && session && !retried) {
+        return refresh().then(function () { return api(path, opts, true); });
+      }
+      if (!r.ok) return r.text().then(function (t) { var e = new Error(t); e.status = r.status; throw e; });
+      return r.text().then(function (t) { return t ? JSON.parse(t) : null; });
+    });
+  }
+  function toRoll(x) {
+    return {
+      rack: x.rack, floor: x.floor || "", fabric: x.fabric || "", color: x.color || "", deleted: !!x.deleted,
+      deletedAt: x.deleted_at ? Date.parse(x.deleted_at) : null, updatedAt: x.updated_at ? Date.parse(x.updated_at) : 0,
+      updatedBy: x.updated_by_name || "", deletedBy: x.deleted_by_name || ""
+    };
+  }
+  function toRow(d) {
+    var o = {};
+    ["rack", "floor", "fabric", "color", "deleted"].forEach(function (k) { if (k in d) o[k] = d[k]; });
+    return o;
+  }
+  function inList(ids) { return "in.(" + ids.map(encodeURIComponent).join(",") + ")"; }
+
+  function supaRepo() {
+    var timer = null, cb = null, errCb = null, first = true, stopped = false;
+    function load() {
+      if (stopped) return Promise.resolve();
+      return api("rolls?select=*&limit=5000").then(function (rows) {
+        if (stopped) return;
+        var m = new Map();
+        rows.forEach(function (x) { m.set(x.id, toRoll(x)); });
+        first = false;
+        cb(m);
+      }).catch(function (e) {
+        if (first && errCb && !stopped) { first = false; errCb(e); }
+      });
+    }
+    function tick() { if (!document.hidden && navigator.onLine) load(); }
+    return {
+      kind: "shared",
+      subscribe: function (next, err) {
+        cb = next; errCb = err; stopped = false;
+        load();
+        timer = setInterval(tick, 10000);
+        document.addEventListener("visibilitychange", tick);
+        window.addEventListener("online", tick);
+      },
+      stop: function () {
+        stopped = true; clearInterval(timer);
+        document.removeEventListener("visibilitychange", tick);
+        window.removeEventListener("online", tick);
+      },
+      get: function (id) {
+        return api("rolls?select=*&id=eq." + encodeURIComponent(id)).then(function (rows) { return rows.length ? toRoll(rows[0]) : null; });
+      },
+      insert: function (id, d) {
+        var row = toRow(d); row.id = id;
+        return api("rolls", { method: "POST", body: row, prefer: "return=minimal" }).then(function () { return load(); });
+      },
+      updateMany: function (ids, d) {
+        return api("rolls?id=" + inList(ids), { method: "PATCH", body: toRow(d), prefer: "return=representation" }).then(function (rows) {
+          if (!rows || !rows.length) { var e = new Error("not found"); e.notFound = true; throw e; }
+          return load();
+        });
+      },
+      removeMany: function (ids) {
+        return api("rolls?id=" + inList(ids), { method: "DELETE", prefer: "return=minimal" }).then(function () { return load(); });
+      },
+      history: function (id) {
+        return api("roll_log?select=action,by_name,details,at&roll_id=eq." + encodeURIComponent(id) + "&order=at.desc&limit=15");
+      }
+    };
+  }
+
+  /* Пробный режим без базы: всё хранится только в памяти телефона */
+  function localRepo() {
+    var m = new Map(), cb = null, logs = {}, who = state.user.name;
+    function emit() { if (cb) cb(new Map(m)); }
+    function log(id, action, details) {
+      (logs[id] = logs[id] || []).unshift({ action: action, by_name: who, details: details || "", at: new Date().toISOString() });
+    }
+    return {
+      kind: "local",
+      subscribe: function (next) { cb = next; emit(); },
+      stop: function () {},
+      get: function (id) { return Promise.resolve(m.has(id) ? m.get(id) : null); },
+      insert: function (id, d) {
+        m.set(id, { rack: d.rack, floor: d.floor || "", fabric: d.fabric || "", color: d.color || "", deleted: false, deletedAt: null, updatedAt: Date.now(), updatedBy: who, deletedBy: "" });
+        log(id, "add", place(m.get(id))); emit(); return Promise.resolve();
+      },
+      updateMany: function (ids, d) {
+        ids.forEach(function (id) {
+          var r = m.get(id); if (!r) return;
+          var n = Object.assign({}, r), act = "edit", det = [];
+          ["rack", "floor", "fabric", "color"].forEach(function (k) { if (k in d && d[k] !== r[k]) { n[k] = d[k]; det.push(k + ": " + (r[k] || "—") + " → " + (d[k] || "—")); } });
+          if ("deleted" in d && d.deleted !== r.deleted) {
+            n.deleted = d.deleted; act = d.deleted ? "delete" : "restore";
+            n.deletedAt = d.deleted ? Date.now() : null; n.deletedBy = d.deleted ? who : "";
+          }
+          if (act === "edit" && !det.length) return;
+          n.updatedAt = Date.now(); n.updatedBy = who; m.set(id, n); log(id, act, det.join("; "));
+        });
+        emit(); return Promise.resolve();
+      },
+      removeMany: function (ids) { ids.forEach(function (id) { m.delete(id); }); emit(); return Promise.resolve(); },
+      history: function (id) { return Promise.resolve(logs[id] || []); }
+    };
+  }
+
+  function onData(m) {
+    state.rolls = m; state.loaded = true;
+    if (state.mode === "error") state.mode = "shared";
+    state.sel.forEach(function (id) { if (!m.has(id)) state.sel.delete(id); });
+    var s = state.sheet;
+    if (s && s.type === "detail") {
+      var r = m.get(s.id);
+      if (!r) { closeSheet(); toast("Этот рулон уже удалён из базы."); }
+      else if (r.updatedAt !== s.stamp || r.deleted !== s.delFlag) drawSheet();
+    }
+    render();
+  }
+  function onDataError() { state.loaded = true; state.mode = "error"; render(); }
+  function startRepo() { repo.subscribe(onData, onDataError); }
+
+  /* ---------- сообщения ---------- */
+  function toast(msg, isErr) {
+    var root = $("#toastRoot");
+    root.innerHTML = '<div class="toast' + (isErr ? " err" : "") + '">' + esc(msg) + "</div>";
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      var t = root.firstChild; if (t) t.classList.add("out");
+      toastTimer = setTimeout(function () { root.innerHTML = ""; }, 240);
+    }, 3200);
+  }
+  function guard() {
+    if (!state.online) { toast("Нет соединения. Изменение не сохранено.", true); return false; }
+    if (!repo) { toast("База ещё загружается.", true); return false; }
+    return true;
+  }
+  function fail(e) {
+    if (e && e.notFound) toast("Рулона уже нет в базе. Список обновлён.", true);
+    else if (e && e.status === 409) toast("Рулон с таким номером уже есть.", true);
+    else if (e && (e.status === 401 || e.status === 403)) toast("Нет доступа. Войдите заново.", true);
+    else toast("Не удалось сохранить. Проверьте связь и повторите.", true);
+  }
+
+  /* ---------- отрисовка списка ---------- */
+  function visible() {
+    var wantDeleted = state.tab === "trash";
+    var q = state.q.trim().toLowerCase();
+    var digits = q.replace(/\s/g, "");
+    var onlyDigits = /^\d+$/.test(digits);
+    var out = [];
+    state.rolls.forEach(function (r, id) {
+      if (!!r.deleted !== wantDeleted) return;
+      if (q) {
+        var hit;
+        if (onlyDigits) hit = id.indexOf(digits) !== -1;
+        else hit = [r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy].some(function (v) { return String(v || "").toLowerCase().indexOf(q) !== -1; });
+        if (!hit) return;
+      }
+      out.push({ id: id, r: r });
+    });
+    out.sort(function (a, b) {
+      var ta = wantDeleted ? (a.r.deletedAt || 0) : (a.r.updatedAt || 0);
+      var tb = wantDeleted ? (b.r.deletedAt || 0) : (b.r.updatedAt || 0);
+      return tb - ta;
+    });
+    return out;
+  }
+  function rackHtml(r, big) {
+    if (!r.rack) return '<span class="rack none' + (big ? " big" : "") + '"><small>стеллаж</small><b>—</b></span>';
+    return '<span class="rack' + (big ? " big" : "") + '"><small>стеллаж</small><b>' + esc(r.rack) + "</b>" + (r.floor ? "<em>" + esc(r.floor) + " этаж</em>" : "") + "</span>";
+  }
+  function rowHtml(it, enter, i) {
+    var r = it.r;
+    var meta = [r.fabric ? esc(r.fabric) : "", r.color ? colorHtml(r.color) : ""].filter(Boolean).join(" · ");
+    var who = r.deleted
+      ? (r.deletedBy ? "Удалил: " + r.deletedBy + " · " + ago(r.deletedAt) : "Удалён " + ago(r.deletedAt))
+      : (r.updatedBy ? r.updatedBy + " · " + ago(r.updatedAt) : "");
+    return '<li class="item' + (enter ? " enter" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
+      '<span class="chk" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.6 3.6L18.2 10"/></svg></span>' +
+      '<span class="info"><span class="num">' + fmt(it.id) + "</span><span class=\"meta\">" + (meta || "без описания") + "</span>" +
+      (who ? '<span class="who">' + esc(who) + "</span>" : "") + "</span>" + rackHtml(r) + "</button></li>";
+  }
+
+  function render() {
+    var needAuth = state.mode === "auth";
+    $("#auth").hidden = !needAuth;
+    $("#app").hidden = needAuth;
+    if (needAuth) {
+      $("#add").hidden = true; $("#actionBar").hidden = true;
+      drawAuth();
+      return;
+    }
+    var c = { a: 0, t: 0 };
+    state.rolls.forEach(function (r) { if (r.deleted) c.t++; else c.a++; });
+    $("#tabActive").textContent = "Рулоны" + (state.loaded ? " · " + c.a : "");
+    $("#tabTrash").textContent = "Удалённые" + (state.loaded && c.t ? " · " + c.t : "");
+    $("#tabActive").setAttribute("aria-selected", state.tab === "active");
+    $("#tabTrash").setAttribute("aria-selected", state.tab === "trash");
+    $("#qClear").hidden = !state.q;
+    var net = $("#net");
+    net.className = "net" + (state.online ? "" : " off");
+    $("#netText").textContent = state.online ? "Онлайн" : "Нет соединения";
+    var nm = (state.user && state.user.name) || "?";
+    $("#userBtn").textContent = nm.trim().charAt(0).toUpperCase();
+    $("#userBtn").hidden = state.mode === "local";
+
+    var b = "";
+    if (!state.online) b = '<div class="banner err">Нет соединения. Искать и менять рулоны нельзя, пока связь не вернётся.</div>';
+    else if (state.mode === "local") b = '<div class="banner">Общая база не подключена (файл config.js). Входа нет, записи хранятся только в памяти этого телефона.</div>';
+    else if (state.mode === "error") b = '<div class="banner err">Не удалось подключиться к общей базе. Проверьте интернет и ключи в config.js, затем перезапустите приложение.</div>';
+    $("#banner").innerHTML = b;
+
+    var list = $("#list");
+    var html;
+    if (!state.loaded) {
+      $("#count").textContent = "";
+      $("#selStart").hidden = true;
+      html = '<li class="empty">Загрузка базы…</li>';
+    } else {
+      var items = visible();
+      var shown = items.slice(0, 100);
+      var txt;
+      if (state.tab === "trash") txt = items.length ? "Удалено рулонов: " + items.length + ". Отсюда их можно вернуть." : "";
+      else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : "");
+      if (items.length > 100) txt += ". Показаны первые 100, уточните номер.";
+      $("#count").textContent = txt;
+      $("#selStart").hidden = state.selecting || !items.length;
+      if (!shown.length) {
+        var msg;
+        if (state.tab === "trash") msg = "<strong>В удалённых пусто</strong>Когда рулон заберут целиком, он появится здесь, и его можно будет вернуть при возврате.";
+        else if (state.q) msg = "<strong>Рулон не найден</strong>Проверьте номер. Если рулон новый, нажмите «Добавить».";
+        else msg = "<strong>В базе пока нет рулонов</strong>Нажмите «Добавить», введите номер рулона, стеллаж, этаж, ткань и цвет.";
+        html = '<li class="empty">' + msg + "</li>";
+      } else {
+        var n = 0;
+        html = shown.map(function (it) {
+          var enter = !state.seen.has(it.id);
+          state.seen.add(it.id);
+          return rowHtml(it, enter, enter ? Math.min(n++, 12) : 0);
+        }).join("");
+      }
+    }
+    if (html !== lastListHtml) { list.innerHTML = html; lastListHtml = html; }
+
+    $("#actA").setAttribute("data-act", state.tab === "trash" ? "bulk-restore" : "bulk-edit");
+    $("#actA").textContent = state.tab === "trash" ? "Вернуть" : "Изменить";
+    $("#actB").setAttribute("data-act", state.tab === "trash" ? "bulk-ask-purge" : "bulk-ask-delete");
+    $("#actB").textContent = state.tab === "trash" ? "Стереть" : "Удалить";
+    applySelectUi();
+  }
+
+  /* ---------- выделение ---------- */
+  function applySelectUi() {
+    var sel = state.selecting;
+    $("#list").classList.toggle("selecting", sel);
+    Array.prototype.forEach.call(document.querySelectorAll("#list .row"), function (b) {
+      var on = state.sel.has(b.getAttribute("data-open"));
+      b.classList.toggle("sel", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    $("#brandBar").hidden = sel;
+    $("#selBar").hidden = !sel;
+    $("#selCount").textContent = "Выбрано: " + state.sel.size;
+    $("#actionBar").hidden = !sel;
+    $("#selStart").hidden = sel || $("#list .row") === null;
+    $("#actA").disabled = $("#actB").disabled = state.sel.size === 0;
+    $("#add").hidden = sel || state.tab === "trash" || state.mode === "auth";
+  }
+  function enterSelect(id) { state.selecting = true; state.sel = new Set(id ? [id] : []); applySelectUi(); }
+  function exitSelect() { if (!state.selecting) return; state.selecting = false; state.sel = new Set(); applySelectUi(); }
+  function toggleSel(id) {
+    if (state.sel.has(id)) state.sel["delete"](id); else state.sel.add(id);
+    applySelectUi();
+  }
+
+  /* ---------- окна снизу ---------- */
+  function openSheet(sh) {
+    state.sheet = sh; drawSheet();
+    if (sh.type === "add" || sh.type === "edit" || sh.type === "bulk") {
+      setTimeout(function () {
+        if (state.sheet !== sh) return;
+        var f = $(sh.type === "add" ? "#f-roll" : "#f-rack");
+        if (f) f.focus();
+      }, 330);
+    }
+  }
+  function closeSheet(now) {
+    state.sheet = null;
+    var root = $("#sheetRoot"), scrim = root.querySelector(".scrim");
+    if (!scrim) return;
+    if (now) { root.innerHTML = ""; return; }
+    scrim.classList.add("out");
+    setTimeout(function () { if (!state.sheet) root.innerHTML = ""; }, 210);
+  }
+  function drawSheet() {
+    var s = state.sheet, root = $("#sheetRoot");
+    if (!s) return;
+    var scrim = root.querySelector(".scrim");
+    if (!scrim) {
+      root.innerHTML = '<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-body" id="sheetBody"></div></div></div>';
+    } else scrim.classList.remove("out");
+    var body = $("#sheetBody");
+    body.innerHTML = sheetHtml(s);
+    body.classList.remove("swap"); void body.offsetWidth; body.classList.add("swap");
+    if (s.type === "detail") loadHistory(s.id);
+  }
+  function head(title, act) {
+    return '<div class="sheet-head"><h2>' + title + '</h2><button class="x" type="button" data-act="' + (act || "close") + '" aria-label="Закрыть">✕</button></div>';
+  }
+  var ACT = { add: "добавил", edit: "изменил", "delete": "удалил", restore: "вернул", purge: "стёр" };
+
+  function sheetHtml(s) {
+    if (s.type === "detail") {
+      var r = state.rolls.get(s.id);
+      if (!r) return head("Рулон не найден");
+      s.stamp = r.updatedAt; s.delFlag = r.deleted;
+      var by = r.deleted
+        ? '<div class="byline">Удалил: <b>' + esc(r.deletedBy || "неизвестно") + "</b> · " + ago(r.deletedAt) + "</div>"
+        : (r.updatedBy ? '<div class="byline">Изменил: <b>' + esc(r.updatedBy) + "</b> · " + ago(r.updatedAt) + "</div>" : "");
+      return '<div class="sheet-head"><div class="big-num">' + fmt(s.id) + '</div><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button></div>' +
+        '<div class="where">' + rackHtml(r, true) + '<dl class="facts"><dt>Место</dt><dd>' + esc(r.rack ? place(r) : "—") + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
+        by + '<div class="hist"><h3>История</h3><div id="hist" class="muted">Загрузка…</div></div>' +
+        (r.deleted
+          ? '<div class="actions"><button class="btn primary" type="button" data-act="restore-one">Вернуть на склад</button><button class="btn danger" type="button" data-act="ask-purge-one">Стереть навсегда</button></div>'
+          : '<div class="actions"><button class="btn primary" type="button" data-act="edit-one">Изменить</button><button class="btn danger" type="button" data-act="ask-delete-one">Удалить</button></div>');
+    }
+    if (s.type === "confirm") {
+      var n = s.ids.length, one = n === 1, del = s.kind === "delete";
+      var nums = one ? "<b>" + fmt(s.ids[0]) + "</b>" : s.ids.slice(0, 4).map(function (i) { return "<b>" + fmt(i) + "</b>"; }).join(", ") + (n > 4 ? " и ещё " + (n - 4) : "");
+      var title = del ? (one ? "Удалить рулон?" : "Удалить рулонов: " + n + "?") : (one ? "Стереть навсегда?" : "Стереть навсегда: " + n + "?");
+      var text = del
+        ? (one ? "Рулон " + nums + " пропадёт из поиска у всех. Он останется во вкладке «Удалённые», оттуда его можно вернуть."
+               : "Рулоны " + nums + " пропадут из поиска у всех. Они останутся во вкладке «Удалённые».")
+        : (one ? "Рулон " + nums + " будет стёрт из базы. Вернуть его будет нельзя." : "Рулоны " + nums + " будут стёрты из базы. Вернуть их будет нельзя.");
+      return head(title, "cancel-confirm") + '<p class="warn">' + text + '</p><div class="actions"><button class="btn" type="button" data-act="cancel-confirm">Отмена</button>' +
+        '<button class="btn danger-solid" type="button" data-act="run-confirm" id="runBtn">' + (del ? "Удалить" : "Стереть") + "</button></div>";
+    }
+    if (s.type === "account") {
+      var u = state.user || {};
+      return head("Профиль") + '<dl class="facts"><dt>Имя</dt><dd>' + esc(u.name || "") + "</dd><dt>Логин</dt><dd>" + esc(u.login || "") + '</dd></dl>' +
+        '<p class="hint">Ваше имя видно всем в истории изменений рулонов.</p><button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
+    }
+    return formHtml(s);
+  }
+  function formHtml(s) {
+    var v = s.values || {}, bulk = s.type === "bulk", editing = s.type === "edit";
+    var title = bulk ? "Изменить рулоны: " + s.ids.length : (editing ? "Изменить рулон" : "Новый рулон");
+    var h = head(title) + '<form id="form" novalidate autocomplete="off">';
+    if (!bulk) {
+      h += '<div class="field"><label for="f-roll">Номер рулона</label><input id="f-roll" class="mono" type="text" inputmode="numeric" pattern="[0-9]*" value="' + esc(v.roll || "") + '"' + (editing ? " readonly" : "") + '><div class="err" id="e-roll"></div></div>';
+    } else {
+      h += '<p class="hint">Заполните только то, что нужно изменить. Пустые поля у выбранных рулонов останутся как есть.</p>';
+    }
+    h += '<div class="two"><div class="field"><label for="f-rack">Номер стеллажа</label><input id="f-rack" type="text" value="' + esc(v.rack || "") + '"><div class="err" id="e-rack"></div></div>' +
+      '<div class="field"><label for="f-floor">Этаж</label><input id="f-floor" type="text" inputmode="numeric" placeholder="не обязательно" value="' + esc(v.floor || "") + '"><div class="err" id="e-floor"></div></div></div>';
+    if (bulk) h += '<label class="check" for="f-nofloor"><input type="checkbox" id="f-nofloor">Убрать этаж у выбранных рулонов</label>';
+    h += '<div class="two"><div class="field"><label for="f-fabric">Ткань</label><input id="f-fabric" type="text" value="' + esc(v.fabric || "") + '"></div>' +
+      '<div class="field"><label for="f-color">Цвет</label><input id="f-color" type="text" value="' + esc(v.color || "") + '"></div></div>' +
+      '<div class="form-err" id="form-err" role="alert"></div>' +
+      '<div class="actions"><button type="button" class="btn" data-act="' + (editing ? "back-detail" : "close") + '">Отмена</button><button type="submit" class="btn primary" id="saveBtn">Сохранить</button></div></form>';
+    return h;
+  }
+  function loadHistory(id) {
+    if (!repo) return;
+    repo.history(id).then(function (rows) {
+      var s = state.sheet, el = $("#hist");
+      if (!s || s.type !== "detail" || s.id !== id || !el) return;
+      if (!rows || !rows.length) { el.textContent = "Записей пока нет."; return; }
+      el.className = "";
+      el.innerHTML = '<ul class="hist-list">' + rows.map(function (x) {
+        return '<li><div class="h1"><span><b>' + esc(x.by_name) + "</b> " + (ACT[x.action] || esc(x.action)) + "</span><time>" + dt(x.at) + "</time></div>" +
+          (x.details ? '<div class="h2">' + esc(x.details) + "</div>" : "") + "</li>";
+      }).join("") + "</ul>";
+    })["catch"](function () {
+      var el = $("#hist"); if (el) el.textContent = "Историю загрузить не удалось.";
+    });
+  }
+
+  /* ---------- сохранение ---------- */
+  function fieldErr(name, msg) {
+    var e = $("#e-" + name), i = $("#f-" + name);
+    if (e) e.textContent = msg || "";
+    if (i) i.classList.toggle("bad", !!msg);
+  }
+  function formErr(msg) { var e = $("#form-err"); if (e) e.textContent = msg || ""; }
+  function setBusy(on, label) {
+    state.busy = on;
+    var b = $("#saveBtn") || $("#runBtn");
+    if (b) { b.disabled = on; if (label) b.textContent = on ? "Сохраняю…" : label; }
+  }
+  function val(id) { var el = $(id); return el ? el.value.trim() : ""; }
+
+  function saveForm() {
+    var s = state.sheet;
+    if (!s || state.busy) return;
+    var vals = { roll: val("#f-roll").replace(/\s/g, ""), rack: val("#f-rack"), floor: val("#f-floor"), fabric: val("#f-fabric"), color: val("#f-color") };
+    ["roll", "rack", "floor"].forEach(function (n) { fieldErr(n, ""); });
+    formErr("");
+    if (s.type === "bulk") return saveBulk(s, vals);
+    var bad = false;
+    if (s.type === "add") {
+      if (!vals.roll) { fieldErr("roll", "Введите номер рулона."); bad = true; }
+      else if (!/^\d+$/.test(vals.roll)) { fieldErr("roll", "В номере должны быть только цифры."); bad = true; }
+      else if (vals.roll.length > 20) { fieldErr("roll", "Номер слишком длинный."); bad = true; }
+    }
+    if (!vals.rack) { fieldErr("rack", "Укажите номер стеллажа."); bad = true; }
+    if (vals.floor.length > 10) { fieldErr("floor", "Слишком длинно."); bad = true; }
+    if (bad || !guard()) return;
+    setBusy(true, "Сохранить");
+    var d = { rack: vals.rack, floor: vals.floor, fabric: vals.fabric, color: vals.color };
+    if (s.type === "edit") {
+      repo.updateMany([s.id], d).then(function () {
+        setBusy(false, "Сохранить"); openSheet({ type: "detail", id: s.id }); toast("Изменения сохранены");
+      })["catch"](function (e) { setBusy(false, "Сохранить"); fail(e); });
+      return;
+    }
+    repo.get(vals.roll).then(function (ex) {
+      if (ex) {
+        setBusy(false, "Сохранить");
+        fieldErr("roll", ex.deleted ? "Этот номер в удалённых. Откройте вкладку «Удалённые» и верните рулон." : "Такой рулон уже есть: " + place(ex) + ".");
+        return;
+      }
+      return repo.insert(vals.roll, d).then(function () {
+        setBusy(false, "Сохранить"); closeSheet();
+        state.tab = "active"; state.q = ""; $("#q").value = ""; state.seen.clear(); lastListHtml = null;
+        render(); toast("Рулон " + fmt(vals.roll) + " добавлен");
+      });
+    })["catch"](function (e) { setBusy(false, "Сохранить"); fail(e); });
+  }
+  function saveBulk(s, vals) {
+    var d = {};
+    if (vals.rack) d.rack = vals.rack;
+    var nf = $("#f-nofloor");
+    if (nf && nf.checked) d.floor = ""; else if (vals.floor) d.floor = vals.floor;
+    if (vals.fabric) d.fabric = vals.fabric;
+    if (vals.color) d.color = vals.color;
+    if (!Object.keys(d).length) { formErr("Заполните хотя бы одно поле. Пустые поля не меняются."); return; }
+    if (vals.floor.length > 10) { fieldErr("floor", "Слишком длинно."); return; }
+    if (!guard()) return;
+    setBusy(true, "Сохранить");
+    repo.updateMany(s.ids, d).then(function () {
+      setBusy(false, "Сохранить"); closeSheet(); exitSelect(); toast("Изменено рулонов: " + s.ids.length);
+    })["catch"](function (e) { setBusy(false, "Сохранить"); fail(e); });
+  }
+  function runConfirm() {
+    var s = state.sheet;
+    if (!s || state.busy || !guard()) return;
+    var ids = s.ids, n = ids.length, p, msg;
+    state.busy = true; var rb = $("#runBtn"); if (rb) rb.disabled = true;
+    if (s.kind === "delete") {
+      p = repo.updateMany(ids, { deleted: true });
+      msg = n === 1 ? "Рулон удалён. Его можно вернуть во вкладке «Удалённые»" : "Удалено рулонов: " + n + ". Их можно вернуть во вкладке «Удалённые»";
+    } else {
+      p = repo.removeMany(ids);
+      msg = n === 1 ? "Рулон стёрт из базы" : "Стёрто из базы: " + n;
+    }
+    p.then(function () { state.busy = false; closeSheet(); exitSelect(); toast(msg); })
+      ["catch"](function (e) { state.busy = false; if (rb) rb.disabled = false; fail(e); });
+  }
+  function restore(ids) {
+    if (state.busy || !guard()) return;
+    state.busy = true;
+    repo.updateMany(ids, { deleted: false }).then(function () {
+      state.busy = false; closeSheet(); exitSelect();
+      state.tab = "active"; state.seen.clear(); lastListHtml = null; render();
+      toast(ids.length === 1 ? "Рулон возвращён на склад" : "Возвращено рулонов: " + ids.length);
+    })["catch"](function (e) { state.busy = false; fail(e); });
+  }
+
+  /* ---------- экран входа ---------- */
+  function drawAuth() {
+    var host = $("#auth");
+    if (host.getAttribute("data-mode") !== state.authTab) {
+      var reg = state.authTab === "register";
+      host.setAttribute("data-mode", state.authTab);
+      host.innerHTML = '<div class="hero"><svg class="hero-logo" aria-hidden="true"><use href="#logo"/></svg><div><h1>Склад тканей</h1><p class="lead">' + (reg ? "Создайте аккаунт, чтобы вносить изменения под своим именем." : "Войдите, чтобы искать рулоны и менять их место.") + '</p></div></div>' +
+        '<div class="auth-card"><div class="tabs seg" role="tablist"><button class="tab" type="button" role="tab" data-auth-tab="login" aria-selected="' + !reg + '">Вход</button>' +
+        '<button class="tab" type="button" role="tab" data-auth-tab="register" aria-selected="' + reg + '">Регистрация</button></div>' +
+        '<form id="authForm" novalidate>' +
+        (reg ? '<div class="field"><label for="a-name">Имя и фамилия</label><input id="a-name" type="text" autocomplete="name" placeholder="Антон Асауляк"></div>' : "") +
+        '<div class="field"><label for="a-login">Логин или почта</label><input id="a-login" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="например anton"></div>' +
+        '<div class="field"><label for="a-pass">Пароль</label><div class="pw"><input id="a-pass" type="password" autocomplete="' + (reg ? "new-password" : "current-password") + '"><button type="button" data-act="show-pass">Показать</button></div></div>' +
+        (reg ? '<div class="field"><label for="a-code">Код регистрации</label><input id="a-code" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="его выдаёт руководитель"></div>' : "") +
+        '<div class="form-err" id="auth-err" role="alert"></div>' +
+        '<button type="submit" class="btn primary" id="authBtn">' + (reg ? "Зарегистрироваться" : "Войти") + "</button></form></div>";
+      if (state.authNote) authError(state.authNote);
+    }
+    if (!state.online && !$("#auth-err").textContent) authError("Нет соединения. Включите интернет.");
+  }
+  function authError(msg) { var e = $("#auth-err"); if (e) e.textContent = msg || ""; }
+  function authMessage(e, reg) {
+    if (!e.status) return "Нет соединения с сервером. Проверьте интернет.";
+    if (e.status === 429) return "Слишком много попыток. Подождите минуту и повторите.";
+    if (e.code === "user_already_exists" || /already (been )?registered/i.test(e.message)) return "Такой логин уже занят. Выберите другой или войдите.";
+    if (e.code === "weak_password") return "Слишком простой пароль. Придумайте подлиннее.";
+    if (e.code === "signup_disabled") return "Регистрация отключена в настройках Supabase.";
+    if (e.code === "email_address_invalid" || (/email/i.test(e.message) && /invalid/i.test(e.message))) return "Supabase не принял такой логин. Зарегистрируйтесь по рабочей почте или смените emailDomain в config.js (см. инструкцию).";
+    if (reg && e.status >= 500) return "Не удалось зарегистрироваться. Проверьте код регистрации.";
+    if (e.code === "invalid_credentials" || e.status === 400) return "Неверный логин или пароль.";
+    return "Не получилось (" + e.status + "). " + e.message;
+  }
+  function submitAuth() {
+    if (state.busy) return;
+    var reg = state.authTab === "register";
+    var login = val("#a-login").toLowerCase(), pass = $("#a-pass").value;
+    var name = reg ? val("#a-name").replace(/\s+/g, " ") : "", code = reg ? val("#a-code") : "";
+    var err = null;
+    if (reg && name.length < 3) err = "Введите имя и фамилию: они будут видны в истории изменений.";
+    else if (login.indexOf("@") !== -1 ? !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(login) : !/^[a-z0-9._-]{3,30}$/.test(login)) err = "Логин: от 3 до 30 символов, латинские буквы, цифры, точка, дефис или подчёркивание. Или введите рабочую почту.";
+    else if (pass.length < 6) err = "Пароль должен быть не короче 6 символов.";
+    else if (reg && !code) err = "Введите код регистрации. Его выдаёт руководитель.";
+    if (err) { authError(err); return; }
+    if (!state.online) { authError("Нет соединения. Включите интернет."); return; }
+    authError("");
+    state.busy = true;
+    var btn = $("#authBtn"); btn.disabled = true; btn.textContent = reg ? "Регистрирую…" : "Вхожу…";
+    var email = login.indexOf("@") !== -1 ? login : login + "@" + DOMAIN;
+    var p = reg
+      ? authCall("signup", { email: email, password: pass, data: { login: login, full_name: name, code: code } })
+      : authCall("token?grant_type=password", { email: email, password: pass });
+    p.then(function (r) {
+      state.busy = false;
+      if (!r || !r.access_token) {
+        btn.disabled = false; btn.textContent = reg ? "Зарегистрироваться" : "Войти";
+        authError("Аккаунт создан, но вход не разрешён: в Supabase включено подтверждение почты. Отключите его (см. инструкцию, шаг 4) и войдите.");
+        return;
+      }
+      writeSession(toSession(r));
+      state.user = session.user; state.authNote = "";
+      state.mode = "shared"; repo = supaRepo();
+      state.seen.clear(); lastListHtml = null;
+      render(); startRepo();
+      toast("Здравствуйте, " + state.user.name);
+    })["catch"](function (e) {
+      state.busy = false;
+      btn.disabled = false; btn.textContent = reg ? "Зарегистрироваться" : "Войти";
+      authError(authMessage(e, reg));
+    });
+  }
+
+  /* ---------- нажатия ---------- */
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    var row = t.closest("[data-open]");
+    if (row) {
+      if (lpFired) { lpFired = false; return; }
+      var rid = row.getAttribute("data-open");
+      if (state.selecting) toggleSel(rid); else openSheet({ type: "detail", id: rid });
+      return;
+    }
+    var tab = t.closest("[data-tab]");
+    if (tab) {
+      state.tab = tab.getAttribute("data-tab"); state.seen.clear(); lastListHtml = null;
+      state.sel = new Set(); render(); return;
+    }
+    var at = t.closest("[data-auth-tab]");
+    if (at) { state.authTab = at.getAttribute("data-auth-tab"); state.authNote = ""; render(); return; }
+    if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
+    var el = t.closest("[data-act]");
+    if (!el) return;
+    var act = el.getAttribute("data-act"), s = state.sheet;
+    switch (act) {
+      case "scrim": if (t === el) closeSheet(); return;
+      case "close": closeSheet(); return;
+      case "account": openSheet({ type: "account" }); return;
+      case "logout": closeSheet(true); signOut(""); return;
+      case "show-pass": var pi = $("#a-pass"), show = pi.type === "password"; pi.type = show ? "text" : "password"; el.textContent = show ? "Скрыть" : "Показать"; return;
+      case "add": openSheet({ type: "add", values: { roll: /^\d+$/.test(state.q.trim()) ? state.q.trim() : "" } }); return;
+      case "sel-start": enterSelect(null); return;
+      case "sel-cancel": exitSelect(); return;
+      case "sel-all": visible().forEach(function (it) { state.sel.add(it.id); }); applySelectUi(); return;
+      case "bulk-edit": if (state.sel.size) openSheet({ type: "bulk", ids: Array.from(state.sel) }); return;
+      case "bulk-ask-delete": if (state.sel.size) openSheet({ type: "confirm", kind: "delete", ids: Array.from(state.sel), back: null }); return;
+      case "bulk-ask-purge": if (state.sel.size) openSheet({ type: "confirm", kind: "purge", ids: Array.from(state.sel), back: null }); return;
+      case "bulk-restore": if (state.sel.size) restore(Array.from(state.sel)); return;
+    }
+    if (!s) return;
+    if (act === "edit-one") { var r = state.rolls.get(s.id) || {}; openSheet({ type: "edit", id: s.id, values: { roll: s.id, rack: r.rack, floor: r.floor, fabric: r.fabric, color: r.color } }); }
+    else if (act === "back-detail") openSheet({ type: "detail", id: s.id });
+    else if (act === "ask-delete-one") openSheet({ type: "confirm", kind: "delete", ids: [s.id], back: s.id });
+    else if (act === "ask-purge-one") openSheet({ type: "confirm", kind: "purge", ids: [s.id], back: s.id });
+    else if (act === "cancel-confirm") { if (s.back) openSheet({ type: "detail", id: s.back }); else closeSheet(); }
+    else if (act === "run-confirm") runConfirm();
+    else if (act === "restore-one") restore([s.id]);
+  });
+  document.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (e.target.matches("#form")) saveForm();
+    else if (e.target.matches("#authForm")) submitAuth();
+  });
+  /* долгое нажатие на рулон включает выбор */
+  document.addEventListener("pointerdown", function (e) {
+    lpFired = false; clearTimeout(lpTimer);
+    var row = e.target.closest && e.target.closest(".row[data-open]");
+    if (!row || state.selecting) return;
+    var id = row.getAttribute("data-open"), sx = e.clientX, sy = e.clientY;
+    row._sx = sx; row._sy = sy;
+    lpTimer = setTimeout(function () { lpFired = true; vib(); enterSelect(id); }, 480);
+  });
+  document.addEventListener("pointermove", function (e) {
+    if (!lpTimer) return;
+    var row = e.target.closest && e.target.closest(".row[data-open]");
+    if (row && row._sx != null && (Math.abs(e.clientX - row._sx) > 10 || Math.abs(e.clientY - row._sy) > 10)) clearTimeout(lpTimer);
+  });
+  ["pointerup", "pointercancel", "scroll"].forEach(function (n) { document.addEventListener(n, function () { clearTimeout(lpTimer); }, true); });
+  document.addEventListener("contextmenu", function (e) { if (e.target.closest && e.target.closest(".row")) e.preventDefault(); });
+
+  $("#q").addEventListener("input", function (e) { state.q = e.target.value; render(); });
+  $("#q").addEventListener("keydown", function (e) { if (e.key === "Enter") e.target.blur(); });
+  window.addEventListener("online", function () { state.online = true; render(); });
+  window.addEventListener("offline", function () { state.online = false; render(); });
+
+  /* кнопка «назад» на Android */
+  function backAction() {
+    if (state.sheet) { closeSheet(); return true; }
+    if (state.selecting) { exitSelect(); return true; }
+    if (state.q) { state.q = ""; $("#q").value = ""; render(); return true; }
+    return false;
+  }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") backAction(); });
+  try {
+    var capApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (capApp && capApp.addListener) {
+      capApp.addListener("backButton", function () { if (!backAction() && capApp.exitApp) capApp.exitApp(); });
+    }
+  } catch (err) {}
+
+  /* ---------- запуск ---------- */
+  if (configured()) {
+    session = readSession();
+    if (session) { state.user = session.user; state.mode = "shared"; repo = supaRepo(); }
+    else state.mode = "auth";
+  } else {
+    state.mode = "local"; state.user = { name: "Вы (пробный режим)", login: "" }; repo = localRepo();
+  }
+  render();
+  if (repo) startRepo();
+})();
+</script>
+</body>
+</html>
