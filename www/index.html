@@ -239,6 +239,7 @@ form { display: grid; gap: 14px; }
 .rack.none { padding: 7px 10px; }
 .tabs.seg { background: var(--surface-2); padding: 4px; border-radius: 12px; gap: 4px; }
 .tabs.seg .tab { border: 0; border-radius: 9px; }
+.ver { margin: 0; text-align: center; font-size: 0.8125rem; color: var(--muted); }
 .hero { display: grid; justify-items: start; gap: 14px; }
 .hero-logo { width: 84px; height: 84px; border-radius: 22px; box-shadow: var(--shadow); display: block; }
 .hero h1 { margin: 0; }
@@ -351,7 +352,16 @@ form { display: grid; gap: 14px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
+  var APP_VERSION = "1.2";
   var CFG = window.SKLAD_CONFIG || {};
+  function cfgProblem() {
+    if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
+    var u = String(CFG.url || ""), k = String(CFG.key || "");
+    if (!u || u.indexOf("ВСТАВЬТЕ") !== -1) return "В config.js не заменён адрес проекта.";
+    if (!/^https?:\/\//.test(u)) return "Адрес в config.js должен начинаться с https://.";
+    if (!k || k.indexOf("ВСТАВЬТЕ") !== -1) return "В config.js не заменён ключ.";
+    return "";
+  }
   var DOMAIN = CFG.emailDomain || "sklad-tkani.com";
   var SESSION_KEY = "sklad_session_v1";
 
@@ -688,7 +698,7 @@ form { display: grid; gap: 14px; }
 
     var b = "";
     if (!state.online) b = '<div class="banner err">Нет соединения. Искать и менять рулоны нельзя, пока связь не вернётся.</div>';
-    else if (state.mode === "local") b = '<div class="banner">Общая база не подключена (файл config.js). Входа нет, записи хранятся только в памяти этого телефона.</div>';
+    else if (state.mode === "local") b = '<div class="banner">Общая база не подключена. ' + esc(cfgProblem()) + ' Входа нет, записи хранятся только в памяти этого телефона. Версия приложения ' + APP_VERSION + ".</div>";
     else if (state.mode === "error") b = '<div class="banner err">Не удалось подключиться к общей базе. Проверьте интернет и ключи в config.js, затем перезапустите приложение.</div>';
     $("#banner").innerHTML = b;
 
@@ -820,7 +830,7 @@ form { display: grid; gap: 14px; }
     if (s.type === "account") {
       var u = state.user || {};
       return head("Профиль") + '<dl class="facts"><dt>Имя</dt><dd>' + esc(u.name || "") + "</dd><dt>Логин</dt><dd>" + esc(u.login || "") + '</dd></dl>' +
-        '<p class="hint">Ваше имя видно всем в истории изменений рулонов.</p><button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
+        '<p class="hint">Ваше имя видно всем в истории изменений рулонов. Версия приложения ' + APP_VERSION + '.</p><button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
     }
     return formHtml(s);
   }
@@ -964,7 +974,7 @@ form { display: grid; gap: 14px; }
         '<div class="field"><label for="a-pass">Пароль</label><div class="pw"><input id="a-pass" type="password" autocomplete="' + (reg ? "new-password" : "current-password") + '"><button type="button" data-act="show-pass">Показать</button></div></div>' +
         (reg ? '<div class="field"><label for="a-code">Код регистрации</label><input id="a-code" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="его выдаёт руководитель"></div>' : "") +
         '<div class="form-err" id="auth-err" role="alert"></div>' +
-        '<button type="submit" class="btn primary" id="authBtn">' + (reg ? "Зарегистрироваться" : "Войти") + "</button></form></div>";
+        '<button type="submit" class="btn primary" id="authBtn">' + (reg ? "Зарегистрироваться" : "Войти") + '</button></form></div><p class="ver">Версия ' + APP_VERSION + "</p>";
       if (state.authNote) authError(state.authNote);
     }
     if (!state.online && !$("#auth-err").textContent) authError("Нет соединения. Включите интернет.");
