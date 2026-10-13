@@ -5,42 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Склад тканей</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Onest:wght@400;500;600;700&display=swap">
 <style>
 :root {
-  --bg: #eef0f5;
-  --surface: #ffffff;
-  --surface-2: #f4f5f9;
-  --fg: #151a2b;
-  --muted: #586079;
-  --line: #d6dae6;
-  --accent: #2b3a8c;
+  --bg: #e8eae4;
+  --surface: #fafaf7;
+  --surface-2: #eff0eb;
+  --fg: #1b2130;
+  --muted: #626a77;
+  --line: #d3d6cd;
+  --accent: #2f3fb5;
   --accent-fg: #ffffff;
-  --accent-soft: #e4e8fb;
-  --tag: #ffd84d;
-  --tag-fg: #1b1b1b;
-  --danger: #b3261e;
-  --ok: #1f7a4d;
-  --shadow: 0 8px 28px rgba(21, 26, 43, 0.18);
-  --card-shadow: 0 1px 2px rgba(21, 26, 43, 0.06), 0 6px 16px rgba(21, 26, 43, 0.06);
-  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --accent-soft: #e2e5f8;
+  --tag: #f2c230;
+  --tag-fg: #211c08;
+  --danger: #b3322a;
+  --ok: #2a7d50;
+  --shadow: 0 18px 40px -12px rgba(27, 33, 48, 0.35);
+  --lift: 0 1px 0 rgba(27, 33, 48, 0.04), 0 2px 6px -2px rgba(27, 33, 48, 0.10);
+  --weave-a: rgba(255, 255, 255, 0.16);
+  --weave-b: rgba(0, 0, 0, 0.12);
+  --f-body: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --spring: cubic-bezier(0.22, 1.25, 0.36, 1);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: light;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1220; --surface: #181c2e; --surface-2: #1f2438; --fg: #e8eaf3; --muted: #98a0b8; --line: #2a3050;
-    --accent: #8e9cff; --accent-fg: #0f1220; --accent-soft: #262c52; --tag: #f2cb3a; --tag-fg: #1b1b1b;
-    --danger: #ff8a80; --ok: #6fd3a0; --shadow: 0 8px 28px rgba(0, 0, 0, 0.5); --card-shadow: none;
+    --bg: #111419; --surface: #1a1e25; --surface-2: #232831; --fg: #eceef2; --muted: #99a0ac; --line: #2e343f;
+    --accent: #8f9bff; --accent-fg: #10131a; --accent-soft: #252b4a; --tag: #f2c230; --tag-fg: #211c08;
+    --danger: #ff8a7a; --ok: #6fd3a0; --shadow: 0 18px 44px -10px rgba(0, 0, 0, 0.7); --lift: none;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1220; --surface: #181c2e; --surface-2: #1f2438; --fg: #e8eaf3; --muted: #98a0b8; --line: #2a3050;
-  --accent: #8e9cff; --accent-fg: #0f1220; --accent-soft: #262c52; --tag: #f2cb3a; --tag-fg: #1b1b1b;
-  --danger: #ff8a80; --ok: #6fd3a0; --shadow: 0 8px 28px rgba(0, 0, 0, 0.5); --card-shadow: none;
+  --bg: #111419; --surface: #1a1e25; --surface-2: #232831; --fg: #eceef2; --muted: #99a0ac; --line: #2e343f;
+  --accent: #8f9bff; --accent-fg: #10131a; --accent-soft: #252b4a; --tag: #f2c230; --tag-fg: #211c08;
+  --danger: #ff8a7a; --ok: #6fd3a0; --shadow: 0 18px 44px -10px rgba(0, 0, 0, 0.7); --lift: none;
   color-scheme: dark;
 }
 
@@ -50,169 +54,196 @@ html, body { min-height: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--fg);
   font-family: var(--f-body); font-size: 16px; line-height: 1.4; -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent; font-feature-settings: "tnum" 0;
 }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-.app { max-width: 560px; margin-inline: auto; padding-inline: 16px; padding-block: 0 120px; }
+.app { max-width: 560px; margin-inline: auto; padding-inline: 16px; padding-block: 0 128px; }
+
+/* ткань: переплетение нитей поверх цвета */
+.weave {
+  background-color: var(--c, var(--surface-2));
+  background-image:
+    repeating-linear-gradient(0deg, var(--weave-a) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, var(--weave-b) 0 1px, transparent 1px 4px);
+}
+.weave.blank { --c: var(--surface-2); background-image: repeating-linear-gradient(135deg, var(--line) 0 1px, transparent 1px 7px); }
 
 /* ---------- шапка ---------- */
-.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 14px 10px; display: grid; gap: 10px; }
-.brand, .selbar { display: flex; align-items: center; gap: 10px; min-height: 40px; }
-.brand h1 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; flex: 1; min-width: 0; }
+.top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding-block: 14px 10px; display: grid; gap: 12px; }
+.top::after { content: ""; position: absolute; left: -16px; right: -16px; bottom: -14px; height: 14px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
+.brand, .selbar { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.brand .title { display: flex; align-items: center; gap: 11px; flex: 1; min-width: 0; }
+.brand h1 { margin: 0; font-size: 1.3125rem; font-weight: 700; letter-spacing: -0.02em; min-width: 0; }
+.logo { width: 40px; height: 40px; border-radius: 11px; flex: none; display: block; }
 .net { display: inline-flex; align-items: center; gap: 7px; font-size: 0.8125rem; color: var(--muted); white-space: nowrap; }
-.net i { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.net i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent); }
 .net.off { color: var(--danger); font-weight: 600; }
-.net.off i { background: var(--danger); }
-.avatar {
-  width: 40px; height: 40px; border-radius: 50%; border: 0; flex: none;
-  background: var(--accent); color: var(--accent-fg); font-weight: 600; font-size: 1.0625rem;
-}
+.net.off i { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent); }
+.avatar { width: 44px; height: 44px; border-radius: 50%; border: 0; flex: none; background: var(--fg); color: var(--bg); font-weight: 700; font-size: 1.0625rem; }
 .selbar { justify-content: space-between; }
-.selbar .count-sel { font-weight: 600; font-size: 1.125rem; flex: 1; }
-.icon-btn { width: 44px; height: 44px; border-radius: 10px; border: 0; background: var(--surface-2); color: var(--fg); font-size: 1.25rem; flex: none; }
-.text-btn { height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; flex: none; }
+.selbar .count-sel { font-weight: 700; font-size: 1.1875rem; flex: 1; letter-spacing: -0.01em; }
+.icon-btn { width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface-2); color: var(--fg); font-size: 1.25rem; flex: none; }
+.text-btn { height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; flex: none; }
 
 .search { position: relative; }
 .search input {
-  width: 100%; height: 54px; padding: 0 52px 0 16px; border-radius: 10px; border: 2px solid var(--line);
-  background: var(--surface); font-family: var(--f-mono); font-size: 1.25rem; letter-spacing: 0.02em;
+  width: 100%; height: 58px; padding: 0 54px 0 50px; border-radius: 18px; border: 2px solid transparent;
+  background: var(--surface); box-shadow: var(--lift); font-family: var(--f-mono); font-size: 1.25rem; font-weight: 500; letter-spacing: 0.02em;
 }
-.search input::placeholder { font-family: var(--f-body); font-size: 1rem; letter-spacing: 0; color: var(--muted); }
+.search input::placeholder { font-family: var(--f-body); font-size: 1.0625rem; font-weight: 400; letter-spacing: 0; color: var(--muted); }
 .search input:focus { border-color: var(--accent); outline: none; }
-.search button { position: absolute; right: 6px; top: 6px; height: 42px; width: 42px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 1.25rem; }
+.search input::-webkit-search-cancel-button { display: none; }
+.search .mag { position: absolute; left: 17px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: var(--muted); pointer-events: none; }
+.search button { position: absolute; right: 8px; top: 8px; height: 42px; width: 42px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--muted); font-size: 1.0625rem; }
 
-.tabs { display: flex; gap: 6px; }
-.tab { flex: 1; min-height: 42px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-size: 0.9375rem; }
-.tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+/* сегменты с бегунком */
+.tabs { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: var(--surface-2); padding: 4px; border-radius: 14px; }
+.top .tabs { background: color-mix(in srgb, var(--fg) 7%, transparent); }
+.tabs .ind { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n, 3)); transform: translateX(calc(var(--ti, 0) * 100%)); border-radius: 10px; background: var(--surface); box-shadow: var(--lift), 0 0 0 1px var(--line); }
+.tab { position: relative; z-index: 1; min-height: 48px; padding: 4px 4px; display: grid; align-content: center; justify-items: center; line-height: 1.15; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 0.9375rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab[aria-selected="true"] { color: var(--fg); font-weight: 650; }
+.tab .n { display: block; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 500; opacity: 0.75; }
 
-.banner { margin-block: 4px 0; padding: 10px 12px; border-radius: 8px; font-size: 0.875rem; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line); }
+.banner { margin-block: 4px 0; padding: 12px 14px; border-radius: 14px; font-size: 0.875rem; background: var(--surface); color: var(--muted); border: 1px dashed var(--line); }
 .banner.err { color: var(--danger); border-color: var(--danger); background: transparent; font-weight: 600; }
 
-.count-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; margin: 4px 0 6px; }
+.count-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; margin: 6px 0 6px; }
 .count { font-size: 0.8125rem; color: var(--muted); margin: 0 2px; }
-.link-btn { border: 0; background: transparent; color: var(--accent); font-weight: 600; padding: 8px 4px; font-size: 0.9375rem; }
+.link-btn { border: 0; background: transparent; color: var(--accent); font-weight: 650; padding: 8px 4px; font-size: 0.9375rem; flex: none; }
 
-/* ---------- список ---------- */
-.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+/* ---------- список: карточки-образцы ---------- */
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .row {
-  width: 100%; text-align: left; display: flex; align-items: center;
-  padding: 12px 12px 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
-  min-height: 72px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  width: 100%; text-align: left; display: flex; align-items: stretch; gap: 0;
+  padding: 0; border-radius: 18px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--lift);
+  min-height: 92px; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
-.row.sel { border-color: var(--accent); background: var(--accent-soft); }
-.row .info { min-width: 0; flex: 1; display: grid; gap: 1px; }
-.row .num { font-family: var(--f-mono); font-size: 1.125rem; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
-.row .meta { color: var(--muted); font-size: 0.875rem; overflow-wrap: anywhere; }
-.row .who { color: var(--muted); font-size: 0.75rem; overflow-wrap: anywhere; opacity: 0.85; }
-.row .rack { margin-left: 12px; flex: none; }
+.row .swatch { flex: none; width: 16px; border-right: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); }
+.row.sel { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+.row .info { min-width: 0; flex: 1; display: grid; gap: 3px; align-content: center; padding: 12px 10px 12px 14px; }
+.row .num { font-family: var(--f-mono); font-size: 1.1875rem; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.25; }
+.num .pre { color: var(--muted); font-weight: 500; }
+.num mark { background: color-mix(in srgb, var(--tag) 70%, transparent); color: inherit; border-radius: 4px; padding: 0 1px; }
+.row .fabric { font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .fabric.none { color: var(--muted); }
+.row .tagline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 0.875rem; color: var(--muted); min-width: 0; }
+.row .who { color: var(--muted); font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.9; }
+.row .rack { margin: 0 12px 0 4px; align-self: center; flex: none; }
+.cname { display: inline-flex; align-items: center; min-width: 0; color: var(--fg); }
+.qty { font-family: var(--f-mono); font-size: 0.8125rem; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); color: var(--fg); }
+.qty.zero { color: var(--danger); }
 
-.chk { flex: none; width: 0; opacity: 0; overflow: hidden; height: 26px; }
+.chk { flex: none; width: 0; opacity: 0; overflow: hidden; height: 26px; align-self: center; }
 .chk svg { width: 26px; height: 26px; display: block; }
 .chk circle { fill: transparent; stroke: var(--muted); stroke-width: 2; }
 .chk path { fill: none; stroke: var(--accent-fg); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16; stroke-dashoffset: 16; }
-.list.selecting .chk { width: 26px; opacity: 1; margin-right: 12px; }
+.list.selecting .chk { width: 26px; opacity: 1; margin-left: 12px; }
 .row.sel .chk circle { fill: var(--accent); stroke: var(--accent); }
 .row.sel .chk path { stroke-dashoffset: 0; }
 
+/* жёлтая бирка стеллажа */
 .rack {
-  display: inline-grid; justify-items: center; align-content: center; min-width: 64px; padding: 6px 10px; gap: 1px;
-  background: var(--tag); color: var(--tag-fg); border-radius: 6px; box-shadow: inset 0 0 0 2px rgba(0,0,0,0.12);
+  position: relative; display: inline-grid; justify-items: center; align-content: center; min-width: 66px; padding: 16px 10px 8px; gap: 0;
+  background: var(--tag); color: var(--tag-fg); border-radius: 10px 10px 12px 12px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10), 0 2px 0 rgba(0, 0, 0, 0.06);
 }
-.rack small { font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; opacity: 0.8; }
-.rack b { font-family: var(--f-mono); font-size: 1.5rem; line-height: 1.1; font-weight: 700; overflow-wrap: anywhere; }
-.rack em { font-style: normal; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 600; background: rgba(0,0,0,0.14); border-radius: 99px; padding: 0 8px; margin-top: 2px; }
-.rack.none { background: var(--surface-2); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
-.rack.big { min-width: 112px; padding: 12px 14px; }
-.rack.big b { font-size: 3rem; }
-.rack.big small { font-size: 0.75rem; }
+.rack::before { content: ""; position: absolute; top: 6px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--hole, var(--surface)); box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.35); }
+.row.sel .rack { --hole: var(--accent-soft); }
+.rack small { font-size: 0.6875rem; font-weight: 600; opacity: 0.75; }
+.rack b { font-family: var(--f-mono); font-size: 1.625rem; line-height: 1.05; font-weight: 700; overflow-wrap: anywhere; }
+.rack em { font-style: normal; font-size: 0.75rem; font-weight: 650; background: rgba(0, 0, 0, 0.13); border-radius: 99px; padding: 0 8px; margin-top: 3px; white-space: nowrap; }
+.rack.none { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); padding: 8px 10px; border-style: dashed; }
+.rack.none::before { display: none; }
+.rack.none b { font-size: 1.25rem; }
+.rack.big { min-width: 118px; padding: 26px 18px 14px; border-radius: 14px 14px 16px 16px; }
+.rack.big::before { top: 9px; width: 11px; height: 11px; margin-left: -5.5px; }
+.rack.big b { font-size: 3.25rem; }
+.rack.big small { font-size: 0.8125rem; }
 .rack.big em { font-size: 0.9375rem; padding: 1px 10px; }
+.rack.big.none { padding: 18px 14px; }
 
-.chip { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 500; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); vertical-align: 2px; }
-.empty { padding: 28px 4px; color: var(--muted); }
-.empty strong { display: block; color: var(--fg); font-size: 1.0625rem; margin-bottom: 4px; }
+.chip { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 99px; font-size: 0.6875rem; font-weight: 500; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); vertical-align: 2px; }
+.empty { padding: 34px 6px; color: var(--muted); }
+.empty strong { display: block; color: var(--fg); font-size: 1.125rem; font-weight: 650; margin-bottom: 6px; letter-spacing: -0.01em; }
+.sw { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 
 /* ---------- кнопки внизу ---------- */
 .fab {
   position: fixed; right: max(16px, calc(50% - 280px + 16px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  z-index: 6; height: 60px; padding: 0 22px 0 18px; border-radius: 30px; border: 0;
+  z-index: 6; height: 60px; padding: 0 24px 0 20px; border-radius: 20px; border: 0;
   background: var(--accent); color: var(--accent-fg); box-shadow: var(--shadow);
-  display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.0625rem;
+  display: inline-flex; align-items: center; gap: 10px; font-weight: 650; font-size: 1.0625rem;
 }
-.fab span { font-size: 1.75rem; line-height: 1; margin-top: -2px; }
+.fab span { font-size: 1.75rem; line-height: 1; margin-top: -2px; font-weight: 400; }
 .actionbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 7; background: var(--surface); border-top: 1px solid var(--line);
-  box-shadow: var(--shadow); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  box-shadow: var(--shadow); padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-radius: 20px 20px 0 0;
 }
 .actionbar .inner { max-width: 560px; margin-inline: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-.btn { min-height: 52px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; padding: 0 14px; }
+.btn { min-height: 54px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 650; padding: 0 14px; }
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
-.btn.danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 55%, transparent); background: transparent; }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
-.qty { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.facts.c1 { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
-.facts dd.note { color: var(--danger); }
-.warn-tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--danger); color: #fff; vertical-align: 2px; }
-
-/* ---------- выбор цвета и ткани ---------- */
-.pick { width: 100%; min-width: 0; height: 52px; padding: 0 12px 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem; color: inherit; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
-.pick .pv { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pick .ph { color: var(--muted); }
-.pick .chev { color: var(--muted); flex: none; }
-.pick:active { border-color: var(--accent); }
-#pickRoot .scrim { z-index: 30; }
-#pickRoot .sheet { max-height: 85%; }
-.pk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.pk-chip, .pk-row, .pk-add, .pk-clear { border: 2px solid var(--line); background: var(--bg); color: inherit; border-radius: 10px; min-height: 48px; padding: 8px 12px; font-size: 1rem; text-align: left; display: flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
-.pk-chip.on, .pk-row.on { border-color: var(--accent); font-weight: 600; }
-.pk-rows { display: grid; gap: 8px; }
-.pk-add { width: 100%; margin-bottom: 8px; border-style: dashed; font-weight: 600; color: var(--accent); }
-.pk-clear { width: 100%; margin-bottom: 8px; color: var(--muted); }
-.pk-chip:active, .pk-row:active, .pk-add:active, .pk-clear:active { background: var(--surface-2); }
-
 /* ---------- окна снизу ---------- */
-.scrim { position: fixed; inset: 0; z-index: 20; background: rgba(8, 10, 20, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.scrim { position: fixed; inset: 0; z-index: 20; background: rgba(10, 12, 18, 0.55); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
   width: 100%; max-width: 560px; max-height: 92%; overflow-y: auto; overscroll-behavior: contain;
-  background: var(--surface); border-radius: 16px 16px 0 0; box-shadow: var(--shadow);
-  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--shadow);
+  padding: 10px 16px calc(22px + env(safe-area-inset-bottom, 0px));
 }
-.sheet-body { display: grid; gap: 16px; }
+.sheet::before { content: ""; display: block; width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
+.sheet-body { display: grid; gap: 18px; }
 .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.sheet-head h2 { margin: 0; font-size: 1.125rem; font-weight: 600; align-self: center; }
-.x { border: 0; background: var(--surface-2); width: 40px; height: 40px; border-radius: 8px; font-size: 1.25rem; color: var(--muted); flex: none; }
-.big-num { font-family: var(--f-mono); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.where { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; }
-.facts { margin: 0; display: grid; gap: 2px; min-width: 0; }
-.facts dt { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+.sheet-head h2 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.015em; align-self: center; }
+.x { border: 0; background: var(--surface-2); width: 42px; height: 42px; border-radius: 12px; font-size: 1.125rem; color: var(--muted); flex: none; }
+
+/* карточка рулона: отрез ткани сверху */
+.cloth { position: relative; margin: -4px -4px 0; height: 116px; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent); transform-origin: left center; }
+.cloth::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 40%, rgba(0, 0, 0, 0.18)); }
+.cloth .x { position: absolute; top: 10px; right: 10px; z-index: 1; background: rgba(255, 255, 255, 0.82); color: #1b2130; }
+.cloth .cname-big { position: absolute; left: 12px; top: 12px; z-index: 1; font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.86); color: #1b2130; max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.label { position: relative; margin: -34px 12px 0; z-index: 2; background: var(--surface); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); display: grid; gap: 2px; }
+.label small { font-size: 0.75rem; color: var(--muted); }
+.big-num { font-family: var(--f-mono); font-size: 1.5rem; font-weight: 700; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; }
+.where { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: center; }
+.facts { margin: 0; display: grid; gap: 1px; min-width: 0; }
+.facts dt { font-size: 0.8125rem; color: var(--muted); margin-top: 8px; }
 .facts dt:first-child { margin-top: 0; }
-.facts dd { margin: 0; font-size: 1.0625rem; overflow-wrap: anywhere; }
-.byline { font-size: 0.9375rem; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
-.byline b { font-weight: 600; }
+.facts dd { margin: 0; font-size: 1.0625rem; font-weight: 500; overflow-wrap: anywhere; }
+.facts.c1 { padding: 14px 16px; border-radius: 16px; background: var(--surface-2); grid-template-columns: auto minmax(0, 1fr); gap: 8px 14px; align-items: baseline; }
+.facts.c1 dt { margin: 0; }
+.facts dd.note { color: var(--danger); }
+.warn-tag { display: inline-block; font-size: 0.75rem; font-weight: 650; padding: 2px 8px; border-radius: 999px; background: var(--danger); color: #fff; vertical-align: 2px; margin-left: 6px; }
+.byline { font-size: 0.9375rem; padding: 11px 14px; border-radius: 14px; background: var(--surface-2); }
+.byline b { font-weight: 650; }
 .muted { color: var(--muted); font-size: 0.875rem; }
-.hist h3 { margin: 0 0 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
-.hist-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.hist-list li { padding-left: 12px; border-left: 2px solid var(--line); }
+.hist h3 { margin: 0 0 8px; font-size: 0.9375rem; color: var(--fg); font-weight: 650; }
+.hist-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.hist-list li { position: relative; padding-left: 18px; }
+.hist-list li::before { content: ""; position: absolute; left: 3px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.hist-list li::after { content: ""; position: absolute; left: 6px; top: 18px; bottom: -10px; width: 1px; background: var(--line); }
+.hist-list li:last-child::after { display: none; }
 .hist-list .h1 { display: flex; justify-content: space-between; gap: 10px; font-size: 0.9375rem; }
-.hist-list time { color: var(--muted); font-size: 0.8125rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hist-list time { color: var(--muted); font-size: 0.8125rem; white-space: nowrap; font-family: var(--f-mono); }
 .hist-list .h2 { color: var(--muted); font-size: 0.8125rem; overflow-wrap: anywhere; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .warn { margin: 0; font-size: 1rem; }
 .warn b { font-family: var(--f-mono); }
 .hint { margin: 0; font-size: 0.875rem; color: var(--muted); }
 
-form { display: grid; gap: 14px; }
-.field { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); align-content: start; }
-.field label { font-size: 0.875rem; font-weight: 600; }
+form { display: grid; gap: 16px; }
+.field { display: grid; gap: 7px; grid-template-columns: minmax(0, 1fr); align-content: start; }
+.field label, .field .lbl { font-size: 0.875rem; font-weight: 600; }
 .field input[type="text"], .field input[type="password"], .field input[type="search"], .field input:not([type]) {
-  width: 100%; min-width: 0; height: 52px; padding: 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem;
+  width: 100%; min-width: 0; height: 54px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem;
 }
-.field input:focus { border-color: var(--accent); outline: none; }
+.field input:focus { border-color: var(--accent); outline: none; background: var(--surface); }
 .field input.bad { border-color: var(--danger); }
 .field input[readonly] { color: var(--muted); }
 .field input.mono { font-family: var(--f-mono); font-size: 1.1875rem; letter-spacing: 0.02em; }
@@ -220,98 +251,109 @@ form { display: grid; gap: 14px; }
 .field .err:empty { display: none; }
 .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .two > * { min-width: 0; }
+.combo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 8px; }
+.combo.num { grid-template-columns: minmax(0, 1fr) 104px; }
+.combo > * { min-width: 0; }
 .check { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; min-height: 44px; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); }
 .form-err { color: var(--danger); font-size: 0.9375rem; font-weight: 500; }
 .form-err:empty { display: none; }
 .pw { position: relative; }
-.pw input { padding-right: 96px !important; }
-.pw button { position: absolute; right: 6px; top: 6px; height: 40px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--accent); font-weight: 600; }
+.pw input { padding-right: 104px !important; }
+.pw button { position: absolute; right: 7px; top: 7px; height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--accent); font-weight: 650; }
+
+/* выбор цвета и ткани */
+.pick { width: 100%; min-width: 0; height: 54px; padding: 0 12px 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem; color: inherit; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
+.pick .pv { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; }
+.pick .ph { color: var(--muted); }
+.pick .chev { color: var(--muted); flex: none; font-size: 0.875rem; }
+.pick:active { border-color: var(--accent); }
+#pickRoot .scrim { z-index: 30; }
+#pickRoot .sheet { max-height: 86%; }
+.pk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pk-chip, .pk-row, .pk-add, .pk-clear { border: 1.5px solid var(--line); background: var(--surface); color: inherit; border-radius: 14px; min-height: 52px; padding: 6px 12px 6px 6px; font-size: 1rem; text-align: left; display: flex; align-items: center; gap: 10px; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
+.pk-row, .pk-add, .pk-clear { padding-left: 14px; }
+.pk-chip .dot { flex: none; width: 38px; height: 38px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14); }
+.pk-chip.on, .pk-row.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); font-weight: 650; }
+.pk-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pk-add { width: 100%; margin-bottom: 8px; border-style: dashed; font-weight: 650; color: var(--accent); }
+.pk-clear { width: 100%; margin-bottom: 8px; color: var(--muted); }
+.pk-chip:active, .pk-row:active, .pk-add:active, .pk-clear:active { background: var(--surface-2); }
 
 /* ---------- вход ---------- */
-.auth { max-width: 460px; margin-inline: auto; padding: 36px 16px 40px; display: grid; gap: 22px; }
-.auth h1 { margin: 0; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
-.auth .lead { margin: 4px 0 0; color: var(--muted); }
-.auth-card { display: grid; gap: 18px; }
+.auth { max-width: 460px; margin-inline: auto; padding: 40px 16px 40px; display: grid; gap: 24px; }
+.hero { display: grid; justify-items: start; gap: 16px; }
+.hero-logo { width: 84px; height: 84px; border-radius: 24px; box-shadow: var(--shadow); display: block; }
+.hero h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+.auth .lead { margin: 6px 0 0; color: var(--muted); max-width: 32ch; }
+.auth-card { display: grid; gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 16px; box-shadow: var(--lift); }
+.auth-card form { gap: 14px; }
+.ver { margin: 0; text-align: center; font-size: 0.8125rem; color: var(--muted); }
 
 .toast {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 40;
-  background: var(--fg); color: var(--bg); padding: 11px 16px; border-radius: 10px; font-size: 0.9375rem; width: max-content; max-width: calc(100% - 32px); text-align: center;
+  background: var(--fg); color: var(--bg); padding: 12px 18px; border-radius: 14px; font-size: 0.9375rem; font-weight: 500; width: max-content; max-width: calc(100% - 32px); text-align: center;
   box-shadow: var(--shadow);
 }
-.toast.err { background: var(--danger); color: var(--surface); }
+.toast.err { background: var(--danger); color: #fff; }
 
-
-/* ---------- оформление ---------- */
-.logo { width: 38px; height: 38px; border-radius: 10px; flex: none; display: block; }
-.brand .title { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.brand h1 { flex: 0 1 auto; }
-.search .mag { position: absolute; left: 15px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: var(--muted); pointer-events: none; }
-.search input { padding-left: 46px; border-radius: 14px; }
-.row { border-radius: 14px; box-shadow: var(--card-shadow); min-height: 78px; padding: 12px 12px 12px 16px; }
-.row .num { font-size: 1.1875rem; }
-.sw { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.5); }
-.rack { position: relative; padding: 15px 10px 7px; border-radius: 9px; }
-.rack::before { content: ""; position: absolute; top: 5px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--hole, var(--surface)); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28); }
-.row.sel .rack { --hole: var(--accent-soft); }
-.rack.big { padding: 24px 16px 12px; border-radius: 12px; }
-.rack.big::before { top: 8px; width: 10px; height: 10px; margin-left: -5px; }
-.rack.none::before { display: none; }
-.rack.none { padding: 7px 10px; }
-.tabs.seg { background: var(--surface-2); padding: 4px; border-radius: 12px; gap: 4px; }
-.tabs.seg .tab { border: 0; border-radius: 9px; }
-.ver { margin: 0; text-align: center; font-size: 0.8125rem; color: var(--muted); }
-.hero { display: grid; justify-items: start; gap: 14px; }
-.hero-logo { width: 84px; height: 84px; border-radius: 22px; box-shadow: var(--shadow); display: block; }
-.hero h1 { margin: 0; }
-.auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: var(--card-shadow); }
-.auth-card form { gap: 14px; }
+/* ---------- движение ---------- */
 @media (prefers-reduced-motion: no-preference) {
-  .hero-logo { animation: pop 0.45s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
-  .logo { animation: pop 0.4s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
-}
+  .tabs .ind { transition: transform 0.38s var(--spring); }
+  .tab { transition: color 0.2s; }
 
-/* ---------- анимации ---------- */
-@media (prefers-reduced-motion: no-preference) {
-  .item.enter { animation: rise 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 30ms); }
-  @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .item.enter { animation: rise 0.42s var(--ease) both; animation-delay: calc(var(--i, 0) * 28ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .item.enter .swatch { animation: unroll 0.5s var(--ease) both; animation-delay: calc(var(--i, 0) * 28ms + 80ms); transform-origin: top; }
+  @keyframes unroll { from { transform: scaleY(0); } to { transform: none; } }
 
-  .row { transition: background-color 0.2s, border-color 0.2s, transform 0.12s; }
-  .row:active { transform: scale(0.985); }
-  .chk { transition: width 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s, margin-right 0.26s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .row { transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.14s var(--ease); }
+  .row:active { transform: scale(0.982); }
+  .chk { transition: width 0.28s var(--ease), opacity 0.2s, margin-left 0.28s var(--ease); }
   .chk circle { transition: fill 0.18s, stroke 0.18s; }
   .chk path { transition: stroke-dashoffset 0.26s ease-out 0.05s; }
 
-  .tab, .btn, .fab, .icon-btn, .text-btn, .avatar { transition: transform 0.12s, background-color 0.18s, color 0.18s, border-color 0.18s, opacity 0.18s; }
-  .btn:active, .fab:active, .icon-btn:active, .text-btn:active, .avatar:active, .tab:active { transform: scale(0.96); }
-  .field input { transition: border-color 0.15s; }
+  .btn, .fab, .icon-btn, .text-btn, .avatar, .pick, .pk-chip, .pk-row, .x { transition: transform 0.14s var(--ease), background-color 0.18s, color 0.18s, border-color 0.18s, opacity 0.18s; }
+  .btn:active, .fab:active, .icon-btn:active, .text-btn:active, .avatar:active, .x:active, .pk-chip:active, .pk-row:active { transform: scale(0.96); }
+  .field input, .search input { transition: border-color 0.15s, background-color 0.15s; }
 
-  .fab { animation: pop 0.3s cubic-bezier(0.2, 1.2, 0.3, 1) both; }
-  @keyframes pop { from { opacity: 0; transform: scale(0.6) translateY(10px); } to { opacity: 1; transform: none; } }
-
-  .selbar { animation: drop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .fab { animation: pop 0.45s var(--spring) both; }
+  @keyframes pop { from { opacity: 0; transform: scale(0.6) translateY(16px); } to { opacity: 1; transform: none; } }
+  .selbar { animation: drop 0.24s var(--ease) both; }
   .brand { animation: fadein 0.2s ease-out both; }
   @keyframes drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-  .actionbar { animation: slideup 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .actionbar { animation: slideup 0.32s var(--ease) both; }
   @keyframes slideup { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
 
-  .scrim { animation: fadein 0.2s ease-out both; }
-  .scrim.out { animation: fadeout 0.18s ease-in both; pointer-events: none; }
-  .sheet { animation: sheetup 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
-  .scrim.out .sheet { animation: sheetdown 0.2s ease-in both; }
-  @keyframes sheetup { from { transform: translateY(40px); opacity: 0.4; } to { transform: none; opacity: 1; } }
-  @keyframes sheetdown { from { transform: none; opacity: 1; } to { transform: translateY(60px); opacity: 0; } }
-  .sheet-body.swap { animation: swap 0.22s ease-out both; }
-  @keyframes swap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .scrim { animation: fadein 0.22s ease-out both; }
+  .scrim.out { animation: fadeout 0.2s ease-in both; pointer-events: none; }
+  .sheet { animation: sheetup 0.46s var(--spring) both; }
+  .scrim.out .sheet { animation: sheetdown 0.22s ease-in both; }
+  @keyframes sheetup { from { transform: translateY(70%); } to { transform: none; } }
+  @keyframes sheetdown { from { transform: none; } to { transform: translateY(100%); } }
+  .sheet-body.swap { animation: swap 0.26s var(--ease) both; }
+  @keyframes swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-  .toast { animation: toastin 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  /* отрез ткани разворачивается, бирка и номер ложатся сверху */
+  .sheet-body.swap .cloth, .scrim:not(.out) .cloth.fresh { animation: cloth 0.6s var(--ease) both; }
+  @keyframes cloth { from { clip-path: inset(0 100% 0 0 round 18px); } to { clip-path: inset(0 0 0 0 round 18px); } }
+  .cloth.fresh + .label { animation: label 0.5s var(--spring) 0.18s both; }
+  @keyframes label { from { opacity: 0; transform: translateY(14px) rotate(-1.5deg); } to { opacity: 1; transform: none; } }
+  .where .rack.big.fresh { animation: swing 0.9s var(--ease) 0.25s both; transform-origin: 50% 9px; }
+  @keyframes swing { 0% { transform: rotate(-14deg); opacity: 0; } 35% { transform: rotate(8deg); opacity: 1; } 60% { transform: rotate(-4deg); } 80% { transform: rotate(2deg); } 100% { transform: none; } }
+
+  .pk-chip, .pk-row { animation: fadein 0.2s ease-out both; }
+
+  .toast { animation: toastin 0.34s var(--spring) both; }
   .toast.out { animation: toastout 0.22s ease-in both; }
-  @keyframes toastin { from { opacity: 0; transform: translate(-50%, 16px) scale(0.96); } to { opacity: 1; transform: translateX(-50%); } }
+  @keyframes toastin { from { opacity: 0; transform: translate(-50%, 18px) scale(0.94); } to { opacity: 1; transform: translateX(-50%); } }
   @keyframes toastout { from { opacity: 1; transform: translateX(-50%); } to { opacity: 0; transform: translate(-50%, 10px); } }
 
-  .auth-card { animation: swap 0.3s ease-out both; }
+  .hero-logo { animation: pop 0.5s var(--spring) both; }
+  .logo { animation: pop 0.45s var(--spring) both; }
+  .auth-card { animation: swap 0.34s var(--ease) both; }
   .form-err:not(:empty) { animation: shake 0.3s ease-out; }
   @keyframes shake { 20% { transform: translateX(-5px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
 }
@@ -344,8 +386,10 @@ form { display: grid; gap: 14px; }
       <input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Номер рулона" aria-label="Поиск по номеру рулона">
       <button id="qClear" type="button" aria-label="Очистить поиск" hidden>✕</button>
     </div>
-    <div class="tabs" role="tablist">
+    <div class="tabs" role="tablist" id="tabs" style="--n:3">
+      <span class="ind" aria-hidden="true"></span>
       <button class="tab" role="tab" id="tabActive" aria-selected="true" data-tab="active">Рулоны</button>
+      <button class="tab" role="tab" id="tabNoRack" aria-selected="false" data-tab="norack">Без места</button>
       <button class="tab" role="tab" id="tabTrash" aria-selected="false" data-tab="trash">Удалённые</button>
     </div>
   </header>
@@ -374,7 +418,7 @@ form { display: grid; gap: 14px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.4";
+  var APP_VERSION = "1.5";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -419,12 +463,14 @@ form { display: grid; gap: 14px; }
   }
   function place(r) { return r.rack ? r.rack + " стеллаж" + (r.floor ? " (" + r.floor + " этаж)" : "") : "место не указано"; }
   function qtyText(r) { return r.qty == null ? "" : String(Math.round(r.qty * 1000) / 1000).replace(".", ",") + (r.unit ? " " + r.unit : ""); }
-  var COLOR_MAP = {"белый": "#f5f5f2", "молочный": "#f3ecd9", "экрю": "#efe6cf", "слоновая кость": "#f1e7cd", "кремовый": "#f3e5b8", "ванильный": "#f3e2a9", "шампань": "#ecd9b5", "бежевый": "#d8c3a0", "песочный": "#d6bf94", "кэмел": "#b98b53", "золотистый": "#c9a64a", "светло-серый": "#c4c6cc", "серебристый": "#b8bcc4", "серый": "#8e9099", "серый меланж": "#a3a5ab", "стальной": "#6f7885", "темно-серый": "#4f525a", "графитовый": "#3b3e45", "антрацит": "#2b2e33", "черный": "#16161a", "красный": "#c62828", "алый": "#e0303a", "кирпичный": "#a8412f", "терракотовый": "#c4623f", "бордовый": "#6d1a2c", "вишневый": "#7b1230", "марсала": "#7a3141", "винный": "#5e1f33", "коралловый": "#ee6f5e", "лососевый": "#f29a85", "персиковый": "#f6c4a3", "абрикосовый": "#f2b07a", "оранжевый": "#f08a24", "морковный": "#e8741f", "желтый": "#f4d03f", "лимонный": "#f1e04a", "горчичный": "#d2a02a", "охра": "#c48a1f", "салатовый": "#9fd356", "лаймовый": "#b8d82f", "светло-зеленый": "#7fc77f", "зеленый": "#2e8b57", "травяной": "#4a9d3a", "бутылочный": "#0e4b36", "темно-зеленый": "#1f4d33", "изумрудный": "#0b8a63", "оливковый": "#7b7d3a", "хаки": "#8a8456", "мятный": "#a5dcc4", "фисташковый": "#b7d3a0", "шалфей": "#9aa88a", "бирюзовый": "#1fb5ad", "морская волна": "#2a9d9a", "аквамарин": "#6fd3c4", "голубой": "#6bb7ee", "небесный": "#9fd0f2", "васильковый": "#5a7fdc", "джинсовый": "#4a6a95", "синий": "#2c5fc4", "электрик": "#1e4fe0", "темно-синий": "#16275f", "индиго": "#34327f", "чернильный": "#1b2140", "фиолетовый": "#7a3fb0", "баклажановый": "#4a2342", "сливовый": "#6b2d5c", "лиловый": "#b08fd1", "сиреневый": "#c3a6e0", "лавандовый": "#cdbfe6", "розовый": "#f19ab6", "нежно-розовый": "#f7d0dc", "пудровый": "#e8c9c4", "ярко-розовый": "#e8458f", "фуксия": "#c2185b", "малиновый": "#b3175e", "коричневый": "#6a4328", "шоколадный": "#4b2e20", "кофейный": "#7a5538", "капучино": "#b79a7e", "какао": "#8a6a55", "орех": "#8b5e3c", "рыжий": "#b5651d", "тауп": "#8b7d73", "чорний": "#16161a", "білий": "#f5f5f2", "молоко": "#f3ecd9", "молочний": "#f3ecd9", "екрю": "#efe6cf", "беж": "#d8c3a0", "бежевий": "#d8c3a0", "світлий беж": "#e6d6b8", "сірий": "#8e9099", "світло-сірий": "#c4c6cc", "блідо-сірий": "#cfd1d6", "темно-сірий": "#4f525a", "графіт": "#3b3e45", "сірий графіт": "#4a4d55", "меланж": "#a3a5ab", "сніжний меланж": "#e4e5e8", "шоколад": "#4b2e20", "мокко": "#6f4e3d", "коричневий": "#6a4328", "червоний": "#c62828", "малиново-червоний": "#b5173f", "бордовий": "#6d1a2c", "бордо": "#6d1a2c", "рожевий": "#f19ab6", "блідо-рожевий": "#f7d0dc", "пудра": "#e8c9c4", "сакура": "#f4c2d0", "барбі": "#e8458f", "малиновий": "#b3175e", "корал": "#ee6f5e", "персик": "#f6c4a3", "помаранчевий": "#f08a24", "жовтий": "#f4d03f", "лимон": "#f1e04a", "гірчиця": "#d2a02a", "хакі": "#8a8456", "хакі беж": "#a89f7c", "оливка": "#7b7d3a", "зелений": "#2e8b57", "темно-зелений": "#1f4d33", "зелена трава": "#4a9d3a", "смарагд": "#0b8a63", "ментол": "#a5dcc4", "м'ятний": "#a5dcc4", "тіффані": "#81d8d0", "бірюзовий": "#1fb5ad", "блакитний": "#6bb7ee", "блідо-блакитний": "#bcdcf3", "сіро-блакитний": "#8fa6bd", "блідо-васильковий": "#a9b8ea", "темно-лазурний": "#1f5f8b", "електрик": "#1e4fe0", "синій": "#2c5fc4", "темно-синій": "#16275f", "чорнильно-синій": "#1b2140", "індиго": "#34327f", "фіолетовий": "#7a3fb0", "ліловий": "#b08fd1", "бузок": "#c3a6e0", "салатовий": "#9fd356", "блідо-салатовий": "#cfe8a8", "світло-салатовий": "#b9e07f", "лайм": "#b8d82f"};
+  var COLOR_MAP = {"белый": "#f5f5f2", "молочный": "#f3ecd9", "экрю": "#efe6cf", "слоновая кость": "#f1e7cd", "кремовый": "#f3e5b8", "ванильный": "#f3e2a9", "шампань": "#ecd9b5", "бежевый": "#d8c3a0", "песочный": "#d6bf94", "кэмел": "#b98b53", "золотистый": "#c9a64a", "светло-серый": "#c4c6cc", "серебристый": "#b8bcc4", "серый": "#8e9099", "серый меланж": "#a3a5ab", "стальной": "#6f7885", "темно-серый": "#4f525a", "графитовый": "#3b3e45", "антрацит": "#2b2e33", "черный": "#16161a", "красный": "#c62828", "алый": "#e0303a", "кирпичный": "#a8412f", "терракотовый": "#c4623f", "бордовый": "#6d1a2c", "вишневый": "#7b1230", "марсала": "#7a3141", "винный": "#5e1f33", "коралловый": "#ee6f5e", "лососевый": "#f29a85", "персиковый": "#f6c4a3", "абрикосовый": "#f2b07a", "оранжевый": "#f08a24", "морковный": "#e8741f", "желтый": "#f4d03f", "лимонный": "#f1e04a", "горчичный": "#d2a02a", "охра": "#c48a1f", "салатовый": "#9fd356", "лаймовый": "#b8d82f", "светло-зеленый": "#7fc77f", "зеленый": "#2e8b57", "травяной": "#4a9d3a", "бутылочный": "#0e4b36", "темно-зеленый": "#1f4d33", "изумрудный": "#0b8a63", "оливковый": "#7b7d3a", "хаки": "#8a8456", "мятный": "#a5dcc4", "фисташковый": "#b7d3a0", "шалфей": "#9aa88a", "бирюзовый": "#1fb5ad", "морская волна": "#2a9d9a", "аквамарин": "#6fd3c4", "голубой": "#6bb7ee", "небесный": "#9fd0f2", "васильковый": "#5a7fdc", "джинсовый": "#4a6a95", "синий": "#2c5fc4", "электрик": "#1e4fe0", "темно-синий": "#16275f", "индиго": "#34327f", "чернильный": "#1b2140", "фиолетовый": "#7a3fb0", "баклажановый": "#4a2342", "сливовый": "#6b2d5c", "лиловый": "#b08fd1", "сиреневый": "#c3a6e0", "лавандовый": "#cdbfe6", "розовый": "#f19ab6", "нежно-розовый": "#f7d0dc", "пудровый": "#e8c9c4", "ярко-розовый": "#e8458f", "фуксия": "#c2185b", "малиновый": "#b3175e", "коричневый": "#6a4328", "шоколадный": "#4b2e20", "кофейный": "#7a5538", "капучино": "#b79a7e", "какао": "#8a6a55", "орех": "#8b5e3c", "рыжий": "#b5651d", "тауп": "#8b7d73", "чорний": "#16161a", "білий": "#f5f5f2", "молоко": "#f3ecd9", "молочний": "#f3ecd9", "екрю": "#efe6cf", "беж": "#d8c3a0", "бежевий": "#d8c3a0", "світлий беж": "#e6d6b8", "сірий": "#8e9099", "світло-сірий": "#c4c6cc", "блідо-сірий": "#cfd1d6", "темно-сірий": "#4f525a", "графіт": "#3b3e45", "сірий графіт": "#4a4d55", "меланж": "#a3a5ab", "сніжний меланж": "#e4e5e8", "шоколад": "#4b2e20", "мокко": "#6f4e3d", "коричневий": "#6a4328", "червоний": "#c62828", "малиново-червоний": "#b5173f", "бордовий": "#6d1a2c", "бордо": "#6d1a2c", "рожевий": "#f19ab6", "блідо-рожевий": "#f7d0dc", "пудра": "#e8c9c4", "сакура": "#f4c2d0", "барбі": "#e8458f", "малиновий": "#b3175e", "корал": "#ee6f5e", "персик": "#f6c4a3", "помаранчевий": "#f08a24", "жовтий": "#f4d03f", "лимон": "#f1e04a", "гірчиця": "#d2a02a", "хакі": "#8a8456", "хакі беж": "#a89f7c", "оливка": "#7b7d3a", "зелений": "#2e8b57", "темно-зелений": "#1f4d33", "зелена трава": "#4a9d3a", "смарагд": "#0b8a63", "ментол": "#a5dcc4", "м'ятний": "#a5dcc4", "тіффані": "#81d8d0", "бірюзовий": "#1fb5ad", "блакитний": "#6bb7ee", "блідо-блакитний": "#bcdcf3", "сіро-блакитний": "#8fa6bd", "блідо-васильковий": "#a9b8ea", "темно-лазурний": "#1f5f8b", "електрик": "#1e4fe0", "синій": "#2c5fc4", "темно-синій": "#16275f", "чорнильно-синій": "#1b2140", "індиго": "#34327f", "фіолетовий": "#7a3fb0", "ліловий": "#b08fd1", "бузок": "#c3a6e0", "салатовий": "#9fd356", "блідо-салатовий": "#cfe8a8", "світло-салатовий": "#b9e07f", "лайм": "#b8d82f", "засмага": "#d9a58a", "цегляний": "#a8412f", "айворі": "#f1e7cd", "олива": "#7b7d3a", "оливковий": "#8a8c45", "рудий": "#b5651d", "койот": "#8b6b4a", "вишня": "#5e1f33", "трава": "#4a9d3a", "моко": "#6f4e3d", "ванільний": "#f3e2a9", "м'ята": "#a5dcc4", "хвиля": "#2a9d9a", "бузина": "#4a2342", "баклажан": "#4a2342", "кофейний": "#7a5538", "визон": "#7a6a5a", "неон": "#39e75f", "лазурний": "#2f8fd8", "фуксія": "#c2185b", "чорно-білий": "#7d7d7d", "грі": "#9a9da3", "пудровий": "#e8c9c4", "пильно-рожевий": "#d8a7a7", "яскравий рожевий": "#e8458f", "неон жовтий": "#e8f53a", "небесно-блакитний": "#9fd0f2", "ніжно-рожевий": "#f7d0dc", "синій джинс": "#4a6a95", "бірюза": "#1fb5ad", "лимонний": "#f1e04a", "райський": "#3fae6a", "темний шоколад": "#3a2318", "світлий шоколад": "#7b5640", "темний бежевий": "#b89c78", "темний": "#3b3e45", "золотий": "#c9a64a", "срібний": "#b8bcc4", "молочний пудровий": "#f3ecd9", "світло-сірий меланж": "#d0d2d6", "сірий меланж": "#a8aab0", "сірий грі": "#9a9da3", "коричневий тауп": "#8b7d73", "темний меланж": "#6a6c72", "темний грі": "#5e6068", "темно-сірий меланж": "#5c5f66", "синьо-сірий графіт": "#4a4d55", "темно-сірий графіт": "#4a4d55", "світлий бежевий пудровий": "#e6d6b8", "бежевий меланж": "#d9c9ae", "рожева засмага": "#d9a58a", "мокко-молоко": "#c9b39a", "блідий хакі беж": "#a89f7c", "бежевий коричневий": "#8b6b4a", "коричневий моко": "#6f4e3d", "темний коричневий": "#4f3020", "бежевий пудровий": "#e8c9c4", "молочний ванільний": "#f3e2a9", "світлий жовтий": "#f6e27a", "блідо-жовтий": "#f7e9a0", "темний хакі": "#5f5a3a", "жовтий лимонний": "#f1e04a", "світлий оливковий": "#8a8c45", "більш олива": "#7b7d3a", "цитрус лайм": "#b8d82f", "більш салатовий": "#9fd356", "яскраво-салатовий": "#9fd356", "світло-зелений": "#7fc77f", "неоновий зелений": "#39e75f", "неоново-зелений": "#39e75f", "зелений райський": "#3fae6a", "м'ята зелена": "#a5dcc4", "зелений смарагд": "#0b8a63", "темний смарагд": "#0b8a63", "морська хвиля": "#2a9d9a", "світлий блакитний": "#a8d3f2", "темно-блакитний": "#3a7fc0", "гнила вишня": "#5e1f33"};
   var COLOR_KEYS = Object.keys(COLOR_MAP).sort(function (a, b) { return b.length - a.length; });
   function colorHex(name) {
     var n = String(name || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/ - /g, "-").trim();
     if (!n) return "";
     if (state.listHex[n]) return state.listHex[n];
+    var bs = norm(splitColor(name).base);
+    if (state.listHex[bs]) return state.listHex[bs];
     for (var i = 0; i < COLOR_KEYS.length; i++) { if (n.indexOf(COLOR_KEYS[i]) !== -1) return COLOR_MAP[COLOR_KEYS[i]]; }
     return "";
   }
@@ -434,10 +480,26 @@ form { display: grid; gap: 14px; }
     return (h ? '<i class="sw" style="background:' + h + '"></i>' : "") + esc(name);
   }
   /* ---------- списки цветов и тканей ---------- */
-  var DEFAULT_COLORS = [["Белый", "#f5f5f2"], ["Молочный", "#f3ecd9"], ["Экрю", "#efe6cf"], ["Слоновая кость", "#f1e7cd"], ["Кремовый", "#f3e5b8"], ["Ванильный", "#f3e2a9"], ["Шампань", "#ecd9b5"], ["Бежевый", "#d8c3a0"], ["Песочный", "#d6bf94"], ["Кэмел", "#b98b53"], ["Золотистый", "#c9a64a"], ["Светло-серый", "#c4c6cc"], ["Серебристый", "#b8bcc4"], ["Серый", "#8e9099"], ["Серый меланж", "#a3a5ab"], ["Стальной", "#6f7885"], ["Темно-серый", "#4f525a"], ["Графитовый", "#3b3e45"], ["Антрацит", "#2b2e33"], ["Черный", "#16161a"], ["Красный", "#c62828"], ["Алый", "#e0303a"], ["Кирпичный", "#a8412f"], ["Терракотовый", "#c4623f"], ["Бордовый", "#6d1a2c"], ["Вишневый", "#7b1230"], ["Марсала", "#7a3141"], ["Винный", "#5e1f33"], ["Коралловый", "#ee6f5e"], ["Лососевый", "#f29a85"], ["Персиковый", "#f6c4a3"], ["Абрикосовый", "#f2b07a"], ["Оранжевый", "#f08a24"], ["Морковный", "#e8741f"], ["Желтый", "#f4d03f"], ["Лимонный", "#f1e04a"], ["Горчичный", "#d2a02a"], ["Охра", "#c48a1f"], ["Салатовый", "#9fd356"], ["Лаймовый", "#b8d82f"], ["Светло-зеленый", "#7fc77f"], ["Зеленый", "#2e8b57"], ["Травяной", "#4a9d3a"], ["Бутылочный", "#0e4b36"], ["Темно-зеленый", "#1f4d33"], ["Изумрудный", "#0b8a63"], ["Оливковый", "#7b7d3a"], ["Хаки", "#8a8456"], ["Мятный", "#a5dcc4"], ["Фисташковый", "#b7d3a0"], ["Шалфей", "#9aa88a"], ["Бирюзовый", "#1fb5ad"], ["Морская волна", "#2a9d9a"], ["Аквамарин", "#6fd3c4"], ["Голубой", "#6bb7ee"], ["Небесный", "#9fd0f2"], ["Васильковый", "#5a7fdc"], ["Джинсовый", "#4a6a95"], ["Синий", "#2c5fc4"], ["Электрик", "#1e4fe0"], ["Темно-синий", "#16275f"], ["Индиго", "#34327f"], ["Чернильный", "#1b2140"], ["Фиолетовый", "#7a3fb0"], ["Баклажановый", "#4a2342"], ["Сливовый", "#6b2d5c"], ["Лиловый", "#b08fd1"], ["Сиреневый", "#c3a6e0"], ["Лавандовый", "#cdbfe6"], ["Розовый", "#f19ab6"], ["Нежно-розовый", "#f7d0dc"], ["Пудровый", "#e8c9c4"], ["Ярко-розовый", "#e8458f"], ["Фуксия", "#c2185b"], ["Малиновый", "#b3175e"], ["Коричневый", "#6a4328"], ["Шоколадный", "#4b2e20"], ["Кофейный", "#7a5538"], ["Капучино", "#b79a7e"], ["Какао", "#8a6a55"], ["Орех", "#8b5e3c"], ["Рыжий", "#b5651d"], ["Тауп", "#8b7d73"]];
-  var DEFAULT_FABRICS = ["Супрем", "Резинка Кашкарсе", "Лакосте", "Флис", "Начёс"];
+  var DEFAULT_COLORS = [["Білий", "#f5f5f2"], ["Сніжний меланж", "#e4e5e8"], ["Молоко", "#f3ecd9"], ["Молочний", "#f3ecd9"], ["Молочний пудровий", "#f3ecd9"], ["Екрю", "#efe6cf"], ["Айворі", "#f1e7cd"], ["Світло-сірий меланж", "#d0d2d6"], ["Блідо-сірий", "#cfd1d6"], ["Світло-сірий", "#c4c6cc"], ["Срібний", "#b8bcc4"], ["Сірий меланж", "#a8aab0"], ["Меланж", "#a3a5ab"], ["Сірий грі", "#9a9da3"], ["Сірий", "#8e9099"], ["Коричневий тауп", "#8b7d73"], ["Чорно-білий", "#7d7d7d"], ["Темний меланж", "#6a6c72"], ["Темний грі", "#5e6068"], ["Темно-сірий меланж", "#5c5f66"], ["Темно-сірий", "#4f525a"], ["Синьо-сірий графіт", "#4a4d55"], ["Сірий графіт", "#4a4d55"], ["Темно-сірий графіт", "#4a4d55"], ["Графіт", "#3b3e45"], ["Антрацит", "#2b2e33"], ["Чорний", "#16161a"], ["Світлий беж", "#e6d6b8"], ["Світлий бежевий пудровий", "#e6d6b8"], ["Бежевий меланж", "#d9c9ae"], ["Беж", "#d8c3a0"], ["Бежевий", "#d8c3a0"], ["Рожева засмага", "#d9a58a"], ["Мокко-молоко", "#c9b39a"], ["Капучино", "#b79a7e"], ["Темний бежевий", "#b89c78"], ["Блідий хакі беж", "#a89f7c"], ["Хакі беж", "#a89f7c"], ["Золотий", "#c9a64a"], ["Какао", "#8a6a55"], ["Койот", "#8b6b4a"], ["Бежевий коричневий", "#8b6b4a"], ["Світлий шоколад", "#7b5640"], ["Кофейний", "#7a5538"], ["Мокко", "#6f4e3d"], ["Коричневий моко", "#6f4e3d"], ["Коричневий", "#6a4328"], ["Темний коричневий", "#4f3020"], ["Шоколад", "#4b2e20"], ["Темний шоколад", "#3a2318"], ["Пильно-рожевий", "#d8a7a7"], ["Червоний", "#c62828"], ["Корал", "#ee6f5e"], ["Бежевий пудровий", "#e8c9c4"], ["Пудра", "#e8c9c4"], ["Цегляний", "#a8412f"], ["Персик", "#f6c4a3"], ["Рудий", "#b5651d"], ["Помаранчевий", "#f08a24"], ["Гірчиця", "#d2a02a"], ["Молочний ванільний", "#f3e2a9"], ["Жовтий", "#f4d03f"], ["Світлий жовтий", "#f6e27a"], ["Блідо-жовтий", "#f7e9a0"], ["Темний хакі", "#5f5a3a"], ["Хакі", "#8a8456"], ["Жовтий лимонний", "#f1e04a"], ["Лимон", "#f1e04a"], ["Світлий оливковий", "#8a8c45"], ["Більш олива", "#7b7d3a"], ["Оливка", "#7b7d3a"], ["Неон жовтий", "#e8f53a"], ["Цитрус лайм", "#b8d82f"], ["Блідо-салатовий", "#cfe8a8"], ["Світло-салатовий", "#b9e07f"], ["Більш салатовий", "#9fd356"], ["Салатовий", "#9fd356"], ["Яскраво-салатовий", "#9fd356"], ["Зелена трава", "#4a9d3a"], ["Трава", "#4a9d3a"], ["Світло-зелений", "#7fc77f"], ["Неоновий зелений", "#39e75f"], ["Неоново-зелений", "#39e75f"], ["Зелений райський", "#3fae6a"], ["Темно-зелений", "#1f4d33"], ["Зелений", "#2e8b57"], ["М'ята зелена", "#a5dcc4"], ["М'ятний", "#a5dcc4"], ["Ментол", "#a5dcc4"], ["Зелений смарагд", "#0b8a63"], ["Смарагд", "#0b8a63"], ["Темний смарагд", "#0b8a63"], ["Тіффані", "#81d8d0"], ["Бірюзовий", "#1fb5ad"], ["Морська хвиля", "#2a9d9a"], ["Темно-лазурний", "#1f5f8b"], ["Небесно-блакитний", "#9fd0f2"], ["Блідо-блакитний", "#bcdcf3"], ["Світлий блакитний", "#a8d3f2"], ["Блакитний", "#6bb7ee"], ["Лазурний", "#2f8fd8"], ["Темно-блакитний", "#3a7fc0"], ["Сіро-блакитний", "#8fa6bd"], ["Синій джинс", "#4a6a95"], ["Синій", "#2c5fc4"], ["Електрик", "#1e4fe0"], ["Темно-синій", "#16275f"], ["Блідо-васильковий", "#a9b8ea"], ["Чорнильно-синій", "#1b2140"], ["Індиго", "#34327f"], ["Бузок", "#c3a6e0"], ["Ліловий", "#b08fd1"], ["Фіолетовий", "#7a3fb0"], ["Баклажан", "#4a2342"], ["Бузина", "#4a2342"], ["Малиновий", "#b3175e"], ["Барбі", "#e8458f"], ["Яскравий рожевий", "#e8458f"], ["Фуксія", "#c2185b"], ["Рожевий", "#f19ab6"], ["Гнила вишня", "#5e1f33"], ["Блідо-рожевий", "#f7d0dc"], ["Ніжно-рожевий", "#f7d0dc"], ["Сакура", "#f4c2d0"], ["Малиново-червоний", "#b5173f"], ["Марсала", "#7a3141"], ["Бордовий", "#6d1a2c"], ["Мультиколор", ""]];
+  var DEFAULT_FABRICS = ["Cool Max", "Акрил", "Ангора", "Атлас", "Батист", "Бенгалин", "Біфлекс", "Вафельна", "Вельвет", "Велюр", "Віскоза", "Габардин", "Дабл-фейс", "Джерсі", "Джинс", "Килимки", "Кожа штучна", "Коміри", "Коттон", "Креп", "Кулір", "Лакоста", "Льон", "Манжети", "Марлева", "Махра", "Мікровельвет", "Мікромодал", "Неопрен", "Парашут", "Плащівка", "Поливіскоза", "Поплін", "Резинка кашкорсе", "Рибана", "Рушники", "Ріпстоп", "Сатин", "Спор лайкра", "Супрем", "Сітка", "Тафта", "Твід", "Тенсель", "Тіар", "Фліс", "Футер двонитка", "Футер з начісом", "Футер тринитка", "Хутро", "Шерсть", "Штапель"];
+  function fold(x) { return norm(x).replace(/[іїи]/g, "и").replace(/є/g, "е").replace(/ґ/g, "г").replace(/[ыэ]/g, function (c) { return c === "ы" ? "и" : "е"; }).replace(/['’ʼ`]/g, ""); }
   function norm(x) { return String(x || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim(); }
   function capital(x) { x = String(x || "").replace(/\s+/g, " ").trim(); return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
+  function splitColor(full) {
+    var m = /^(.*?)\s*№\s*(.*)$/.exec(String(full || "").trim());
+    return m ? { base: m[1].trim(), num: m[2].trim() } : { base: String(full || "").trim(), num: "" };
+  }
+  function joinColor(base, num) { num = String(num || "").replace(/^№\s*/, "").trim(); return (base + (num ? " №" + num : "")).trim(); }
+  function splitFabric(full) {
+    full = String(full || "").trim();
+    var f = fold(full), best = "";
+    state.lists.fabrics.forEach(function (x) {
+      var k = fold(x.name);
+      if (k && (f === k || f.indexOf(k + " ") === 0) && x.name.length > best.length) best = x.name;
+    });
+    return best ? { type: best, rest: full.slice(best.length).trim() } : { type: "", rest: full };
+  }
+  function joinFabric(type, rest) { return (String(type || "") + " " + String(rest || "")).replace(/\s+/g, " ").trim(); }
   function setLists(colors, fabrics) {
     state.lists = { colors: colors || [], fabrics: fabrics || [] };
     var h = {};
@@ -746,6 +808,7 @@ form { display: grid; gap: 14px; }
     var out = [];
     state.rolls.forEach(function (r, id) {
       if (!!r.deleted !== wantDeleted) return;
+      if (state.tab === "norack" && r.rack) return;
       if (q) {
         var hit;
         if (onlyDigits) hit = id.indexOf(digits) !== -1;
@@ -761,19 +824,45 @@ form { display: grid; gap: 14px; }
     });
     return out;
   }
-  function rackHtml(r, big) {
-    if (!r.rack) return '<span class="rack none' + (big ? " big" : "") + '"><small>стеллаж</small><b>—</b></span>';
-    return '<span class="rack' + (big ? " big" : "") + '"><small>стеллаж</small><b>' + esc(r.rack) + "</b>" + (r.floor ? "<em>" + esc(r.floor) + " этаж</em>" : "") + "</span>";
+  function rackHtml(r, big, fresh) {
+    var cls = "rack" + (big ? " big" : "") + (fresh ? " fresh" : "");
+    if (!r.rack) return '<span class="' + cls + ' none"><small>стеллаж</small><b>—</b></span>';
+    return '<span class="' + cls + '"><small>стеллаж</small><b>' + esc(r.rack) + "</b>" + (r.floor ? "<em>" + esc(r.floor) + " этаж</em>" : "") + "</span>";
   }
+  /* номер: служебное начало 2000000 бледнее, найденная часть подсвечена */
+  function numHtml(id, digits) {
+    id = String(id);
+    var m = /^(20{4,})(\d{4,}.*)$/.exec(id), pre = m ? m[1].length : 0;
+    var hs = -1, he = -1;
+    if (digits) { hs = id.indexOf(digits); if (hs !== -1) he = hs + digits.length; }
+    var out = "", cur = null, buf = "";
+    function flush() { if (!buf) return; out += cur === "h" ? "<mark>" + esc(buf) + "</mark>" : cur === "p" ? '<span class="pre">' + esc(buf) + "</span>" : esc(buf); buf = ""; }
+    for (var i = 0; i < id.length; i++) {
+      var k = (i >= hs && i < he) ? "h" : (i < pre ? "p" : "n");
+      if (k !== cur) { flush(); cur = k; }
+      buf += id.charAt(i);
+    }
+    flush();
+    return id.length <= 10 && hs === -1 && !pre ? esc(fmt(id)) : out;
+  }
+  function swatchStyle(color) {
+    var h = colorHex(color);
+    return h ? ' class="swatch weave" style="--c:' + h + '"' : ' class="swatch weave blank"';
+  }
+  function searchDigits() { var d = state.q.replace(/\s/g, ""); return /^[\d-]+$/.test(d) ? d : ""; }
   function rowHtml(it, enter, i) {
     var r = it.r;
-    var meta = [r.fabric ? esc(r.fabric) : "", r.color ? colorHtml(r.color) : "", r.qty != null ? '<span class="qty">' + esc(qtyText(r)) + "</span>" : ""].filter(Boolean).join(" · ");
     var who = r.deleted
-      ? (r.deletedBy ? "Удалил: " + r.deletedBy + " · " + ago(r.deletedAt) : "Удалён " + ago(r.deletedAt))
-      : (r.updatedBy ? r.updatedBy + " · " + ago(r.updatedAt) : "");
+      ? (r.deletedBy ? "Удалил " + r.deletedBy + ", " + ago(r.deletedAt) : "Удалён " + ago(r.deletedAt))
+      : (r.updatedBy ? r.updatedBy + ", " + ago(r.updatedAt) : "");
+    var tags = (r.color ? '<span class="cname">' + colorHtml(r.color) + "</span>" : "") +
+      (r.qty != null ? '<span class="qty' + (r.qty <= 0 ? " zero" : "") + '">' + esc(qtyText(r)) + "</span>" : "");
     return '<li class="item' + (enter ? " enter" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
+      "<span" + swatchStyle(r.color) + "></span>" +
       '<span class="chk" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.6 3.6L18.2 10"/></svg></span>' +
-      '<span class="info"><span class="num">' + fmt(it.id) + "</span><span class=\"meta\">" + (meta || "без описания") + "</span>" +
+      '<span class="info"><span class="num">' + numHtml(it.id, searchDigits()) + "</span>" +
+      '<span class="fabric' + (r.fabric ? "" : " none") + '">' + esc(r.fabric || "ткань не указана") + "</span>" +
+      (tags ? '<span class="tagline">' + tags + "</span>" : "") +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") + "</span>" + rackHtml(r) + "</button></li>";
   }
 
@@ -786,11 +875,16 @@ form { display: grid; gap: 14px; }
       drawAuth();
       return;
     }
-    var c = { a: 0, t: 0 };
-    state.rolls.forEach(function (r) { if (r.deleted) c.t++; else c.a++; });
-    $("#tabActive").textContent = "Рулоны" + (state.loaded ? " · " + c.a : "");
-    $("#tabTrash").textContent = "Удалённые" + (state.loaded && c.t ? " · " + c.t : "");
+    var c = { a: 0, t: 0, n: 0 };
+    state.rolls.forEach(function (r) { if (r.deleted) c.t++; else { c.a++; if (!r.rack) c.n++; } });
+    function cnt(n) { return state.loaded && n ? '<span class="n">' + n + "</span>" : ""; }
+    $("#tabActive").innerHTML = "Рулоны" + cnt(c.a);
+    $("#tabNoRack").innerHTML = "Без места" + cnt(c.n);
+    $("#tabTrash").innerHTML = "Удалённые" + cnt(c.t);
+    var ti = { active: 0, norack: 1, trash: 2 }[state.tab] || 0;
+    $("#tabs").style.setProperty("--ti", ti);
     $("#tabActive").setAttribute("aria-selected", state.tab === "active");
+    $("#tabNoRack").setAttribute("aria-selected", state.tab === "norack");
     $("#tabTrash").setAttribute("aria-selected", state.tab === "trash");
     $("#qClear").hidden = !state.q;
     var net = $("#net");
@@ -817,6 +911,7 @@ form { display: grid; gap: 14px; }
       var shown = items.slice(0, 100);
       var txt;
       if (state.tab === "trash") txt = items.length ? "Удалено рулонов: " + items.length + ". Отсюда их можно вернуть." : "";
+      else if (state.tab === "norack") txt = items.length ? (state.q ? "Найдено без места: " + items.length : "Рулоны без стеллажа: " + items.length + ". Откройте рулон и укажите место") : "";
       else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : "");
       if (items.length > 100) txt += ". Показаны первые 100, уточните номер.";
       $("#count").textContent = txt;
@@ -824,6 +919,7 @@ form { display: grid; gap: 14px; }
       if (!shown.length) {
         var msg;
         if (state.tab === "trash") msg = "<strong>В удалённых пусто</strong>Когда рулон заберут целиком, он появится здесь, и его можно будет вернуть при возврате.";
+        else if (state.tab === "norack" && !state.q) msg = "<strong>У всех рулонов указано место</strong>Здесь появляются рулоны без стеллажа, например новые из 1С.";
         else if (state.q) msg = "<strong>Рулон не найден</strong>Проверьте номер. Если рулон новый, нажмите «Добавить».";
         else msg = "<strong>В базе пока нет рулонов</strong>Нажмите «Добавить», введите номер рулона, стеллаж, этаж, ткань и цвет.";
         html = '<li class="empty">' + msg + "</li>";
@@ -897,6 +993,7 @@ form { display: grid; gap: 14px; }
     } else scrim.classList.remove("out");
     var body = $("#sheetBody");
     body.innerHTML = sheetHtml(s);
+    if (noAnim) Array.prototype.forEach.call(body.querySelectorAll(".fresh"), function (x) { x.classList.remove("fresh"); });
     if (!noAnim) { body.classList.remove("swap"); void body.offsetWidth; body.classList.add("swap"); }
     if (s.type === "detail") loadHistory(s.id);
   }
@@ -922,8 +1019,11 @@ form { display: grid; gap: 14px; }
       var by = r.deleted
         ? '<div class="byline">Удалил: <b>' + esc(r.deletedBy || "неизвестно") + "</b> · " + ago(r.deletedAt) + "</div>"
         : (r.updatedBy ? '<div class="byline">Изменил: <b>' + esc(r.updatedBy) + "</b> · " + ago(r.updatedAt) + "</div>" : "");
-      return '<div class="sheet-head"><div class="big-num">' + fmt(s.id) + '</div><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button></div>' +
-        '<div class="where">' + rackHtml(r, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
+      var hx = colorHex(r.color);
+      return '<div class="cloth weave fresh' + (hx ? "" : " blank") + '"' + (hx ? ' style="--c:' + hx + '"' : "") + '><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button>' +
+        (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + "</div>" +
+        '<div class="label"><small>Рулон</small><div class="big-num">' + numHtml(s.id, "") + "</div></div>" +
+        '<div class="where">' + rackHtml(r, true, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
         c1Html(r) +
         by + '<div class="hist"><h3>История</h3><div id="hist" class="muted">Загрузка…</div></div>' +
         (r.deleted
@@ -960,8 +1060,11 @@ form { display: grid; gap: 14px; }
     h += '<div class="two"><div class="field"><label for="f-rack">Номер стеллажа</label><input id="f-rack" type="text" value="' + esc(v.rack || "") + '"><div class="err" id="e-rack"></div></div>' +
       '<div class="field"><label for="f-floor">Этаж</label><input id="f-floor" type="text" inputmode="numeric" placeholder="не обязательно" value="' + esc(v.floor || "") + '"><div class="err" id="e-floor"></div></div></div>';
     if (bulk) h += '<label class="check" for="f-nofloor"><input type="checkbox" id="f-nofloor"' + (v.nofloor ? " checked" : "") + '>Убрать этаж у выбранных рулонов</label>';
-    h += '<div class="two"><div class="field"><label for="f-fabric">Ткань</label>' + pickBtn("fabric", v.fabric) + '</div>' +
-      '<div class="field"><label for="f-color">Цвет</label>' + pickBtn("color", v.color) + '</div></div>' +
+    var fs = splitFabric(v.fabric), cs = splitColor(v.color);
+    h += '<div class="field"><span class="lbl">Ткань</span><div class="combo">' + pickBtn("fabric", fs.type) +
+        '<input id="f-fabric2" type="text" placeholder="уточнение" aria-label="Уточнение ткани" value="' + esc(fs.rest) + '"></div></div>' +
+      '<div class="field"><span class="lbl">Цвет</span><div class="combo num">' + pickBtn("color", cs.base) +
+        '<input id="f-colornum" type="text" inputmode="text" placeholder="№" aria-label="Номер оттенка" value="' + esc(cs.num) + '"></div></div>' +
       '<div class="form-err" id="form-err" role="alert"></div>' +
       '<div class="actions"><button type="button" class="btn" data-act="' + (editing ? "back-detail" : "close") + '">Отмена</button><button type="submit" class="btn primary" id="saveBtn">Сохранить</button></div></form>';
     return h;
@@ -974,7 +1077,8 @@ form { display: grid; gap: 14px; }
   function snapshotForm() {
     var s = state.sheet; if (!s || !$("#form")) return;
     var v = s.values = s.values || {};
-    ["roll", "rack", "floor", "fabric", "color"].forEach(function (k) { var el = $("#f-" + k); if (el) v[k] = el.value.trim(); });
+    ["roll", "rack", "floor"].forEach(function (k) { var el = $("#f-" + k); if (el) v[k] = el.value.trim(); });
+    v.fabric = joinFabric(val("#f-fabric"), val("#f-fabric2")); v.color = joinColor(val("#f-color"), val("#f-colornum"));
     var nf = $("#f-nofloor"); if (nf) v.nofloor = nf.checked;
   }
   function openPicker(kind) {
@@ -989,19 +1093,19 @@ form { display: grid; gap: 14px; }
   }
   function drawPickerList() {
     var pk = state.pick, el = $("#pkList"); if (!pk || !el) return;
-    var cur = ((state.sheet && state.sheet.values) || {})[pk.kind] || "";
-    var q = norm(pk.q), isColor = pk.kind === "color";
+    var cb = $("#f-" + pk.kind), cur = cb ? cb.value : "";
+    var q = fold(pk.q), isColor = pk.kind === "color";
     var all = isColor ? state.lists.colors : state.lists.fabrics;
-    var items = all.filter(function (x) { return !q || norm(x.name).indexOf(q) !== -1; });
+    var items = all.filter(function (x) { return !q || fold(x.name).indexOf(q) !== -1; });
     var more = items.length > 150 ? items.length - 150 : 0;
     if (more) items = items.slice(0, 150);
-    var exact = all.some(function (x) { return norm(x.name) === q; });
+    var exact = all.some(function (x) { return fold(x.name) === q; });
     var h = "";
     if (!q) h += '<button type="button" class="pk-clear" data-pk-val="">' + (state.sheet && state.sheet.type === "bulk" ? "Не менять" : "Не указывать") + '</button>';
     if (q && !exact && pk.q.trim().length <= 60) h += '<button type="button" class="pk-add" data-pk-add="1">+ Добавить «' + esc(capital(pk.q)) + '»</button>';
     if (isColor) {
       h += '<div class="pk-grid">' + items.map(function (x) {
-        return '<button type="button" class="pk-chip' + (norm(x.name) === norm(cur) ? " on" : "") + '" data-pk-val="' + esc(x.name) + '">' + (x.hex ? '<i class="sw" style="background:' + esc(x.hex) + '"></i>' : "") + esc(x.name) + '</button>';
+        return '<button type="button" class="pk-chip' + (norm(x.name) === norm(cur) ? " on" : "") + '" data-pk-val="' + esc(x.name) + '">' + (x.hex ? '<i class="dot weave" style="--c:' + esc(x.hex) + '"></i>' : '<i class="dot weave blank"></i>') + "<span>" + esc(x.name) + "</span></button>";
       }).join("") + "</div>";
     } else {
       h += '<div class="pk-rows">' + items.map(function (x) {
@@ -1023,7 +1127,6 @@ form { display: grid; gap: 14px; }
   }
   function choosePick(val) {
     var pk = state.pick; if (!pk || !state.sheet) return;
-    (state.sheet.values = state.sheet.values || {})[pk.kind] = val;
     closePicker();
     var btn = $("#f-" + pk.kind);
     if (btn) {
@@ -1035,7 +1138,7 @@ form { display: grid; gap: 14px; }
     var pk = state.pick; if (!pk) return;
     var name = capital(pk.q); if (!name) return;
     var kind = pk.kind, list = kind === "color" ? state.lists.colors : state.lists.fabrics;
-    var found = list.filter(function (x) { return norm(x.name) === norm(name); })[0];
+    var found = list.filter(function (x) { return fold(x.name) === fold(name); })[0];
     if (found) { choosePick(found.name); return; }
     list.push(kind === "color" ? { name: name, hex: "" } : { name: name });
     choosePick(name);
@@ -1077,7 +1180,7 @@ form { display: grid; gap: 14px; }
   function saveForm() {
     var s = state.sheet;
     if (!s || state.busy) return;
-    var vals = { roll: val("#f-roll").replace(/\s/g, ""), rack: val("#f-rack"), floor: val("#f-floor"), fabric: val("#f-fabric"), color: val("#f-color") };
+    var vals = { roll: val("#f-roll").replace(/\s/g, ""), rack: val("#f-rack"), floor: val("#f-floor"), fabric: joinFabric(val("#f-fabric"), val("#f-fabric2")), color: joinColor(val("#f-color"), val("#f-colornum")) };
     ["roll", "rack", "floor"].forEach(function (n) { fieldErr(n, ""); });
     formErr("");
     if (s.type === "bulk") return saveBulk(s, vals);
@@ -1155,10 +1258,10 @@ form { display: grid; gap: 14px; }
   function drawAuth() {
     var host = $("#auth");
     if (host.getAttribute("data-mode") !== state.authTab) {
-      var reg = state.authTab === "register";
+      var reg = state.authTab === "register", wasReg = host.getAttribute("data-mode") === "register";
       host.setAttribute("data-mode", state.authTab);
       host.innerHTML = '<div class="hero"><svg class="hero-logo" aria-hidden="true"><use href="#logo"/></svg><div><h1>Склад тканей</h1><p class="lead">' + (reg ? "Создайте аккаунт, чтобы вносить изменения под своим именем." : "Войдите, чтобы искать рулоны и менять их место.") + '</p></div></div>' +
-        '<div class="auth-card"><div class="tabs seg" role="tablist"><button class="tab" type="button" role="tab" data-auth-tab="login" aria-selected="' + !reg + '">Вход</button>' +
+        '<div class="auth-card"><div class="tabs seg" role="tablist" id="authTabs" style="--n:2;--ti:' + (wasReg ? 1 : 0) + '"><span class="ind" aria-hidden="true"></span><button class="tab" type="button" role="tab" data-auth-tab="login" aria-selected="' + !reg + '">Вход</button>' +
         '<button class="tab" type="button" role="tab" data-auth-tab="register" aria-selected="' + reg + '">Регистрация</button></div>' +
         '<form id="authForm" novalidate>' +
         (reg ? '<div class="field"><label for="a-name">Имя и фамилия</label><input id="a-name" type="text" autocomplete="name" placeholder="Антон Асауляк"></div>' : "") +
@@ -1168,6 +1271,7 @@ form { display: grid; gap: 14px; }
         '<div class="form-err" id="auth-err" role="alert"></div>' +
         '<button type="submit" class="btn primary" id="authBtn">' + (reg ? "Зарегистрироваться" : "Войти") + '</button></form></div><p class="ver">Версия ' + APP_VERSION + "</p>";
       if (state.authNote) authError(state.authNote);
+      var at = $("#authTabs"); void at.offsetWidth; at.style.setProperty("--ti", reg ? 1 : 0);
     }
     if (!state.online && !$("#auth-err").textContent) authError("Нет соединения. Включите интернет.");
   }
