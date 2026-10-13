@@ -619,7 +619,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.9";
+  var APP_VERSION = "2.0";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1833,11 +1833,14 @@ form { display: grid; gap: 16px; }
     if (m) { m.classList.add("out"); setTimeout(function () { if (!OR.open) root.innerHTML = ""; }, 220); }
     return true;
   }
+  /* выполненные заказы видны 5 часов, потом исчезают */
+  var DONE_KEEP = 5 * 3600e3;
+  function recentDone(o) { return o.status === "done" && Date.now() - Date.parse(o.done_at || o.changed_at || o.created_at) < DONE_KEEP; }
   function orderList() {
     var list = [];
     OR.map.forEach(function (o) {
       if (OR.chat !== "all" && String(o.chat_id) !== OR.chat) return;
-      if (OR.tab === "active" ? o.status === "done" : o.status !== "done") return;
+      if (OR.tab === "active" ? o.status === "done" : !recentDone(o)) return;
       list.push(o);
     });
     list.sort(function (a, b) { return OR.tab === "active" ? Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.done_at || b.changed_at) - Date.parse(a.done_at || a.changed_at); });
@@ -1847,7 +1850,7 @@ form { display: grid; gap: 16px; }
     var box = $("#ordersIn"); if (!box) return;
     var sc = box.parentNode.scrollTop;
     var chats = new Map(), na = 0, nd = 0;
-    OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (o.status === "done") nd++; else na++; });
+    OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (o.status !== "done") na++; else if (recentDone(o)) nd++; });
     var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="orders-close" aria-label="Назад">←</button><h2>Заказы</h2></div>' +
       '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
       '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
@@ -1860,8 +1863,8 @@ form { display: grid; gap: 16px; }
     var list = orderList();
     if (!OR.loaded) h += '<p class="empty">Загрузка заказов…</p>';
     else if (!list.length) h += '<p class="empty"><strong>' + (OR.tab === "active" ? "Заказов в работе нет" : "Выполненных пока нет") + "</strong>" +
-      (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "") + "</p>";
-    else h += '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
+      (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "Здесь видны заказы, выполненные за последние 5 часов.") + "</p>";
+    else h += (OR.tab === "done" ? '<p class="hint">Выполненные за последние 5 часов. Заказ отмечается выполненным кнопками или реакцией на сообщение в Telegram.</p>' : "") + '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
     box.innerHTML = h;
     box.parentNode.scrollTop = sc;
     list.slice(0, 40).forEach(function (o) { if (o.photo_path) loadThumb(o); });
