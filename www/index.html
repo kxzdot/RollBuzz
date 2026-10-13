@@ -413,6 +413,82 @@ form { display: grid; gap: 16px; }
 .nb-item.me { background: var(--accent-soft); border-color: var(--accent); cursor: default; color: inherit; }
 .nb-item.me .nb-place { color: var(--accent); }
 
+/* ---------- заказы ---------- */
+.obtn { position: relative; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); color: var(--fg); box-shadow: var(--lift); flex: none; }
+.obtn svg { width: 24px; height: 24px; display: block; margin: auto; }
+.obtn .badge { position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 20px; text-align: center; font-family: var(--f-mono); }
+#ordersRoot .orders { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+.o-top { display: flex; align-items: center; gap: 12px; }
+.o-top h2 { margin: 0; font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; }
+.o-chats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.ochip { flex: none; height: 36px; padding: 0 14px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 600; font-size: 0.875rem; white-space: nowrap; }
+.ochip.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.o-list { display: grid; gap: 12px; }
+.ocard { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; box-shadow: var(--lift); position: relative; overflow: hidden; }
+.ocard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
+.ocard.st-taken::before { background: var(--tag); }
+.ocard.st-done::before { background: var(--ok); }
+.ocard.st-done { opacity: 0.85; }
+.oc-head { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8125rem; color: var(--muted); }
+.oc-head time { font-family: var(--f-mono); white-space: nowrap; }
+.oc-chat { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-who { font-weight: 650; font-size: 1.0625rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.oc-doc { font-weight: 500; font-size: 0.875rem; color: var(--muted); }
+.oc-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.oc-photo { padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); min-height: 80px; display: block; width: 100%; }
+.oc-photo img { display: block; width: 100%; max-height: 220px; object-fit: cover; object-position: top left; }
+.oc-ocr { margin: 0; font-size: 0.875rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.oc-ocr.warn { color: var(--danger); }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); display: inline-block; flex: none; }
+.oc-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.oi { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: var(--lift); }
+.oi.st-done { opacity: 0.7; }
+.oi-main { width: 100%; display: flex; align-items: stretch; border: 0; padding: 0; background: transparent; text-align: left; min-height: 64px; }
+.oi-main .swatch { flex: none; width: 10px; }
+.oi-info { flex: 1; min-width: 0; display: grid; gap: 1px; align-content: center; padding: 8px 10px 8px 12px; }
+.oi-info .num { font-family: var(--f-mono); font-weight: 600; font-size: 1rem; overflow-wrap: anywhere; }
+.oi-meta { font-size: 0.8125rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oi-meta.warn { color: var(--danger); }
+.oi-main .rack { margin: 0 10px 0 4px; align-self: center; min-width: 56px; padding: 13px 8px 6px; }
+.oi-main .rack b { font-size: 1.25rem; }
+.oi-main .rack.none { padding: 6px 8px; }
+.oi-act { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 10px 10px; flex-wrap: wrap; }
+.btn.sm { min-height: 40px; padding: 0 16px; border-radius: 11px; font-size: 0.9375rem; }
+.mini { height: 36px; min-width: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-weight: 600; font-size: 0.875rem; }
+.ost { margin-right: auto; font-size: 0.875rem; font-weight: 600; }
+.ost.taken { color: color-mix(in srgb, var(--tag) 55%, var(--fg)); }
+.ost.done { color: var(--ok); }
+.oc-foot { display: grid; gap: 6px; font-size: 0.875rem; color: var(--muted); }
+.oc-foot.solo { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; color: inherit; }
+.oc-prog { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.oc-prog i { display: block; height: 100%; width: calc(var(--p) * 100%); background: var(--ok); border-radius: 3px; }
+.oc-add { justify-self: start; padding: 4px 0; }
+.o-addform { display: grid; grid-template-columns: minmax(0, 1fr) auto 48px; gap: 8px; }
+.o-addform input { width: 100%; min-width: 0; height: 48px; padding: 0 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); font-family: var(--f-mono); font-size: 1.0625rem; }
+.o-addform .btn { min-height: 48px; }
+.o-addform .icon-btn { width: 48px; height: 48px; }
+.o-addform .icon-btn svg { width: 24px; height: 24px; display: block; margin: auto; }
+.otag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 650; vertical-align: 3px; background: var(--tag); color: var(--tag-fg); }
+.inorders { display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--tag) 22%, var(--surface)); border: 1px solid color-mix(in srgb, var(--tag) 60%, transparent); }
+.inorders h3 { margin: 0; font-size: 0.9375rem; font-weight: 650; }
+.io { display: grid; gap: 6px; }
+.io-t { display: grid; gap: 1px; font-size: 0.875rem; }
+.io-t span { color: var(--muted); }
+.io .oi-act { padding: 0; }
+#scanRoot .viewer { position: fixed; inset: 0; z-index: 35; background: #0b0d12; color: #fff; display: grid; grid-template-rows: auto 1fr auto; padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(16px + env(safe-area-inset-bottom, 0px)); gap: 10px; }
+.v-img { overflow: auto; border-radius: 12px; background: #fff; }
+.v-img img { display: block; width: 100%; }
+.v-img.zoom img { width: 250%; max-width: none; }
+@media (prefers-reduced-motion: no-preference) {
+  #ordersRoot .orders.in { animation: modein 0.34s var(--ease) both; }
+  #ordersRoot .orders.out { animation: modeout 0.2s ease-in both; }
+  .spin { animation: rot 0.8s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+  .obtn.ping .badge { animation: ping 0.6s var(--spring) 2; }
+  @keyframes ping { 50% { transform: scale(1.35); } }
+  .oc-prog i { transition: width 0.4s var(--ease); }
+}
+
 /* ---------- движение ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .tabs .ind { transition: transform 0.38s var(--spring); }
@@ -490,6 +566,7 @@ form { display: grid; gap: 16px; }
     <div class="brand" id="brandBar">
       <div class="title"><svg class="logo" aria-hidden="true"><use href="#logo"/></svg><h1>Склад тканей</h1></div>
       <span class="net" id="net"><i></i><span id="netText">Онлайн</span></span>
+      <button class="obtn" id="ordersBtn" type="button" data-act="orders-open" aria-label="Заказы" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="badge" hidden></span></button>
       <button class="avatar" id="userBtn" type="button" data-act="account" aria-label="Профиль"></button>
     </div>
     <div class="selbar" id="selBar" hidden>
@@ -528,6 +605,7 @@ form { display: grid; gap: 16px; }
   </div>
 </div>
 <div id="sheetRoot"></div>
+<div id="ordersRoot"></div>
 <div id="modeRoot"></div>
 <div id="pickRoot"></div>
 <div id="scanRoot"></div>
@@ -538,7 +616,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.7";
+  var APP_VERSION = "1.8";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -695,7 +773,7 @@ form { display: grid; gap: 16px; }
     return refresh().then(function () { return session.access_token; });
   }
   function signOut(note) {
-    if (state.mode2) closeMode(); closeScan();
+    if (state.mode2) closeMode(); closeScan(); closeViewer(); ordersStop(); closeOrders(); OR.map = new Map();
     state.pick = null; var pr = document.getElementById("pickRoot"); if (pr) pr.innerHTML = "";
     writeSession(null);
     if (repo && repo.stop) repo.stop();
@@ -896,7 +974,7 @@ form { display: grid; gap: 16px; }
     render();
   }
   function onDataError() { state.loaded = true; state.mode = "error"; render(); }
-  function startRepo() { repo.subscribe(onData, onDataError); loadLists(); }
+  function startRepo() { repo.subscribe(onData, onDataError); loadLists(); ordersStart(); }
 
   /* ---------- сообщения ---------- */
   function toast(msg, isErr) {
@@ -1031,7 +1109,7 @@ form { display: grid; gap: 16px; }
     return '<li class="item' + (enter ? " enter" : "") + (it.nb ? " nbr" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
       "<span" + swatchStyle(r.color) + "></span>" +
       '<span class="chk" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.6 3.6L18.2 10"/></svg></span>' +
-      '<span class="info"><span class="num">' + numHtml(it.id, it.nb ? "" : searchDigits()) + (it.nb ? '<span class="nbtag">сосед</span>' : "") + "</span>" +
+      '<span class="info"><span class="num">' + numHtml(it.id, it.nb ? "" : searchDigits()) + (it.nb ? '<span class="nbtag">сосед</span>' : "") + (activeOrdersFor(it.id).some(function (x) { return x.it.state !== "done"; }) ? '<span class="otag">в заказе</span>' : "") + "</span>" +
       '<span class="fabric' + (r.fabric ? "" : " none") + '">' + esc(r.fabric || "ткань не указана") + "</span>" +
       (tags ? '<span class="tagline">' + tags + "</span>" : "") +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") + "</span>" + rackHtml(r) + "</button></li>";
@@ -1214,7 +1292,7 @@ form { display: grid; gap: 16px; }
         (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + "</div>" +
         '<div class="label"><small>Рулон</small><div class="big-num">' + numHtml(s.id, "") + "</div></div>" +
         '<div class="where">' + rackHtml(r, true, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
-        c1Html(r) + nbHtml(s.id) +
+        inOrdersHtml(s.id) + c1Html(r) + nbHtml(s.id) +
         by + '<div class="hist"><h3>История</h3><div id="hist" class="muted">Загрузка…</div></div>' +
         (r.deleted
           ? '<div class="actions"><button class="btn primary" type="button" data-act="restore-one">Вернуть на склад</button><button class="btn danger" type="button" data-act="ask-purge-one">Стереть навсегда</button></div>'
@@ -1487,6 +1565,8 @@ form { display: grid; gap: 16px; }
       state.q = q; $("#q").value = q; state.tab = r.id && state.rolls.get(r.id) && state.rolls.get(r.id).deleted ? "trash" : "active"; lastListHtml = null; render();
       if (r.id) openSheet({ type: "detail", id: r.id });
       else if (!r.many) toast("Рулона " + code + " нет в базе. Его можно добавить.", true);
+    } else if (target.indexOf("order:") === 0) {
+      orderAddItem(+target.slice(6), code);
     } else if (target === "roll") {
       var f = $("#f-roll"); if (f) { f.value = code; fieldErr("roll", ""); }
     }
@@ -1664,6 +1744,333 @@ form { display: grid; gap: 16px; }
     var M = state.mode2, e = M && M.log[i]; if (!e || e.st !== "err") return;
     e.st = "wait"; e.retry = false; drawLog();
     M.queue = M.queue.then(function () { return modeProcess(e); });
+  }
+
+  /* ---------- заказы из Telegram ---------- */
+  var OR = { map: new Map(), last: "", timer: null, loaded: false, missing: false, open: false, tab: "active", chat: "all", busy: null,
+    ocrBusy: false, photos: {}, adding: null, known: null };
+  var OCR_LIB = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+  function ordersStart() {
+    ordersStop();
+    if (!repo || repo.kind !== "shared") return;
+    OR.map = new Map(); OR.last = ""; OR.loaded = false; OR.missing = false; OR.known = null;
+    ordersLoad(true);
+    OR.timer = setInterval(function () { if (!document.hidden && navigator.onLine) ordersLoad(false); }, 10000);
+  }
+  function ordersStop() { clearInterval(OR.timer); OR.timer = null; }
+  function ordersLoad(full) {
+    if (OR.busy) return OR.busy;
+    var path;
+    if (full || !OR.last) {
+      var since = new Date(Date.now() - 14 * 864e5).toISOString();
+      path = "orders?select=*,order_items(*)&or=(status.neq.done,created_at.gte." + encodeURIComponent(since) + ")&order=created_at.desc";
+      OR.busy = apiAll(path);
+    } else {
+      path = "orders?select=*,order_items(*)&changed_at=gte." + encodeURIComponent(new Date(Date.parse(OR.last) - 60000).toISOString()) + "&order=changed_at.asc&limit=500";
+      OR.busy = api(path);
+    }
+    return OR.busy.then(function (rows) {
+      OR.busy = null;
+      var fresh = [];
+      (rows || []).forEach(function (o) {
+        (o.order_items || []).sort(function (a, b) { return a.id - b.id; });
+        if (OR.known && !OR.known.has(o.id)) fresh.push(o);
+        OR.map.set(o.id, o);
+        if (o.changed_at && Date.parse(o.changed_at) > (Date.parse(OR.last) || 0)) OR.last = o.changed_at;
+      });
+      if (!OR.known) OR.known = new Set();
+      OR.map.forEach(function (o, id) { OR.known.add(id); });
+      OR.loaded = true; OR.missing = false;
+      if (fresh.length) {
+        var f = fresh[fresh.length - 1];
+        toast("Новый заказ: " + (f.author || "без имени") + (f.chat_title ? ", " + f.chat_title : ""));
+        var b = $("#ordersBtn"); if (b) { b.classList.remove("ping"); void b.offsetWidth; b.classList.add("ping"); }
+      }
+      if (full || (rows && rows.length)) ordersChanged();
+      ocrNext();
+    }, function (e) {
+      OR.busy = null;
+      if (e && (e.status === 404 || e.status === 400)) { OR.missing = true; ordersChanged(); }
+    });
+  }
+  function ordersChanged() {
+    OR.byRoll = new Map();
+    OR.map.forEach(function (o) {
+      (o.order_items || []).forEach(function (it) {
+        if (it.state === "done" && o.status === "done") return;
+        var a = OR.byRoll.get(it.roll_id); if (!a) OR.byRoll.set(it.roll_id, a = []);
+        a.push({ o: o, it: it });
+      });
+    });
+    var b = $("#ordersBtn");
+    if (b) {
+      b.hidden = OR.missing || !repo || repo.kind !== "shared";
+      var n = 0; OR.map.forEach(function (o) { if (o.status !== "done") n++; });
+      var badge = b.querySelector(".badge"); badge.textContent = n > 99 ? "99+" : String(n); badge.hidden = !n;
+    }
+    if (OR.open) drawOrders();
+    var s = state.sheet;
+    if (s && s.type === "detail" && $("#inOrders")) $("#inOrders").outerHTML = inOrdersHtml(s.id);
+    lastListHtml = null; if (state.mode === "shared" && !state.selecting) render();
+  }
+  function activeOrdersFor(id) { return (OR.byRoll && OR.byRoll.get(id)) || []; }
+
+  /* ---------- экран заказов ---------- */
+  function openOrders() {
+    OR.open = true; closeSheet(true);
+    $("#ordersRoot").innerHTML = '<div class="orders in" role="dialog" aria-label="Заказы"><div class="mode-in" id="ordersIn"></div></div>';
+    drawOrders();
+    if (!OR.loaded) ordersLoad(true);
+  }
+  function closeOrders() {
+    if (!OR.open) return false;
+    OR.open = false; OR.adding = null;
+    var root = $("#ordersRoot"), m = root.firstChild;
+    if (m) { m.classList.add("out"); setTimeout(function () { if (!OR.open) root.innerHTML = ""; }, 220); }
+    return true;
+  }
+  function orderList() {
+    var list = [];
+    OR.map.forEach(function (o) {
+      if (OR.chat !== "all" && String(o.chat_id) !== OR.chat) return;
+      if (OR.tab === "active" ? o.status === "done" : o.status !== "done") return;
+      list.push(o);
+    });
+    list.sort(function (a, b) { return OR.tab === "active" ? Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.done_at || b.changed_at) - Date.parse(a.done_at || a.changed_at); });
+    return list;
+  }
+  function drawOrders() {
+    var box = $("#ordersIn"); if (!box) return;
+    var sc = box.parentNode.scrollTop;
+    var chats = new Map(), na = 0, nd = 0;
+    OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (o.status === "done") nd++; else na++; });
+    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="orders-close" aria-label="Назад">←</button><h2>Заказы</h2></div>' +
+      '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
+      '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
+      '<button class="tab" type="button" data-act="o-tab" data-id="done" aria-selected="' + (OR.tab === "done") + '">Выполнены<span class="n">' + nd + "</span></button></div>";
+    if (chats.size > 1) {
+      h += '<div class="o-chats"><button type="button" class="ochip' + (OR.chat === "all" ? " on" : "") + '" data-act="o-chat" data-id="all">Все группы</button>';
+      chats.forEach(function (t, id) { h += '<button type="button" class="ochip' + (OR.chat === id ? " on" : "") + '" data-act="o-chat" data-id="' + esc(id) + '">' + esc(t) + "</button>"; });
+      h += "</div>";
+    }
+    var list = orderList();
+    if (!OR.loaded) h += '<p class="empty">Загрузка заказов…</p>';
+    else if (!list.length) h += '<p class="empty"><strong>' + (OR.tab === "active" ? "Заказов в работе нет" : "Выполненных пока нет") + "</strong>" +
+      (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "") + "</p>";
+    else h += '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
+    box.innerHTML = h;
+    box.parentNode.scrollTop = sc;
+    list.slice(0, 40).forEach(function (o) { if (o.photo_path) loadThumb(o); });
+  }
+  function itemsDone(o) { var n = 0; (o.order_items || []).forEach(function (i) { if (i.state === "done") n++; }); return n; }
+  function orderCard(o) {
+    var its = o.order_items || [], n = its.length, d = itemsDone(o), me = (state.user && state.user.name) || "";
+    var h = '<article class="ocard st-' + o.status + '" id="oc-' + o.id + '">' +
+      '<div class="oc-head"><span class="oc-chat">' + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time></div>" +
+      '<div class="oc-who">' + esc(o.author || "Без имени") + (o.doc_no ? '<span class="oc-doc">' + esc(o.doc_no) + "</span>" : "") + "</div>";
+    if (o.text) h += '<p class="oc-text">' + esc(o.text) + "</p>";
+    if (o.photo_path) {
+      h += '<button type="button" class="oc-photo" data-act="o-photo" data-id="' + o.id + '"><img alt="Фото документа" id="ph-' + o.id + '"' + (OR.photos[o.photo_path] && OR.photos[o.photo_path].url ? ' src="' + OR.photos[o.photo_path].url + '"' : "") + "></button>";
+      if (o.ocr_state === "pending" || o.ocr_state === "work") h += '<p class="oc-ocr"><i class="spin"></i>Читаю номера с фото…</p>';
+      else if (o.ocr_state === "fail") h += '<p class="oc-ocr warn">Номера на фото не найдены. Добавьте рулоны вручную или сканером.</p>';
+    }
+    if (n) {
+      h += '<ul class="oc-items">' + its.map(function (it) { return itemRow(o, it, me); }).join("") + "</ul>";
+      h += '<div class="oc-foot"><div class="oc-prog"><i style="--p:' + (n ? d / n : 0) + '"></i></div><span>' + (d === n ? "Собран" + (o.done_by_name ? ": " + esc(o.done_by_name) : "") : "Собрано " + d + " из " + n + (o.taken_by_name ? ", собирает " + esc(o.taken_by_name) : "")) + "</span></div>";
+    } else {
+      h += '<div class="oc-foot solo">' + soloActions(o, me) + "</div>";
+    }
+    if (OR.adding === o.id) {
+      h += '<form class="o-addform" data-id="' + o.id + '" novalidate autocomplete="off"><input type="text" inputmode="numeric" class="mono" placeholder="Номер рулона" id="oadd-' + o.id + '">' +
+        '<button type="submit" class="btn primary">Добавить</button><button type="button" class="icon-btn" data-act="o-scan" data-id="' + o.id + '" aria-label="Сканировать">' + ICON_SCAN + "</button></form>";
+    } else if (o.status !== "done") {
+      h += '<button type="button" class="link-btn oc-add" data-act="o-add" data-id="' + o.id + '">+ Добавить рулон</button>';
+    }
+    return h + "</article>";
+  }
+  function soloActions(o, me) {
+    if (o.status === "done") return '<span class="ost done">✓ Выполнил ' + esc(o.done_by_name || "") + '</span><button type="button" class="mini" data-act="o-reset" data-id="' + o.id + '">Вернуть</button>';
+    if (o.status === "taken") return '<span class="ost taken">' + (o.taken_by_name === me ? "Вы взяли" : "Взял " + esc(o.taken_by_name || "")) + '</span><button type="button" class="mini" data-act="o-reset" data-id="' + o.id + '">Отказаться</button><button type="button" class="btn primary sm" data-act="o-done" data-id="' + o.id + '">Готово</button>';
+    return '<button type="button" class="btn sm" data-act="o-take" data-id="' + o.id + '">Беру</button><button type="button" class="btn primary sm" data-act="o-done" data-id="' + o.id + '">Готово</button>';
+  }
+  function itemRow(o, it, me) {
+    var r = state.rolls.get(it.roll_id), act;
+    if (it.state === "done") act = '<span class="ost done">✓ ' + esc(it.done_by_name || "") + '</span><button type="button" class="mini" data-act="oi-reset" data-id="' + it.id + '" aria-label="Вернуть в работу">↺</button>';
+    else if (it.state === "taken") act = '<span class="ost taken">' + (it.taken_by_name === me ? "Вы взяли" : esc(it.taken_by_name || "")) + '</span><button type="button" class="btn primary sm" data-act="oi-done" data-id="' + it.id + '">Готово</button>';
+    else act = '<button type="button" class="btn sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
+    return '<li class="oi st-' + it.state + '"><button type="button" class="oi-main" data-act="oi-open" data-id="' + esc(it.roll_id) + '">' +
+      "<span" + swatchStyle(r && r.color) + "></span>" +
+      '<span class="oi-info"><b class="num">' + numHtml(it.roll_id, "") + "</b>" +
+      (r ? '<span class="oi-meta">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + (r.qty != null ? " · " + esc(qtyText(r)) : "") + "</span>" : '<span class="oi-meta warn">нет в базе</span>') +
+      "</span>" + (r ? rackHtml(r) : "") + "</button>" +
+      '<div class="oi-act">' + act + (it.source === "manual" && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div></li>";
+  }
+  /* блок «В заказах» в карточке рулона */
+  function inOrdersHtml(id) {
+    var a = activeOrdersFor(id);
+    if (!a.length) return '<div id="inOrders" hidden></div>';
+    var me = (state.user && state.user.name) || "";
+    return '<div id="inOrders" class="inorders"><h3>В заказе</h3>' + a.map(function (x) {
+      var o = x.o, it = x.it, act;
+      if (it.state === "done") act = '<span class="ost done">✓ ' + esc(it.done_by_name || "") + "</span>";
+      else if (it.state === "taken") act = '<span class="ost taken">' + (it.taken_by_name === me ? "Вы взяли" : esc(it.taken_by_name || "")) + '</span><button type="button" class="btn primary sm" data-act="oi-done" data-id="' + it.id + '">Готово</button>';
+      else act = '<button type="button" class="btn primary sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
+      return '<div class="io"><div class="io-t"><b>' + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  /* ---------- действия ---------- */
+  function setItem(id, st) {
+    if (!guard()) return;
+    patchLocalItem(id, st);
+    api("order_items?id=eq." + id, { method: "PATCH", body: { state: st }, prefer: "return=minimal" })
+      .then(function () { return ordersLoad(false); })["catch"](function (e) { fail(e); ordersLoad(true); });
+  }
+  function patchLocalItem(id, st) {
+    var me = (state.user && state.user.name) || "";
+    OR.map.forEach(function (o) {
+      (o.order_items || []).forEach(function (it) {
+        if (it.id !== id) return;
+        it.state = st;
+        if (st === "taken") it.taken_by_name = me;
+        if (st === "done") { it.done_by_name = me; it.taken_by_name = it.taken_by_name || me; }
+        if (st === "new") { it.taken_by_name = null; it.done_by_name = null; }
+        var n = o.order_items.length, d = itemsDone(o), busy = o.order_items.some(function (i) { return i.state !== "new"; });
+        o.status = d === n ? "done" : busy ? "taken" : "open";
+      });
+    });
+    if (st === "done") beep(true);
+    ordersChanged();
+  }
+  function setOrder(id, st) {
+    if (!guard()) return;
+    var o = OR.map.get(id), me = (state.user && state.user.name) || "";
+    if (o) { o.status = st; if (st === "taken") o.taken_by_name = me; if (st === "done") { o.done_by_name = me; o.taken_by_name = o.taken_by_name || me; } if (st === "open") o.taken_by_name = o.done_by_name = null; }
+    if (st === "done") beep(true);
+    ordersChanged();
+    api("orders?id=eq." + id, { method: "PATCH", body: { status: st }, prefer: "return=minimal" })
+      .then(function () { return ordersLoad(false); })["catch"](function (e) { fail(e); ordersLoad(true); });
+  }
+  function delItem(id) {
+    if (!guard()) return;
+    api("order_items?id=eq." + id, { method: "DELETE", prefer: "return=minimal" }).then(function () { OR.map.forEach(function (o) { o.order_items = (o.order_items || []).filter(function (i) { return i.id !== id; }); }); ordersChanged(); return ordersLoad(false); })["catch"](fail);
+  }
+  function orderAddItem(oid, raw) {
+    var code = String(raw || "").replace(/\s/g, "");
+    if (!/^\d[\d-]{0,29}$/.test(code)) { toast("Введите номер рулона: только цифры.", true); return; }
+    var res = resolveRoll(code);
+    if (res.many) { toast("С этим номером несколько рулонов: " + res.many.join(", "), true); return; }
+    var id = res.id || code;
+    if (!guard()) return;
+    OR.adding = null;
+    api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: [{ order_id: oid, roll_id: id, source: "manual" }], prefer: "resolution=ignore-duplicates,return=minimal" })
+      .then(function () { toast("Рулон " + id + " добавлен в заказ"); return ordersLoad(false); })["catch"](fail);
+    ordersChanged();
+  }
+
+  /* ---------- фото документа ---------- */
+  function photoBlob(path) {
+    var c = OR.photos[path] || (OR.photos[path] = {});
+    if (c.p) return c.p;
+    c.p = ensureToken().then(function (t) {
+      return fetch(CFG.url.replace(/\/+$/, "") + "/storage/v1/object/authenticated/orders/" + path.split("/").map(encodeURIComponent).join("/"), { headers: { apikey: CFG.key, Authorization: "Bearer " + t } });
+    }).then(function (r) {
+      if (!r.ok) throw new Error("photo " + r.status);
+      return r.blob();
+    }).then(function (b) { c.blob = b; c.url = URL.createObjectURL(b); return b; });
+    c.p["catch"](function () { delete OR.photos[path]; });
+    return c.p;
+  }
+  function loadThumb(o) {
+    photoBlob(o.photo_path).then(function () { var im = $("#ph-" + o.id); if (im && !im.src) im.src = OR.photos[o.photo_path].url; })["catch"](function () {});
+  }
+  function openPhoto(id) {
+    var o = OR.map.get(id); if (!o || !o.photo_path) return;
+    var root = $("#scanRoot");
+    root.innerHTML = '<div class="viewer"><div class="scan-top"><b>' + esc(o.author || "Фото") + '</b><button class="x" type="button" data-act="viewer-close" aria-label="Закрыть">✕</button></div><div class="v-img"><img alt="Фото документа"></div><p class="scan-hint">Нажмите на фото, чтобы увеличить</p></div>';
+    photoBlob(o.photo_path).then(function () { var im = root.querySelector("img"); if (im) im.src = OR.photos[o.photo_path].url; })["catch"](function () { toast("Фото не загрузилось.", true); });
+  }
+  function closeViewer() {
+    var v = $("#scanRoot .viewer"); if (!v) return false;
+    $("#scanRoot").innerHTML = ""; return true;
+  }
+
+  /* ---------- номера с фото: распознавание на телефоне ---------- */
+  var ocrLib = null;
+  function loadOcr() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    if (ocrLib) return ocrLib;
+    ocrLib = new Promise(function (ok, bad) {
+      var s = document.createElement("script"); s.src = OCR_LIB; s.async = true;
+      s.onload = function () { window.Tesseract ? ok(window.Tesseract) : bad(new Error("no tesseract")); };
+      s.onerror = function () { ocrLib = null; bad(new Error("ocr load")); };
+      document.head.appendChild(s);
+    });
+    return ocrLib;
+  }
+  function serialsFromText(text) {
+    // ровно 13 цифр подряд (O читается как 0, I и l как 1) и верная контрольная цифра
+    var out = [];
+    String(text).split(/[^0-9OoОоIl]+/).forEach(function (t) {
+      if (!/\d/.test(t)) return;
+      var d = t.replace(/[OoОо]/g, "0").replace(/[Il]/g, "1");
+      if (/^\d{13}$/.test(d) && eanCheck(d) && out.indexOf(d) === -1) out.push(d);
+    });
+    return out;
+  }
+  function docFromText(text) {
+    var t = String(text), no = "", who = "";
+    var m = /(?:Замовлення|Заказ)[^\n№]{0,40}(?:№|N[oо°]?\.?|Ne)\s*(\d{3,})/i.exec(t);
+    if (m) no = "№ " + m[1];
+    var w = /(?:Замовник|Заказчик)[:\s]+([^\n]{3,60})/i.exec(t);
+    if (w) who = w[1].replace(/\s+/g, " ").trim();
+    return [no, who].filter(Boolean).join(", ");
+  }
+  function ocrImage(blob) {
+    return loadOcr().then(function (T) {
+      var url = URL.createObjectURL(blob);
+      return new Promise(function (ok, bad) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = bad; im.src = url; }).then(function (im) {
+        // мелкие скриншоты увеличиваем: так цифры читаются надёжнее
+        var k = Math.min(3, Math.max(1, 2400 / im.naturalWidth)), c = document.createElement("canvas");
+        c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+        var g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        return T.createWorker("ukr+eng").then(function (w) {
+          return w.recognize(c).then(function (r) { w.terminate(); return (r && r.data && r.data.text) || ""; }, function (e) { w.terminate(); throw e; });
+        });
+      });
+    });
+  }
+  function ocrNext() {
+    if (OR.ocrBusy || !repo || repo.kind !== "shared" || Date.now() - (OR.ocrFailAt || 0) < 60000) return;
+    var cand = null, now = Date.now();
+    OR.map.forEach(function (o) {
+      if (!o.photo_path) return;
+      var stale = o.ocr_state === "work" && now - Date.parse(o.changed_at) > 180000;
+      if ((o.ocr_state === "pending" || stale) && (!cand || Date.parse(o.created_at) > Date.parse(cand.created_at))) cand = o;
+    });
+    if (!cand) return;
+    OR.ocrBusy = true;
+    var o = cand;
+    api("orders?id=eq." + o.id + "&ocr_state=in.(pending,work)", { method: "PATCH", body: { ocr_state: "work" }, prefer: "return=representation" }).then(function (rows) {
+      if (!rows || !rows.length) throw { skip: true };
+      return photoBlob(o.photo_path);
+    }).then(ocrImage).then(function (text) {
+      var nums = serialsFromText(text), doc = docFromText(text);
+      var p = nums.length ? api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: nums.map(function (x) { var rr = resolveRoll(x); return { order_id: o.id, roll_id: rr.id || x, source: "photo" }; }), prefer: "resolution=ignore-duplicates,return=minimal" }) : Promise.resolve();
+      return p.then(function () {
+        return api("orders?id=eq." + o.id, { method: "PATCH", body: { ocr_state: nums.length ? "done" : "fail", doc_no: doc }, prefer: "return=minimal" });
+      });
+    }).then(function () {
+      OR.ocrBusy = false; return ordersLoad(false);
+    }, function (e) {
+      OR.ocrBusy = false;
+      if (e && e.skip) { ordersLoad(false); return; }
+      // не получилось (нет сети или библиотека не загрузилась): вернём в очередь, попробуем позже
+      OR.ocrFailAt = Date.now();
+      api("orders?id=eq." + o.id + "&ocr_state=eq.work", { method: "PATCH", body: { ocr_state: "pending" }, prefer: "return=minimal" })["catch"](function () {});
+      setTimeout(ocrNext, 61000);
+    });
   }
 
   /* ---------- выбор из списка ---------- */
@@ -1941,6 +2348,7 @@ form { display: grid; gap: 16px; }
     var at = t.closest("[data-auth-tab]");
     if (at) { state.authTab = at.getAttribute("data-auth-tab"); state.authNote = ""; render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
+    var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
     var rt = t.closest("[data-retry]"); if (rt) { modeRetry(+rt.getAttribute("data-retry")); return; }
     var pv = t.closest("[data-pk-val]");
@@ -1956,6 +2364,22 @@ form { display: grid; gap: 16px; }
       case "scan-close": closeScan(); return;
       case "torch": Scan.toggleTorch().then(function (on) { el.classList.toggle("on", on); }); return;
       case "mode-open": openMode(); return;
+      case "orders-open": openOrders(); return;
+      case "orders-close": closeOrders(); return;
+      case "o-tab": OR.tab = el.getAttribute("data-id"); drawOrders(); var oi = $("#ordersRoot .orders"); if (oi) oi.scrollTop = 0; return;
+      case "o-chat": OR.chat = el.getAttribute("data-id"); drawOrders(); return;
+      case "oi-take": setItem(+el.getAttribute("data-id"), "taken"); return;
+      case "oi-done": setItem(+el.getAttribute("data-id"), "done"); return;
+      case "oi-reset": setItem(+el.getAttribute("data-id"), "new"); return;
+      case "oi-del": delItem(+el.getAttribute("data-id")); return;
+      case "o-take": setOrder(+el.getAttribute("data-id"), "taken"); return;
+      case "o-done": setOrder(+el.getAttribute("data-id"), "done"); return;
+      case "o-reset": setOrder(+el.getAttribute("data-id"), "open"); return;
+      case "o-add": OR.adding = +el.getAttribute("data-id"); drawOrders(); setTimeout(function () { var f = $("#oadd-" + OR.adding); if (f) f.focus(); }, 50); return;
+      case "o-scan": openScan("order:" + el.getAttribute("data-id")); return;
+      case "o-photo": openPhoto(+el.getAttribute("data-id")); return;
+      case "viewer-close": closeViewer(); return;
+      case "oi-open": var rid2 = el.getAttribute("data-id"); if (state.rolls.has(rid2)) openSheet({ type: "detail", id: rid2 }); else toast("Рулона " + rid2 + " нет в базе.", true); return;
       case "nb-toggle": state.nb = !state.nb; lsSet("sklad_nb", state.nb ? "1" : null); state.seen.clear(); lastListHtml = null; render(); return;
       case "open-roll": openSheet({ type: "detail", id: el.getAttribute("data-id") }); return;
       case "mode-close": closeMode(); return;
@@ -1990,6 +2414,7 @@ form { display: grid; gap: 16px; }
   document.addEventListener("submit", function (e) {
     e.preventDefault();
     if (e.target.matches("#form")) saveForm();
+    else if (e.target.matches(".o-addform")) { var oid = +e.target.getAttribute("data-id"); orderAddItem(oid, val("#oadd-" + oid)); }
     else if (e.target.matches("#modeForm")) modeStart();
     else if (e.target.matches("#modeAdd")) modeAdd(val("#m-code"), false);
     else if (e.target.matches("#authForm")) submitAuth();
@@ -2019,9 +2444,11 @@ form { display: grid; gap: 16px; }
   /* кнопка «назад» на Android */
   function backAction() {
     if (state.pick) { closePicker(); return true; }
+    if (closeViewer()) return true;
     if (closeScan()) return true;
     if (state.mode2) { closeMode(); return true; }
     if (state.sheet) { closeSheet(); return true; }
+    if (closeOrders()) return true;
     if (state.selecting) { exitSelect(); return true; }
     if (state.q) { state.q = ""; $("#q").value = ""; render(); return true; }
     return false;
