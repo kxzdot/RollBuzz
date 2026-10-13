@@ -23,6 +23,11 @@ jobs:
       - name: Установка Capacitor
         run: npm install --no-audit --no-fund
 
+      - name: Голосовой ввод (необязательно)
+        # если модуль распознавания речи не установится, приложение соберётся без голосового ввода
+        continue-on-error: true
+        run: npm install @capacitor-community/speech-recognition@^7.0.0 --no-audit --no-fund
+
       - name: Создание Android-проекта
         run: |
           if [ ! -d android ]; then npx cap add android; fi
