@@ -393,6 +393,26 @@ form { display: grid; gap: 16px; }
   .dock-btn { animation: pop 0.45s var(--spring) 0.05s both; }
 }
 
+
+/* ---------- соседи ---------- */
+.ftog { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px 0 10px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 600; font-size: 0.9375rem; flex: none; }
+.ftog svg { width: 22px; height: 22px; }
+.ftog[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.count { margin: 0 2px 8px; }
+.nbtag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 650; vertical-align: 3px; background: var(--accent-soft); color: var(--accent); }
+.item.nbr .row { border-style: dashed; }
+.nb h3 { margin: 0; font-size: 0.9375rem; font-weight: 650; }
+.nb h3 span { font-family: var(--f-mono); font-weight: 500; color: var(--muted); margin-left: 4px; }
+.nb .hint { margin: 2px 0 8px; }
+.nb-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.nb-item { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "num qty" "place qty"; gap: 0 10px; align-items: center; text-align: left; padding: 9px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+.nb-item .num { grid-area: num; font-family: var(--f-mono); font-weight: 600; font-size: 0.9375rem; overflow-wrap: anywhere; }
+.nb-item .nb-place { grid-area: place; font-size: 0.875rem; font-weight: 600; color: var(--fg); }
+.nb-item .nb-place.none { color: var(--muted); font-weight: 500; }
+.nb-item .qty { grid-area: qty; }
+.nb-item.me { background: var(--accent-soft); border-color: var(--accent); cursor: default; color: inherit; }
+.nb-item.me .nb-place { color: var(--accent); }
+
 /* ---------- движение ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .tabs .ind { transition: transform 0.38s var(--spring); }
@@ -493,9 +513,10 @@ form { display: grid; gap: 16px; }
 
   <div id="banner"></div>
   <div class="count-row">
-    <p class="count" id="count" aria-live="polite"></p>
+    <button class="ftog" id="nbToggle" type="button" data-act="nb-toggle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="9.5" y="7" width="5" height="10" rx="2.5" fill="currentColor"/><rect x="16.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Соседи</span></button>
     <button class="link-btn" id="selStart" type="button" data-act="sel-start" hidden>Выбрать</button>
   </div>
+  <p class="count" id="count" aria-live="polite"></p>
   <ul class="list" id="list"></ul>
 </div>
 
@@ -517,7 +538,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.6";
+  var APP_VERSION = "1.7";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -534,7 +555,7 @@ form { display: grid; gap: 16px; }
     rolls: new Map(), q: "", tab: "active", sheet: null, online: navigator.onLine,
     mode: "auth", loaded: false, user: null, authTab: "login", authNote: "",
     busy: false, selecting: false, sel: new Set(), seen: new Set(),
-    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null
+    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null, nb: false
   };
   var repo = null, session = null, refreshing = null;
   var toastTimer = null, lpTimer = null, lpFired = false, lastListHtml = null;
@@ -900,7 +921,57 @@ form { display: grid; gap: 16px; }
   }
 
   /* ---------- отрисовка списка ---------- */
+  /* ---------- соседи: та же ткань и цвет, номера идут почти подряд (одна серия) ---------- */
+  var NB_GAP = 10, nbCache = { rolls: null, map: null };
+  function rollNum(id) {
+    var m = /^(\d+)/.exec(id); if (!m) return null;
+    var d = m[1], n = Number(d);
+    return d.length === 13 && d.charAt(0) === "2" ? Math.floor(n / 10) : n;   // у штрихкода 1С последняя цифра контрольная
+  }
+  function nbKey(r) { return r.fabric && r.color ? fold(r.fabric) + "|" + fold(r.color) : ""; }
+  function nbIndex() {
+    if (nbCache.rolls === state.rolls) return nbCache.map;
+    var map = new Map();
+    state.rolls.forEach(function (r, id) {
+      var k = nbKey(r), n = rollNum(id); if (!k || n == null) return;
+      var a = map.get(k); if (!a) map.set(k, a = []);
+      a.push({ id: id, n: n, del: !!r.deleted });
+    });
+    map.forEach(function (a) { a.sort(function (x, y) { return x.n - y.n || (x.id < y.id ? -1 : 1); }); });
+    nbCache = { rolls: state.rolls, map: map };
+    return map;
+  }
+  /* вся серия рулона по порядку номеров (вместе с ним самим) */
+  function series(id, withDeleted) {
+    var r = state.rolls.get(id); if (!r) return [];
+    var a = nbIndex().get(nbKey(r)); if (!a) return [id];
+    var list = a.filter(function (x) { return withDeleted || !x.del || x.id === id; });
+    var i = -1; for (var k = 0; k < list.length; k++) if (list[k].id === id) { i = k; break; }
+    if (i < 0) return [id];
+    var lo = i, hi = i;
+    while (lo > 0 && list[lo].n - list[lo - 1].n <= NB_GAP) lo--;
+    while (hi < list.length - 1 && list[hi + 1].n - list[hi].n <= NB_GAP) hi++;
+    return list.slice(lo, hi + 1).map(function (x) { return x.id; });
+  }
   function visible() {
+    var base = visibleBase();
+    if (!state.nb || !state.q.trim() || !base.length) return base;
+    var wantDeleted = state.tab === "trash", seen = new Set(), out = [];
+    base.slice(0, 40).forEach(function (it) {
+      if (seen.has(it.id)) return;
+      series(it.id, wantDeleted).forEach(function (id) {
+        if (seen.has(id)) return;
+        var r = state.rolls.get(id);
+        if (!r || !!r.deleted !== wantDeleted) return;
+        seen.add(id);
+        out.push({ id: id, r: r, nb: id !== it.id && !base.some(function (b) { return b.id === id; }) });
+      });
+    });
+    base.slice(40).forEach(function (it) { if (!seen.has(it.id)) { seen.add(it.id); out.push(it); } });
+    out.nbHits = base.length;
+    return out;
+  }
+  function visibleBase() {
     var wantDeleted = state.tab === "trash";
     var q = state.q.trim().toLowerCase();
     var digits = q.replace(/\s/g, "");
@@ -957,10 +1028,10 @@ form { display: grid; gap: 16px; }
       : (r.updatedBy ? r.updatedBy + ", " + ago(r.updatedAt) : "");
     var tags = (r.color ? '<span class="cname">' + colorHtml(r.color) + "</span>" : "") +
       (r.qty != null ? '<span class="qty' + (r.qty <= 0 ? " zero" : "") + '">' + esc(qtyText(r)) + "</span>" : "");
-    return '<li class="item' + (enter ? " enter" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
+    return '<li class="item' + (enter ? " enter" : "") + (it.nb ? " nbr" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
       "<span" + swatchStyle(r.color) + "></span>" +
       '<span class="chk" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.6 3.6L18.2 10"/></svg></span>' +
-      '<span class="info"><span class="num">' + numHtml(it.id, searchDigits()) + "</span>" +
+      '<span class="info"><span class="num">' + numHtml(it.id, it.nb ? "" : searchDigits()) + (it.nb ? '<span class="nbtag">сосед</span>' : "") + "</span>" +
       '<span class="fabric' + (r.fabric ? "" : " none") + '">' + esc(r.fabric || "ткань не указана") + "</span>" +
       (tags ? '<span class="tagline">' + tags + "</span>" : "") +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") + "</span>" + rackHtml(r) + "</button></li>";
@@ -988,6 +1059,7 @@ form { display: grid; gap: 16px; }
     $("#tabTrash").setAttribute("aria-selected", state.tab === "trash");
     $("#qClear").hidden = !state.q;
     $("#qScan").hidden = !!state.q;
+    $("#nbToggle").setAttribute("aria-pressed", state.nb ? "true" : "false");
     var net = $("#net");
     net.className = "net" + (state.online ? "" : " off");
     $("#netText").textContent = state.online ? "Онлайн" : "Нет соединения";
@@ -1013,7 +1085,9 @@ form { display: grid; gap: 16px; }
       var txt;
       if (state.tab === "trash") txt = items.length ? "Удалено рулонов: " + items.length + ". Отсюда их можно вернуть." : "";
       else if (state.tab === "norack") txt = items.length ? (state.q ? "Найдено без места: " + items.length : "Рулоны без стеллажа: " + items.length + ". Откройте рулон и укажите место") : "";
-      else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : "");
+      else if (state.q && items.nbHits != null) txt = "Найдено: " + items.nbHits + ", вместе с соседями: " + items.length;
+      else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : (state.nb ? "" : ""));
+      if (state.nb && !state.q.trim() && items.length) txt = "Соседи включены: введите номер рулона, и рядом появится вся его серия";
       if (items.length > 100) txt += ". Показаны первые 100, уточните номер.";
       $("#count").textContent = txt;
       $("#selStart").hidden = state.selecting || !items.length;
@@ -1104,6 +1178,20 @@ form { display: grid; gap: 16px; }
   }
   var ACT = { add: "добавил", edit: "изменил", "delete": "удалил", restore: "вернул", purge: "стёр" };
 
+  function nbHtml(id) {
+    var r = state.rolls.get(id);
+    var ser = series(id, !!(r && r.deleted)), others = ser.filter(function (x) { return x !== id; });
+    if (!others.length) return "";
+    var pos = ser.indexOf(id);
+    return '<div class="nb"><h3>Соседи из серии <span>' + others.length + "</span></h3>" +
+      '<p class="hint">Та же ткань и цвет, номера почти подряд.</p><ul class="nb-list">' +
+      ser.slice(Math.max(0, pos - 12), pos + 13).map(function (x) {
+        var o = state.rolls.get(x), me = x === id;
+        return "<li><button type=\"button\" class=\"nb-item" + (me ? " me" : "") + '"' + (me ? " disabled" : ' data-act="open-roll" data-id="' + esc(x) + '"') + '><span class="num">' + numHtml(x, "") + "</span>" +
+          '<span class="nb-place' + (o.rack ? "" : " none") + '">' + (me ? "этот рулон" : (o.rack ? esc(place(o)) : "место не указано")) + "</span>" +
+          (o.qty != null ? '<span class="qty">' + esc(qtyText(o)) + "</span>" : "") + "</button></li>";
+      }).join("") + "</ul>" + (others.length > 24 ? '<p class="hint">Показаны ближайшие 24.</p>' : "") + "</div>";
+  }
   function c1Html(r) {
     if (r.qty == null && !r.warehouse && !r.article && !r.note) return "";
     var h = '<dl class="facts c1">';
@@ -1126,7 +1214,7 @@ form { display: grid; gap: 16px; }
         (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + "</div>" +
         '<div class="label"><small>Рулон</small><div class="big-num">' + numHtml(s.id, "") + "</div></div>" +
         '<div class="where">' + rackHtml(r, true, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
-        c1Html(r) +
+        c1Html(r) + nbHtml(s.id) +
         by + '<div class="hist"><h3>История</h3><div id="hist" class="muted">Загрузка…</div></div>' +
         (r.deleted
           ? '<div class="actions"><button class="btn primary" type="button" data-act="restore-one">Вернуть на склад</button><button class="btn danger" type="button" data-act="ask-purge-one">Стереть навсегда</button></div>'
@@ -1868,6 +1956,8 @@ form { display: grid; gap: 16px; }
       case "scan-close": closeScan(); return;
       case "torch": Scan.toggleTorch().then(function (on) { el.classList.toggle("on", on); }); return;
       case "mode-open": openMode(); return;
+      case "nb-toggle": state.nb = !state.nb; lsSet("sklad_nb", state.nb ? "1" : null); state.seen.clear(); lastListHtml = null; render(); return;
+      case "open-roll": openSheet({ type: "detail", id: el.getAttribute("data-id") }); return;
       case "mode-close": closeMode(); return;
       case "mode-setup": if (state.mode2) { Scan.stop(); state.mode2.step = "setup"; drawMode(true); } return;
       case "mode-cam": if (state.mode2) { state.mode2.cam = !state.mode2.cam; if (!state.mode2.cam) Scan.stop(); drawMode(false); } return;
@@ -1947,6 +2037,8 @@ form { display: grid; gap: 16px; }
       capApp.addListener("backButton", function () { if (!backAction() && capApp.exitApp) capApp.exitApp(); });
     }
   } catch (err) {}
+
+  state.nb = lsGet("sklad_nb") === "1";
 
   /* ---------- запуск ---------- */
   if (configured()) {
