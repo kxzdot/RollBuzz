@@ -154,6 +154,11 @@ button { cursor: pointer; }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
 
+.qty { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.facts.c1 { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
+.facts dd.note { color: var(--danger); }
+.warn-tag { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--danger); color: #fff; vertical-align: 2px; }
+
 /* ---------- выбор цвета и ткани ---------- */
 .pick { width: 100%; min-width: 0; height: 52px; padding: 0 12px 0 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--bg); font-size: 1.0625rem; color: inherit; display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left; }
 .pick .pv { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -369,7 +374,7 @@ form { display: grid; gap: 14px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "1.3";
+  var APP_VERSION = "1.4";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -412,8 +417,9 @@ form { display: grid; gap: 14px; }
     function p(n) { return (n < 10 ? "0" : "") + n; }
     return p(d.getDate()) + "." + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
-  function place(r) { return r.rack + " стеллаж" + (r.floor ? " (" + r.floor + " этаж)" : ""); }
-  var COLOR_MAP = {"белый": "#f5f5f2", "молочный": "#f3ecd9", "экрю": "#efe6cf", "слоновая кость": "#f1e7cd", "кремовый": "#f3e5b8", "ванильный": "#f3e2a9", "шампань": "#ecd9b5", "бежевый": "#d8c3a0", "песочный": "#d6bf94", "кэмел": "#b98b53", "золотистый": "#c9a64a", "светло-серый": "#c4c6cc", "серебристый": "#b8bcc4", "серый": "#8e9099", "серый меланж": "#a3a5ab", "стальной": "#6f7885", "темно-серый": "#4f525a", "графитовый": "#3b3e45", "антрацит": "#2b2e33", "черный": "#16161a", "красный": "#c62828", "алый": "#e0303a", "кирпичный": "#a8412f", "терракотовый": "#c4623f", "бордовый": "#6d1a2c", "вишневый": "#7b1230", "марсала": "#7a3141", "винный": "#5e1f33", "коралловый": "#ee6f5e", "лососевый": "#f29a85", "персиковый": "#f6c4a3", "абрикосовый": "#f2b07a", "оранжевый": "#f08a24", "морковный": "#e8741f", "желтый": "#f4d03f", "лимонный": "#f1e04a", "горчичный": "#d2a02a", "охра": "#c48a1f", "салатовый": "#9fd356", "лаймовый": "#b8d82f", "светло-зеленый": "#7fc77f", "зеленый": "#2e8b57", "травяной": "#4a9d3a", "бутылочный": "#0e4b36", "темно-зеленый": "#1f4d33", "изумрудный": "#0b8a63", "оливковый": "#7b7d3a", "хаки": "#8a8456", "мятный": "#a5dcc4", "фисташковый": "#b7d3a0", "шалфей": "#9aa88a", "бирюзовый": "#1fb5ad", "морская волна": "#2a9d9a", "аквамарин": "#6fd3c4", "голубой": "#6bb7ee", "небесный": "#9fd0f2", "васильковый": "#5a7fdc", "джинсовый": "#4a6a95", "синий": "#2c5fc4", "электрик": "#1e4fe0", "темно-синий": "#16275f", "индиго": "#34327f", "чернильный": "#1b2140", "фиолетовый": "#7a3fb0", "баклажановый": "#4a2342", "сливовый": "#6b2d5c", "лиловый": "#b08fd1", "сиреневый": "#c3a6e0", "лавандовый": "#cdbfe6", "розовый": "#f19ab6", "нежно-розовый": "#f7d0dc", "пудровый": "#e8c9c4", "ярко-розовый": "#e8458f", "фуксия": "#c2185b", "малиновый": "#b3175e", "коричневый": "#6a4328", "шоколадный": "#4b2e20", "кофейный": "#7a5538", "капучино": "#b79a7e", "какао": "#8a6a55", "орех": "#8b5e3c", "рыжий": "#b5651d", "тауп": "#8b7d73"};
+  function place(r) { return r.rack ? r.rack + " стеллаж" + (r.floor ? " (" + r.floor + " этаж)" : "") : "место не указано"; }
+  function qtyText(r) { return r.qty == null ? "" : String(Math.round(r.qty * 1000) / 1000).replace(".", ",") + (r.unit ? " " + r.unit : ""); }
+  var COLOR_MAP = {"белый": "#f5f5f2", "молочный": "#f3ecd9", "экрю": "#efe6cf", "слоновая кость": "#f1e7cd", "кремовый": "#f3e5b8", "ванильный": "#f3e2a9", "шампань": "#ecd9b5", "бежевый": "#d8c3a0", "песочный": "#d6bf94", "кэмел": "#b98b53", "золотистый": "#c9a64a", "светло-серый": "#c4c6cc", "серебристый": "#b8bcc4", "серый": "#8e9099", "серый меланж": "#a3a5ab", "стальной": "#6f7885", "темно-серый": "#4f525a", "графитовый": "#3b3e45", "антрацит": "#2b2e33", "черный": "#16161a", "красный": "#c62828", "алый": "#e0303a", "кирпичный": "#a8412f", "терракотовый": "#c4623f", "бордовый": "#6d1a2c", "вишневый": "#7b1230", "марсала": "#7a3141", "винный": "#5e1f33", "коралловый": "#ee6f5e", "лососевый": "#f29a85", "персиковый": "#f6c4a3", "абрикосовый": "#f2b07a", "оранжевый": "#f08a24", "морковный": "#e8741f", "желтый": "#f4d03f", "лимонный": "#f1e04a", "горчичный": "#d2a02a", "охра": "#c48a1f", "салатовый": "#9fd356", "лаймовый": "#b8d82f", "светло-зеленый": "#7fc77f", "зеленый": "#2e8b57", "травяной": "#4a9d3a", "бутылочный": "#0e4b36", "темно-зеленый": "#1f4d33", "изумрудный": "#0b8a63", "оливковый": "#7b7d3a", "хаки": "#8a8456", "мятный": "#a5dcc4", "фисташковый": "#b7d3a0", "шалфей": "#9aa88a", "бирюзовый": "#1fb5ad", "морская волна": "#2a9d9a", "аквамарин": "#6fd3c4", "голубой": "#6bb7ee", "небесный": "#9fd0f2", "васильковый": "#5a7fdc", "джинсовый": "#4a6a95", "синий": "#2c5fc4", "электрик": "#1e4fe0", "темно-синий": "#16275f", "индиго": "#34327f", "чернильный": "#1b2140", "фиолетовый": "#7a3fb0", "баклажановый": "#4a2342", "сливовый": "#6b2d5c", "лиловый": "#b08fd1", "сиреневый": "#c3a6e0", "лавандовый": "#cdbfe6", "розовый": "#f19ab6", "нежно-розовый": "#f7d0dc", "пудровый": "#e8c9c4", "ярко-розовый": "#e8458f", "фуксия": "#c2185b", "малиновый": "#b3175e", "коричневый": "#6a4328", "шоколадный": "#4b2e20", "кофейный": "#7a5538", "капучино": "#b79a7e", "какао": "#8a6a55", "орех": "#8b5e3c", "рыжий": "#b5651d", "тауп": "#8b7d73", "чорний": "#16161a", "білий": "#f5f5f2", "молоко": "#f3ecd9", "молочний": "#f3ecd9", "екрю": "#efe6cf", "беж": "#d8c3a0", "бежевий": "#d8c3a0", "світлий беж": "#e6d6b8", "сірий": "#8e9099", "світло-сірий": "#c4c6cc", "блідо-сірий": "#cfd1d6", "темно-сірий": "#4f525a", "графіт": "#3b3e45", "сірий графіт": "#4a4d55", "меланж": "#a3a5ab", "сніжний меланж": "#e4e5e8", "шоколад": "#4b2e20", "мокко": "#6f4e3d", "коричневий": "#6a4328", "червоний": "#c62828", "малиново-червоний": "#b5173f", "бордовий": "#6d1a2c", "бордо": "#6d1a2c", "рожевий": "#f19ab6", "блідо-рожевий": "#f7d0dc", "пудра": "#e8c9c4", "сакура": "#f4c2d0", "барбі": "#e8458f", "малиновий": "#b3175e", "корал": "#ee6f5e", "персик": "#f6c4a3", "помаранчевий": "#f08a24", "жовтий": "#f4d03f", "лимон": "#f1e04a", "гірчиця": "#d2a02a", "хакі": "#8a8456", "хакі беж": "#a89f7c", "оливка": "#7b7d3a", "зелений": "#2e8b57", "темно-зелений": "#1f4d33", "зелена трава": "#4a9d3a", "смарагд": "#0b8a63", "ментол": "#a5dcc4", "м'ятний": "#a5dcc4", "тіффані": "#81d8d0", "бірюзовий": "#1fb5ad", "блакитний": "#6bb7ee", "блідо-блакитний": "#bcdcf3", "сіро-блакитний": "#8fa6bd", "блідо-васильковий": "#a9b8ea", "темно-лазурний": "#1f5f8b", "електрик": "#1e4fe0", "синій": "#2c5fc4", "темно-синій": "#16275f", "чорнильно-синій": "#1b2140", "індиго": "#34327f", "фіолетовий": "#7a3fb0", "ліловий": "#b08fd1", "бузок": "#c3a6e0", "салатовий": "#9fd356", "блідо-салатовий": "#cfe8a8", "світло-салатовий": "#b9e07f", "лайм": "#b8d82f"};
   var COLOR_KEYS = Object.keys(COLOR_MAP).sort(function (a, b) { return b.length - a.length; });
   function colorHex(name) {
     var n = String(name || "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").replace(/ - /g, "-").trim();
@@ -541,7 +547,9 @@ form { display: grid; gap: 14px; }
     return {
       rack: x.rack, floor: x.floor || "", fabric: x.fabric || "", color: x.color || "", deleted: !!x.deleted,
       deletedAt: x.deleted_at ? Date.parse(x.deleted_at) : null, updatedAt: x.updated_at ? Date.parse(x.updated_at) : 0,
-      updatedBy: x.updated_by_name || "", deletedBy: x.deleted_by_name || ""
+      updatedBy: x.updated_by_name || "", deletedBy: x.deleted_by_name || "",
+      qty: x.qty == null ? null : Number(x.qty), unit: x.unit || "", warehouse: x.warehouse || "", article: x.article || "", note: x.note || "",
+      in1c: !!x.in_1c, c1Date: x.c1_date || "", changedAt: x.changed_at ? Date.parse(x.changed_at) : 0
     };
   }
   function toRow(d) {
@@ -550,27 +558,69 @@ form { display: grid; gap: 14px; }
     return o;
   }
   function inList(ids) { return "in.(" + ids.map(encodeURIComponent).join(",") + ")"; }
+  /* Supabase отдаёт не больше 1000 строк за раз, поэтому берём частями */
+  function apiAll(path) {
+    var all = [];
+    function next(off) {
+      return api(path + "&limit=1000&offset=" + off).then(function (rows) {
+        rows = rows || [];
+        all = all.concat(rows);
+        return rows.length ? next(off + rows.length) : all;
+      });
+    }
+    return next(0);
+  }
 
   function supaRepo() {
     var timer = null, cb = null, errCb = null, first = true, stopped = false;
-    function load() {
+    var map = new Map(), lastSync = "", busy = null, dirty = false;
+    function iso(t) { return encodeURIComponent(new Date(t).toISOString()); }
+    function remember(rows) {
+      rows.forEach(function (x) {
+        map.set(x.id, toRoll(x));
+        if (x.changed_at && Date.parse(x.changed_at) > (Date.parse(lastSync) || 0)) lastSync = x.changed_at;
+      });
+    }
+    function full() {
+      return apiAll("rolls?select=*&order=id.asc").then(function (rows) {
+        map = new Map(); lastSync = ""; remember(rows); return true;
+      });
+    }
+    /* только то, что поменялось с прошлого раза (с запасом в минуту), и стёртые */
+    function incr() {
+      var since = iso(Date.parse(lastSync) - 60000);
+      return Promise.all([
+        api("rolls?select=*&changed_at=gte." + since + "&order=changed_at.asc&limit=1000"),
+        api("roll_log?select=roll_id&action=eq.purge&at=gte." + since + "&limit=1000")
+      ]).then(function (r) {
+        if (r[0].length >= 1000) return full();
+        var changed = false;
+        r[0].forEach(function (x) { var o = map.get(x.id); if (!o || o.changedAt !== Date.parse(x.changed_at)) changed = true; });
+        remember(r[0]);
+        r[1].forEach(function (x) { if (map.has(x.roll_id)) { map["delete"](x.roll_id); changed = true; } });
+        return changed;
+      });
+    }
+    function load(forceFull) {
       if (stopped) return Promise.resolve();
-      return api("rolls?select=*&limit=5000").then(function (rows) {
+      if (busy) return busy.then(function () { return load(forceFull); });
+      var p = (forceFull || !lastSync) ? full() : incr();
+      busy = p.then(function (changed) {
+        busy = null;
         if (stopped) return;
-        var m = new Map();
-        rows.forEach(function (x) { m.set(x.id, toRoll(x)); });
-        first = false;
-        cb(m);
-      }).catch(function (e) {
+        if (changed || first || dirty) { first = false; dirty = false; cb(new Map(map)); }
+      }, function (e) {
+        busy = null;
         if (first && errCb && !stopped) { first = false; errCb(e); }
       });
+      return busy;
     }
     function tick() { if (!document.hidden && navigator.onLine) load(); }
     return {
       kind: "shared",
       subscribe: function (next, err) {
         cb = next; errCb = err; stopped = false;
-        load();
+        load(true);
         timer = setInterval(tick, 10000);
         document.addEventListener("visibilitychange", tick);
         window.addEventListener("online", tick);
@@ -594,12 +644,14 @@ form { display: grid; gap: 14px; }
         });
       },
       removeMany: function (ids) {
-        return api("rolls?id=" + inList(ids), { method: "DELETE", prefer: "return=minimal" }).then(function () { return load(); });
+        return api("rolls?id=" + inList(ids), { method: "DELETE", prefer: "return=minimal" }).then(function () {
+          ids.forEach(function (id) { map["delete"](id); }); dirty = true; return load();
+        });
       },
       lists: function () {
         return Promise.all([
-          api("colors?select=name,hex&order=sort.asc,name.asc&limit=1000"),
-          api("fabrics?select=name&order=sort.asc,name.asc&limit=1000")
+          apiAll("colors?select=name,hex&order=sort.asc,name.asc,id.asc"),
+          apiAll("fabrics?select=name&order=sort.asc,name.asc,id.asc")
         ]).then(function (r) { return { colors: r[0] || [], fabrics: r[1] || [] }; });
       },
       addColor: function (name) { return api("colors", { method: "POST", body: { name: name, hex: "", sort: 1000 }, prefer: "return=minimal" }); },
@@ -656,7 +708,7 @@ form { display: grid; gap: 14px; }
     if (s && s.type === "detail") {
       var r = m.get(s.id);
       if (!r) { closeSheet(); toast("Этот рулон уже удалён из базы."); }
-      else if (r.updatedAt !== s.stamp || r.deleted !== s.delFlag) drawSheet();
+      else if ((r.changedAt || r.updatedAt) !== s.stamp || r.deleted !== s.delFlag) drawSheet(true);
     }
     render();
   }
@@ -690,14 +742,14 @@ form { display: grid; gap: 14px; }
     var wantDeleted = state.tab === "trash";
     var q = state.q.trim().toLowerCase();
     var digits = q.replace(/\s/g, "");
-    var onlyDigits = /^\d+$/.test(digits);
+    var onlyDigits = /^[\d-]+$/.test(digits) && /\d/.test(digits);
     var out = [];
     state.rolls.forEach(function (r, id) {
       if (!!r.deleted !== wantDeleted) return;
       if (q) {
         var hit;
         if (onlyDigits) hit = id.indexOf(digits) !== -1;
-        else hit = [r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy].some(function (v) { return String(v || "").toLowerCase().indexOf(q) !== -1; });
+        else hit = [r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy, r.article, r.note].some(function (v) { return String(v || "").toLowerCase().indexOf(q) !== -1; });
         if (!hit) return;
       }
       out.push({ id: id, r: r });
@@ -715,7 +767,7 @@ form { display: grid; gap: 14px; }
   }
   function rowHtml(it, enter, i) {
     var r = it.r;
-    var meta = [r.fabric ? esc(r.fabric) : "", r.color ? colorHtml(r.color) : ""].filter(Boolean).join(" · ");
+    var meta = [r.fabric ? esc(r.fabric) : "", r.color ? colorHtml(r.color) : "", r.qty != null ? '<span class="qty">' + esc(qtyText(r)) + "</span>" : ""].filter(Boolean).join(" · ");
     var who = r.deleted
       ? (r.deletedBy ? "Удалил: " + r.deletedBy + " · " + ago(r.deletedAt) : "Удалён " + ago(r.deletedAt))
       : (r.updatedBy ? r.updatedBy + " · " + ago(r.updatedAt) : "");
@@ -853,16 +905,26 @@ form { display: grid; gap: 14px; }
   }
   var ACT = { add: "добавил", edit: "изменил", "delete": "удалил", restore: "вернул", purge: "стёр" };
 
+  function c1Html(r) {
+    if (r.qty == null && !r.warehouse && !r.article && !r.note) return "";
+    var h = '<dl class="facts c1">';
+    if (r.qty != null) h += "<dt>Остаток" + (r.c1Date ? " на " + esc(r.c1Date.split("-").reverse().join(".")) : "") + "</dt><dd>" + esc(qtyText(r)) + (r.in1c ? "" : ' <span class="warn-tag">нет в остатках 1С</span>') + "</dd>";
+    if (r.warehouse) h += "<dt>Склад</dt><dd>" + esc(r.warehouse) + "</dd>";
+    if (r.article) h += "<dt>Артикул</dt><dd>" + esc(r.article) + "</dd>";
+    if (r.note) h += '<dt>Примечание</dt><dd class="note">' + esc(r.note) + "</dd>";
+    return h + "</dl>";
+  }
   function sheetHtml(s) {
     if (s.type === "detail") {
       var r = state.rolls.get(s.id);
       if (!r) return head("Рулон не найден");
-      s.stamp = r.updatedAt; s.delFlag = r.deleted;
+      s.stamp = r.changedAt || r.updatedAt; s.delFlag = r.deleted;
       var by = r.deleted
         ? '<div class="byline">Удалил: <b>' + esc(r.deletedBy || "неизвестно") + "</b> · " + ago(r.deletedAt) + "</div>"
         : (r.updatedBy ? '<div class="byline">Изменил: <b>' + esc(r.updatedBy) + "</b> · " + ago(r.updatedAt) + "</div>" : "");
       return '<div class="sheet-head"><div class="big-num">' + fmt(s.id) + '</div><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button></div>' +
-        '<div class="where">' + rackHtml(r, true) + '<dl class="facts"><dt>Место</dt><dd>' + esc(r.rack ? place(r) : "—") + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
+        '<div class="where">' + rackHtml(r, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
+        c1Html(r) +
         by + '<div class="hist"><h3>История</h3><div id="hist" class="muted">Загрузка…</div></div>' +
         (r.deleted
           ? '<div class="actions"><button class="btn primary" type="button" data-act="restore-one">Вернуть на склад</button><button class="btn danger" type="button" data-act="ask-purge-one">Стереть навсегда</button></div>'
@@ -922,7 +984,7 @@ form { display: grid; gap: 14px; }
     root.innerHTML = '<div class="scrim" data-act="pk-scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-body" id="pickBody"></div></div></div>';
     $("#pickBody").innerHTML = '<div class="sheet-head"><h2>' + (kind === "color" ? "Выберите цвет" : "Выберите ткань") + '</h2><button class="x" type="button" data-act="pk-close" aria-label="Закрыть">✕</button></div>' +
       '<div class="field"><input id="pk-q" type="search" placeholder="Поиск или новое название" autocomplete="off"></div><div id="pkList"></div>';
-    $("#pk-q").addEventListener("input", function (e) { state.pick.q = e.target.value; drawPickerList(); });
+    $("#pk-q").addEventListener("input", function (e) { if (!state.pick) return; state.pick.q = e.target.value; drawPickerList(); });
     drawPickerList();
   }
   function drawPickerList() {
@@ -931,6 +993,8 @@ form { display: grid; gap: 14px; }
     var q = norm(pk.q), isColor = pk.kind === "color";
     var all = isColor ? state.lists.colors : state.lists.fabrics;
     var items = all.filter(function (x) { return !q || norm(x.name).indexOf(q) !== -1; });
+    var more = items.length > 150 ? items.length - 150 : 0;
+    if (more) items = items.slice(0, 150);
     var exact = all.some(function (x) { return norm(x.name) === q; });
     var h = "";
     if (!q) h += '<button type="button" class="pk-clear" data-pk-val="">' + (state.sheet && state.sheet.type === "bulk" ? "Не менять" : "Не указывать") + '</button>';
@@ -944,6 +1008,7 @@ form { display: grid; gap: 14px; }
         return '<button type="button" class="pk-row' + (norm(x.name) === norm(cur) ? " on" : "") + '" data-pk-val="' + esc(x.name) + '">' + esc(x.name) + '</button>';
       }).join("") + "</div>";
     }
+    if (more) h += '<p class="hint">И ещё ' + more + '. Начните вводить название, чтобы найти нужное.</p>';
     if (!items.length && !q) h += '<p class="hint">Список пока пуст. Введите название выше и добавьте его.</p>';
     el.innerHTML = h;
   }
@@ -1019,7 +1084,7 @@ form { display: grid; gap: 14px; }
     var bad = false;
     if (s.type === "add") {
       if (!vals.roll) { fieldErr("roll", "Введите номер рулона."); bad = true; }
-      else if (!/^\d+$/.test(vals.roll)) { fieldErr("roll", "В номере должны быть только цифры."); bad = true; }
+      else if (!/^\d[\d-]*$/.test(vals.roll)) { fieldErr("roll", "В номере должны быть только цифры (можно с дефисом)."); bad = true; }
       else if (vals.roll.length > 20) { fieldErr("roll", "Номер слишком длинный."); bad = true; }
     }
     if (!vals.rack) { fieldErr("rack", "Укажите номер стеллажа."); bad = true; }
