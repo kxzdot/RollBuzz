@@ -350,7 +350,11 @@ form { display: grid; gap: 16px; }
 .mode-title b { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.015em; }
 .mode-title span { color: var(--muted); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 .mode-title .link-btn { padding: 2px 0; font-size: 0.875rem; }
-.mode-add { display: grid; grid-template-columns: minmax(0, 1fr) auto 54px; gap: 8px; }
+.mode-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.mode-top .cam-toggle { width: 44px; height: 44px; flex: none; }
+.mode-top .cam-toggle svg { width: 24px; height: 24px; }
+@media (max-width: 420px) { .dock:has(#voiceBtn:not([hidden])) .dl { display: none; } .dock:has(#voiceBtn:not([hidden])) #modeBtn { width: 60px; padding: 0; justify-content: center; } }
+@media (max-width: 420px) { .net:not(.off) #netText { display: none; } .brand h1 { font-size: 1.1875rem; } }
 .mode-add input { width: 100%; min-width: 0; height: 54px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); font-family: var(--f-mono); font-size: 1.1875rem; }
 .mode-add input:focus { border-color: var(--accent); outline: none; }
 .mode-add .btn { min-height: 54px; }
@@ -492,6 +496,20 @@ form { display: grid; gap: 16px; }
   .oc-prog i { transition: width 0.4s var(--ease); }
 }
 
+
+/* ---------- голос и штрихкоды стеллажей ---------- */
+.dock-btn.mic { width: 60px; padding: 0; justify-content: center; }
+.dock-btn.mic svg { width: 26px; height: 26px; }
+.heard { margin: 0; font-size: 1.0625rem; font-style: italic; color: var(--muted); }
+.vroll { display: flex; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.vroll .swatch { width: 12px; flex: none; }
+.vroll > div { display: grid; gap: 2px; padding: 10px 12px; }
+.vroll .num { font-family: var(--f-mono); font-size: 1.125rem; }
+.vroll span { font-size: 0.875rem; color: var(--muted); }
+.vlist { display: grid; gap: 6px; }
+.ml-rack { text-align: center; font-weight: 700; font-size: 0.9375rem; padding: 8px; border-radius: 12px; background: var(--tag); color: var(--tag-fg); }
+.mode .go + .go { margin-top: -6px; }
+
 /* ---------- движение ---------- */
 @media (prefers-reduced-motion: no-preference) {
   .tabs .ind { transition: transform 0.38s var(--spring); }
@@ -600,7 +618,7 @@ form { display: grid; gap: 16px; }
   <ul class="list" id="list"></ul>
 </div>
 
-<div class="dock"><button class="dock-btn" id="modeBtn" type="button" data-act="mode-open" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18M20 3v18M4 9h16M4 15h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="12" r="2" fill="currentColor"/><circle cx="14" cy="12" r="2" fill="currentColor"/><circle cx="11" cy="6" r="2" fill="currentColor"/></svg>Раскладка</button><button class="fab" id="add" type="button" data-act="add" aria-label="Добавить рулон" hidden><span>+</span>Добавить</button></div>
+<div class="dock"><button class="dock-btn mic" id="voiceBtn" type="button" data-act="voice" aria-label="Голосовой ввод" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="dock-btn" id="modeBtn" type="button" data-act="mode-open" aria-label="Раскладка" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18M20 3v18M4 9h16M4 15h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="12" r="2" fill="currentColor"/><circle cx="14" cy="12" r="2" fill="currentColor"/><circle cx="11" cy="6" r="2" fill="currentColor"/></svg><span class="dl">Раскладка</span></button><button class="fab" id="add" type="button" data-act="add" aria-label="Добавить рулон" hidden><span>+</span>Добавить</button></div>
 <div class="actionbar" id="actionBar" hidden>
   <div class="inner">
     <button class="btn" id="actA" type="button" disabled>Изменить</button>
@@ -619,7 +637,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.0";
+  var APP_VERSION = "2.1";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1058,13 +1076,15 @@ form { display: grid; gap: 16px; }
     var q = state.q.trim().toLowerCase();
     var digits = q.replace(/\s/g, "");
     var onlyDigits = /^[\d-]+$/.test(digits) && /\d/.test(digits);
+    var rq = rackQuery(q);
     var out = [];
     state.rolls.forEach(function (r, id) {
       if (!!r.deleted !== wantDeleted) return;
       if (state.tab === "norack" && r.rack) return;
       if (q) {
         var hit;
-        if (onlyDigits) hit = id.indexOf(digits) !== -1;
+        if (rq) hit = String(r.rack || "").toLowerCase() === String(rq.rack).toLowerCase() && (rq.floor == null || String(r.floor || "") === String(rq.floor));
+        else if (onlyDigits) hit = id.indexOf(digits) !== -1;
         else hit = [r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy, r.article, r.note].some(function (v) { return String(v || "").toLowerCase().indexOf(q) !== -1; });
         if (!hit) return;
       }
@@ -1124,7 +1144,7 @@ form { display: grid; gap: 16px; }
     $("#auth").hidden = !needAuth;
     $("#app").hidden = needAuth;
     if (needAuth) {
-      $("#add").hidden = true; $("#modeBtn").hidden = true; $("#actionBar").hidden = true;
+      $("#add").hidden = true; $("#modeBtn").hidden = true; $("#voiceBtn").hidden = true; $("#actionBar").hidden = true;
       drawAuth();
       return;
     }
@@ -1215,6 +1235,7 @@ form { display: grid; gap: 16px; }
     $("#actA").disabled = $("#actB").disabled = state.sel.size === 0;
     $("#add").hidden = sel || state.tab === "trash" || state.mode === "auth";
     $("#modeBtn").hidden = $("#add").hidden || state.mode === "local";
+    $("#voiceBtn").hidden = $("#add").hidden || !voiceAvailable();
   }
   function enterSelect(id) { state.selecting = true; state.sel = new Set(id ? [id] : []); applySelectUi(); }
   function exitSelect() { if (!state.selecting) return; state.selecting = false; state.sel = new Set(); applySelectUi(); }
@@ -1302,6 +1323,7 @@ form { display: grid; gap: 16px; }
           ? '<div class="actions"><button class="btn primary" type="button" data-act="restore-one">Вернуть на склад</button><button class="btn danger" type="button" data-act="ask-purge-one">Стереть навсегда</button></div>'
           : '<div class="actions"><button class="btn primary" type="button" data-act="edit-one">Изменить</button><button class="btn danger" type="button" data-act="ask-delete-one">Удалить</button></div>');
     }
+    if (s.type === "voice") return voiceSheetHtml(s);
     if (s.type === "confirm") {
       var n = s.ids.length, one = n === 1, del = s.kind === "delete";
       var nums = one ? "<b>" + fmt(s.ids[0]) + "</b>" : s.ids.slice(0, 4).map(function (i) { return "<b>" + fmt(i) + "</b>"; }).join(", ") + (n > 4 ? " и ещё " + (n - 4) : "");
@@ -1329,7 +1351,7 @@ form { display: grid; gap: 16px; }
     } else {
       h += '<p class="hint">Заполните только то, что нужно изменить. Пустые поля у выбранных рулонов останутся как есть.</p>';
     }
-    h += '<div class="two"><div class="field"><label for="f-rack">Номер стеллажа</label><input id="f-rack" type="text" value="' + esc(v.rack || "") + '"><div class="err" id="e-rack"></div></div>' +
+    h += '<div class="two"><div class="field"><label for="f-rack">Номер стеллажа</label><div class="withbtn"><input id="f-rack" type="text" value="' + esc(v.rack || "") + '"><button type="button" class="in-scan" data-act="scan-rack" aria-label="Сканировать штрихкод стеллажа">' + ICON_SCAN + '</button></div><div class="err" id="e-rack"></div></div>' +
       '<div class="field"><label for="f-floor">Этаж</label><input id="f-floor" type="text" inputmode="numeric" placeholder="не обязательно" value="' + esc(v.floor || "") + '"><div class="err" id="e-floor"></div></div></div>';
     if (bulk) h += '<label class="check" for="f-nofloor"><input type="checkbox" id="f-nofloor"' + (v.nofloor ? " checked" : "") + '>Убрать этаж у выбранных рулонов</label>';
     var fs = splitFabric(v.fabric), cs = splitColor(v.color);
@@ -1563,6 +1585,18 @@ form { display: grid; gap: 16px; }
     return true;
   }
   function scanDone(target, code) {
+    var rp = rackFromCode(code);
+    if (target === "rackfield" || target === "modeRack") {
+      if (!rp) { toast("Это не штрихкод стеллажа. Распечатайте штрихкоды в загрузчике.", true); return; }
+      if (target === "rackfield") { var fr = $("#f-rack"), ff = $("#f-floor"); if (fr) fr.value = rp.rack; if (ff) ff.value = rp.floor; toast(rackText(rp)); }
+      else { var mr = $("#m-rack"), mf = $("#m-floor"); if (mr) mr.value = rp.rack; if (mf) mf.value = rp.floor; modeStart(); }
+      return;
+    }
+    if (rp && target === "search") {
+      var q0 = "стеллаж " + rp.rack + (rp.floor ? " этаж " + rp.floor : "");
+      state.q = q0; $("#q").value = q0; state.tab = "active"; lastListHtml = null; render(); return;
+    }
+    if (rp) { toast("Это штрихкод стеллажа, а нужен номер рулона.", true); return; }
     if (target === "search") {
       var r = resolveRoll(code);
       var q = r.id || code;
@@ -1609,7 +1643,8 @@ form { display: grid; gap: 16px; }
         '<details class="preset"' + (M.fabric || M.color ? " open" : "") + '><summary>Ткань и цвет для новых рулонов</summary>' +
         '<p class="hint">Заполните, если раскладываете новый приход одной ткани. Уже известные рулоны это не меняет.</p>' +
         presetFields(M) + "</details>" +
-        '<button type="submit" class="btn primary go">' + ICON_SCAN + "<span>Начать</span></button></form></div></div>";
+        '<button type="submit" class="btn primary go">' + ICON_SCAN + "<span>Начать</span></button>" +
+        '<button type="button" class="btn go" data-act="scan-moderack">' + ICON_SCAN + "<span>Отсканировать штрихкод стеллажа</span></button></form></div></div>";
       root.innerHTML = h;
       if (!M.rack) setTimeout(function () { var f = $("#m-rack"); if (f && state.mode2 && state.mode2.step === "setup") f.focus(); }, 350);
       return;
@@ -1617,11 +1652,13 @@ form { display: grid; gap: 16px; }
     h = '<div class="mode run' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Раскладка"><div class="mode-in">' +
       '<div class="mode-top">' + rackHtml({ rack: M.rack, floor: M.floor }) +
       '<div class="mode-title"><b>Раскладка</b><span id="modeCount">' + countText(M) + '</span><button type="button" class="link-btn" data-act="mode-setup">Сменить стеллаж</button></div>' +
+      (voiceAvailable() ? '<button type="button" class="icon-btn cam-toggle" data-act="mode-voice" aria-label="Сказать номер">' + ICON_MIC + "</button>" : "") +
+      '<button type="button" class="icon-btn cam-toggle' + (M.cam ? " on" : "") + '" data-act="mode-cam" aria-label="' + (M.cam ? "Выключить камеру" : "Включить камеру") + '">' + ICON_SCAN + "</button>" +
       '<button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
       (M.cam ? camBox("modeCam") : "") +
       '<form id="modeAdd" class="mode-add" novalidate autocomplete="off"><input id="m-code" type="text" inputmode="numeric" class="mono" placeholder="Номер рулона" aria-label="Номер рулона">' +
       '<button type="submit" class="btn primary">Записать</button>' +
-      '<button type="button" class="icon-btn cam-toggle' + (M.cam ? " on" : "") + '" data-act="mode-cam" aria-label="' + (M.cam ? "Выключить камеру" : "Включить камеру") + '">' + ICON_SCAN + "</button></form>" +
+      "</form>" +
       '<ul class="mode-log" id="modeLog">' + logHtml(M) + "</ul></div></div>";
     root.innerHTML = h;
     if (M.cam) resumeModeCam();
@@ -1657,8 +1694,9 @@ form { display: grid; gap: 16px; }
     drawMode(true);
   }
   function logHtml(M) {
-    if (!M.log.length) return '<li class="ml-empty">Здесь появятся записанные рулоны. Ошибочный можно отменить.</li>';
+    if (!M.log.length) return '<li class="ml-empty">Здесь появятся записанные рулоны. Ошибочный можно отменить. Штрихкод стеллажа переключает место.</li>';
     return M.log.slice(0, 80).map(function (e, i) {
+      if (e.st === "rack") return '<li class="ml-rack' + (e.fresh ? " fresh" : "") + '">' + esc(e.text) + "</li>";
       var meta = [e.fabric, e.color].filter(Boolean).join(", ");
       return '<li class="ml ' + e.st + (e.fresh ? " fresh" : "") + '"><span' + swatchStyle(e.color) + "></span>" +
         '<div class="ml-body"><b class="num">' + numHtml(e.id || e.code, "") + "</b>" + (meta ? '<span class="ml-meta">' + esc(meta) + "</span>" : "") +
@@ -1677,6 +1715,8 @@ form { display: grid; gap: 16px; }
     var M = state.mode2; if (!M || M.step !== "run") return;
     var code = String(raw || "").replace(/\s/g, "");
     if (!code) return;
+    var rp = rackFromCode(code);
+    if (rp) { modeSwitchRack(rp, fromCam); return; }
     var now = Date.now();
     if (M.recent[code] && now - M.recent[code] < 4000) return;   // сканер видит тот же код повторно
     if (fromCam && M.log[0] && M.log[0].code === code && M.log[0].st !== "err") return;   // тот же рулон всё ещё перед камерой
@@ -1694,6 +1734,35 @@ form { display: grid; gap: 16px; }
     if (!/^\d[\d-]{0,29}$/.test(code)) { e.st = "err"; e.text = "Это не номер рулона: в номере только цифры."; beep(false); drawLog(); return; }
     if (!fromCam) { var f = $("#m-code"); if (f) f.value = ""; }
     M.queue = M.queue.then(function () { return modeProcess(e); });
+  }
+  function modeSwitchRack(rp, fromCam) {
+    var M = state.mode2; if (!M) return;
+    if (!fromCam) { var f = $("#m-code"); if (f) f.value = ""; }
+    if (M.rack === rp.rack && M.floor === rp.floor) return;   // тот же стеллаж ещё перед камерой
+    M.rack = rp.rack; M.floor = rp.floor;
+    lsSet("sklad_mode_last", JSON.stringify({ rack: M.rack, floor: M.floor }));
+    var tag = $(".mode-top .rack"); if (tag) tag.outerHTML = rackHtml({ rack: M.rack, floor: M.floor }, false, true);
+    M.log.unshift({ code: "", st: "rack", text: "Теперь " + rackText(rp).toLowerCase(), fresh: true });
+    beep(true); drawLog();
+  }
+  function modeVoice() {
+    var M = state.mode2; if (!M || voiceBusy) return;
+    voiceBusy = true;
+    listen("Номер рулона или «стеллаж 5 этаж 2»").then(function (matches) {
+      voiceBusy = false;
+      var done = false;
+      matches.some(function (m) {
+        var p = parseVoice(m);
+        if (p.rack && (!p.digits || p.digits.length < 4)) { modeSwitchRack({ rack: p.rack, floor: p.floor || "" }, false); done = true; return true; }
+        var f = findSpoken(p.digits);
+        if (f.list.length === 1) {
+          if (p.rack) modeSwitchRack({ rack: p.rack, floor: p.floor || "" }, false);
+          modeAdd(f.list[0], false); done = true; return true;
+        }
+        return false;
+      });
+      if (!done) { beep(false); toast(matches.length ? "Не нашёл рулон по словам «" + matches[0] + "». Скажите больше цифр." : "Не расслышал.", true); }
+    })["catch"](function (e) { voiceBusy = false; toast(e && e.message ? e.message : "Голосовой ввод не сработал.", true); });
   }
   function modeProcess(e) {
     var M = state.mode2; if (!M) return;
@@ -2081,7 +2150,8 @@ form { display: grid; gap: 16px; }
         var g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
         return T.createWorker("ukr+eng").then(function (w) {
-          return w.recognize(c).then(function (r) { w.terminate(); return (r && r.data && r.data.text) || ""; }, function (e) { w.terminate(); throw e; });
+          // режим «один блок текста»: строки таблицы не разваливаются на столбцы, склад остаётся в одной строке с серией
+          return Promise.resolve(w.setParameters ? w.setParameters({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1" }) : null).then(function () { return w.recognize(c); }).then(function (r) { w.terminate(); return (r && r.data && r.data.text) || ""; }, function (e) { w.terminate(); throw e; });
         });
       });
     });
@@ -2118,6 +2188,139 @@ form { display: grid; gap: 16px; }
       setTimeout(ocrNext, 61000);
     });
   }
+
+  /* ---------- штрихкод стеллажа: EAN-13 «29» + стеллаж(4) + этаж(2) + 0000 (печатается в загрузчике) ---------- */
+  function rackFromCode(code) {
+    var d = String(code || "");
+    if (!/^29\d{11}$/.test(d) || !eanCheck(d) || d.slice(8, 12) !== "0000") return null;
+    var rack = parseInt(d.slice(2, 6), 10), floor = parseInt(d.slice(6, 8), 10);
+    if (!rack) return null;
+    return { rack: String(rack), floor: floor ? String(floor) : "" };
+  }
+  function rackText(p) { return "Стеллаж " + p.rack + (p.floor ? ", этаж " + p.floor : ""); }
+  /* поиск «стеллаж 12 этаж 3»: показать все рулоны на месте */
+  function rackQuery(q) {
+    var m = /^стел+аж\s*(\S+?)(?:\s*,?\s*этаж\s*(\S+))?$/i.exec(String(q).trim());
+    return m ? { rack: m[1], floor: m[2] || null } : null;
+  }
+
+  /* ---------- голосовой ввод: «2000012916960, стеллаж 5, этаж 2» ---------- */
+  var NUMW = { "ноль": 0, "нуль": 0, "один": 1, "одна": 1, "одну": 1, "раз": 1, "два": 2, "две": 2, "три": 3, "четыре": 4, "пять": 5, "шесть": 6, "семь": 7, "восемь": 8, "девять": 9,
+    "десять": 10, "одиннадцать": 11, "двенадцать": 12, "тринадцать": 13, "четырнадцать": 14, "пятнадцать": 15, "шестнадцать": 16, "семнадцать": 17, "восемнадцать": 18, "девятнадцать": 19,
+    "двадцать": 20, "тридцать": 30, "сорок": 40, "пятьдесят": 50, "шестьдесят": 60, "семьдесят": 70, "восемьдесят": 80, "девяносто": 90,
+    "сто": 100, "двести": 200, "триста": 300, "четыреста": 400, "пятьсот": 500, "шестьсот": 600, "семьсот": 700, "восемьсот": 800, "девятьсот": 900,
+    "первый": 1, "первом": 1, "первого": 1, "второй": 2, "втором": 2, "второго": 2, "третий": 3, "третьем": 3, "третьего": 3, "четвёртый": 4, "четвертый": 4, "четвертом": 4, "пятый": 5, "пятом": 5,
+    "шестой": 6, "шестом": 6, "седьмой": 7, "седьмом": 7, "восьмой": 8, "восьмом": 8, "девятый": 9, "девятом": 9, "десятый": 10, "десятом": 10,
+    "двенадцатый": 12,
+    "одне": 1, "дві": 2, "чотири": 4, "п'ять": 5, "шість": 6, "сім": 7, "вісім": 8, "дев'ять": 9, "десять": 10, "перший": 1, "другий": 2, "третій": 3 };
+  function wordsToDigits(s) {
+    // «двадцать пять» → 25, «пятый» → 5; цифры не трогаем
+    var out = [], acc = null;
+    s.split(/\s+/).forEach(function (w) {
+      var v = NUMW[w];
+      if (v == null) { if (acc != null) { out.push(String(acc)); acc = null; } out.push(w); return; }
+      if (acc == null) acc = v;
+      else if (acc >= 100 && v < 100) acc += v;
+      else if (acc >= 20 && acc % 10 === 0 && v < 10) acc += v;
+      else { out.push(String(acc)); acc = v; }
+    });
+    if (acc != null) out.push(String(acc));
+    return out.join(" ");
+  }
+  function parseVoice(text) {
+    var s = " " + String(text || "").toLowerCase().replace(/ё/g, "е").replace(/[,.;:!?]/g, " ").replace(/\s+/g, " ") + " ";
+    s = wordsToDigits(s.trim());
+    var rk = /(стел+аж\w*|стил+аж\w*|стеллаж\w*|ряд\w*)/, fl = /(этаж\w*|поверх\w*|полк\w*)/;
+    var iR = s.search(rk), iF = s.search(fl);
+    var head = s.slice(0, Math.min.apply(null, [iR, iF, s.length].filter(function (x) { return x >= 0; })));
+    function firstNum(from) { if (from < 0) return ""; var m = /^(\d+)/.exec(s.slice(from).replace(/^\S+\s*/, "")); return m ? m[1].slice(0, 6) : ""; }
+    // номер рулона: все цифры до слова «стеллаж»/«этаж», группы склеиваются («2000 012 916 960»)
+    var digits = (head.match(/\d+/g) || []).join("");
+    var rack = firstNum(iR), floor = firstNum(iF);
+    // «916960 5 стеллаж 2 этаж»: число перед словом — это стеллаж, число после него относится к этажу
+    var before = iR > 0 ? /(\d+)\s*$/.exec(s.slice(0, iR)) : null;
+    if (before && before[1].length <= 4 && rack && iF > iR && !floor && new RegExp("^\\S+\\s*" + rack + "\\s*$").test(s.slice(iR, iF))) {
+      floor = floor || rack; rack = before[1]; digits = (s.slice(0, iR - before[0].length).match(/\d+/g) || []).join("");
+    }
+    // «этаж 2 стеллаж 5» и «5 стеллаж 2 этаж»
+    if (iR >= 0 && !rack) { var b = /(\d+)\s*$/.exec(s.slice(0, iR)); if (b) { rack = b[1]; digits = digits.slice(0, digits.length - b[1].length); } }
+    if (iF >= 0 && iF > iR && !floor) { var b2 = /(\d+)\s*$/.exec(s.slice(iR >= 0 ? iR : 0, iF)); if (b2) floor = b2[1]; }
+    return { text: text, digits: digits, rack: rack, floor: floor };
+  }
+  /* рулон по сказанным цифрам: полный номер или его конец (если такой конец только у одного рулона) */
+  function findSpoken(digits) {
+    if (!digits || digits.length < 4) return { list: [] };
+    var r = resolveRoll(digits);
+    if (r.id) return { list: [r.id] };
+    if (r.many) return { list: r.many };
+    var list = [];
+    state.rolls.forEach(function (x, id) { if (!x.deleted && id.replace(/-.*$/, "").slice(-digits.length) === digits) list.push(id); });
+    return { list: list.slice(0, 8), more: list.length > 8 };
+  }
+  function voicePlugin() {
+    var C = window.Capacitor;
+    return C && C.Plugins && C.Plugins.SpeechRecognition ? C.Plugins.SpeechRecognition : null;
+  }
+  function voiceAvailable() { return !!voicePlugin(); }
+  var voiceBusy = false;
+  function listen(prompt) {
+    var SR = voicePlugin();
+    if (!SR) return Promise.reject(new Error("Голосовой ввод не установлен в этой сборке."));
+    return Promise.resolve(SR.requestPermissions ? SR.requestPermissions() : null).then(function (p) {
+      if (p && p.speechRecognition === "denied") throw new Error("Нет доступа к микрофону. Разрешите его в настройках телефона.");
+      return SR.start({ language: "ru-RU", maxResults: 5, partialResults: false, popup: true, prompt: prompt || "Говорите" });
+    }).then(function (r) { return (r && r.matches) || []; });
+  }
+  /* голос с главного экрана: номер + место → подтверждение */
+  function voiceAdd() {
+    if (voiceBusy) return;
+    voiceBusy = true;
+    listen("Номер рулона, стеллаж, этаж").then(function (matches) {
+      voiceBusy = false;
+      if (!matches.length) { toast("Не расслышал. Попробуйте ещё раз.", true); return; }
+      var best = null;
+      matches.forEach(function (m) {
+        var p = parseVoice(m), f = findSpoken(p.digits);
+        var score = (f.list.length === 1 ? 4 : f.list.length ? 2 : 0) + (p.rack ? 2 : 0) + (p.floor ? 1 : 0);
+        if (!best || score > best.score) best = { p: p, f: f, score: score };
+      });
+      openSheet({ type: "voice", p: best.p, list: best.f.list, more: best.f.more, pick: best.f.list.length === 1 ? best.f.list[0] : null });
+    })["catch"](function (e) { voiceBusy = false; toast(e && e.message ? e.message : "Голосовой ввод не сработал.", true); });
+  }
+  function voiceSheetHtml(s) {
+    var p = s.p, h = head("Голосовой ввод");
+    h += '<p class="heard">«' + esc(p.text) + "»</p>";
+    if (!s.list.length) {
+      h += '<p class="warn">' + (p.digits ? "Рулон с номером " + esc(p.digits) + " не найден." : "Не услышал номер рулона.") + " Скажите номер полностью или последние 5–6 цифр.</p>";
+    } else if (!s.pick) {
+      h += '<p class="hint">Подходит несколько рулонов, выберите:</p><div class="vlist">' + s.list.map(function (id) {
+        var r = state.rolls.get(id);
+        return '<button type="button" class="nb-item" data-act="voice-pick" data-id="' + esc(id) + '"><span class="num">' + numHtml(id, p.digits) + '</span><span class="nb-place">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + "</span></button>";
+      }).join("") + "</div>" + (s.more ? '<p class="hint">И ещё. Скажите больше цифр.</p>' : "");
+    } else {
+      var r = state.rolls.get(s.pick);
+      h += '<div class="vroll"><span' + swatchStyle(r.color) + '></span><div><b class="num">' + numHtml(s.pick, "") + "</b><span>" + esc([r.fabric, r.color].filter(Boolean).join(", ")) + "</span>" +
+        "<span>Сейчас: " + (r.rack ? esc(place(r)) : "место не указано") + "</span></div></div>";
+    }
+    h += '<div class="two"><div class="field"><label for="v-rack">Стеллаж</label><input id="v-rack" type="text" class="mono" value="' + esc(p.rack || "") + '"></div>' +
+      '<div class="field"><label for="v-floor">Этаж</label><input id="v-floor" type="text" inputmode="numeric" class="mono" placeholder="нет" value="' + esc(p.floor || "") + '"></div></div>';
+    h += '<div class="actions"><button class="btn" type="button" data-act="voice-again">🎙 Ещё раз</button><button class="btn primary" type="button" data-act="voice-save" id="runBtn"' + (s.pick ? "" : " disabled") + ">Записать место</button></div>";
+    return h;
+  }
+  function voiceSave() {
+    var s = state.sheet; if (!s || s.type !== "voice" || !s.pick || !guard()) return;
+    var rack = val("#v-rack"), floor = val("#v-floor");
+    if (!rack) { toast("Скажите или впишите стеллаж.", true); return; }
+    setBusy(true, "Записать место");
+    var r = state.rolls.get(s.pick), d = { rack: rack, floor: floor };
+    if (r && r.deleted) d.deleted = false;
+    repo.updateMany([s.pick], d).then(function () {
+      setBusy(false, "Записать место"); var id = s.pick; closeSheet();
+      toast("Рулон " + id + ": " + rackText({ rack: rack, floor: floor }).toLowerCase()); beep(true);
+    })["catch"](function (e) { setBusy(false, "Записать место"); fail(e); });
+  }
+
+  var ICON_MIC = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
 
   /* ---------- выбор из списка ---------- */
   function pickBtn(kind, value) {
@@ -2410,6 +2613,13 @@ form { display: grid; gap: 16px; }
       case "scan-close": closeScan(); return;
       case "torch": Scan.toggleTorch().then(function (on) { el.classList.toggle("on", on); }); return;
       case "mode-open": openMode(); return;
+      case "voice": voiceAdd(); return;
+      case "voice-again": closeSheet(true); voiceAdd(); return;
+      case "voice-pick": if (state.sheet && state.sheet.type === "voice") { state.sheet.pick = el.getAttribute("data-id"); drawSheet(true); } return;
+      case "voice-save": voiceSave(); return;
+      case "mode-voice": modeVoice(); return;
+      case "scan-rack": openScan("rackfield"); return;
+      case "scan-moderack": openScan("modeRack"); return;
       case "orders-open": openOrders(); return;
       case "orders-close": closeOrders(); return;
       case "o-tab": OR.tab = el.getAttribute("data-id"); drawOrders(); var oi = $("#ordersRoot .orders"); if (oi) oi.scrollTop = 0; return;
