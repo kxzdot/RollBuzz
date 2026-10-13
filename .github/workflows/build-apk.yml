@@ -28,6 +28,12 @@ jobs:
           if [ ! -d android ]; then npx cap add android; fi
           npx cap sync android
 
+      - name: Доступ к камере (сканер штрихкодов)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          grep -q "android.permission.CAMERA" $M || sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' $M
+          grep -n "CAMERA\|VIBRATE\|hardware.camera" $M
+
       - name: Иконка приложения
         run: |
           test -d android-res
