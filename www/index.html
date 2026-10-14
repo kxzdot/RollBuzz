@@ -114,6 +114,21 @@ button { cursor: pointer; }
 .count { font-size: 0.8125rem; color: var(--muted); margin: 0 2px; }
 .link-btn { border: 0; background: transparent; color: var(--accent); font-weight: 650; padding: 8px 4px; font-size: 0.9375rem; flex: none; }
 
+/* ---------- сводка по оттенкам ---------- */
+.shades { margin: 0 0 12px; }
+.shades-h { font-size: 0.8125rem; color: var(--muted); margin: 0 2px 6px; }
+.shades-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.shade { display: flex; align-items: stretch; text-align: left; padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--fg); overflow: hidden; font: inherit; min-width: 0; animation: shIn .25s ease both; }
+button.shade:active { transform: scale(0.98); }
+.shade .swatch { flex: none; width: 12px; border-right: 1px solid color-mix(in srgb, var(--fg) 10%, transparent); }
+.sh-body { display: grid; gap: 2px; padding: 9px 10px; min-width: 0; }
+.sh-top { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.sh-top b { font-family: var(--f-mono); font-size: 1.0625rem; font-weight: 650; flex: none; }
+.sh-top em { font-style: normal; font-size: 0.8125rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-n { font-size: 0.875rem; font-weight: 600; }
+.sh-f, .sh-r { font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes shIn { from { opacity: 0; transform: translateY(4px); } }
+
 /* ---------- список: карточки-образцы ---------- */
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .row {
@@ -624,6 +639,7 @@ form { display: grid; gap: 16px; }
     <button class="link-btn" id="selStart" type="button" data-act="sel-start" hidden>Выбрать</button>
   </div>
   <p class="count" id="count" aria-live="polite"></p>
+  <div class="shades" id="shades" hidden></div>
   <ul class="list" id="list"></ul>
 </div>
 
@@ -646,7 +662,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.3";
+  var APP_VERSION = "2.4";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1077,8 +1093,102 @@ form { display: grid; gap: 16px; }
       });
     });
     base.slice(40).forEach(function (it) { if (!seen.has(it.id)) { seen.add(it.id); out.push(it); } });
-    out.nbHits = base.length;
+    out.nbHits = base.length; out.tq = base.tq;
     return out;
+  }
+  /* ---------- поиск словами: «кулир лимон», «меланж №3», «черный» ---------- */
+  // русские корни → украинские (цвета и ткани в 1С записаны по-украински)
+  var SYN = [["серебр", "сриб"], ["бел", "бил"], ["сер", "сир"], ["черн", "чорн"], ["красн", "червон"], ["желт", "жовт"], ["розов", "рожев"],
+    ["голуб", "блакит"], ["оранж", "помаранч"], ["горчи", "гирчи"], ["сирен", "бузок"], ["изумруд", "смарагд"], ["светл", "свитл"], ["бледн", "блид"],
+    ["двунит", "двонит"], ["трехнит", "тринит"], ["начес", "начис"], ["сетк", "ситк"], ["мех", "хутр"], ["воротн", "комир"], ["полотен", "рушник"],
+    ["плащев", "плащив"], ["лен", "льон"], ["мят", "мят"], ["кож", "кож"]];
+  var ENDS = /(ого|его|ому|ему|ими|ий|ой|ая|яя|ое|ее|ие|ую|юю|ом|ем|их|а|я|и|е|о|у|ю|ь)$/;
+  function stem(w) {
+    if (w.length < 5) return w;
+    var s = w.replace(ENDS, "");
+    if (/нн$/.test(s)) s = s.slice(0, -1);
+    return s.length >= 3 ? s : w;
+  }
+  function textQuery(q) {
+    var words = [], nums = [];
+    String(q).split(/\s+/).forEach(function (t) {
+      if (!t) return;
+      var m = /^№\s*(\S+)$/.exec(t) || (/^\d+$/.test(t) ? [t, t] : null);
+      if (m) { nums.push({ v: m[1].toLowerCase(), shadeOnly: t.charAt(0) === "№" }); return; }
+      if (t === "№") return;
+      var f = fold(t), st = stem(f), alts = [st];
+      SYN.forEach(function (p) { if (st.indexOf(p[0]) === 0) alts.push(p[1] + st.slice(p[0].length)); if (st.indexOf(p[0]) === 0 && p[0].length >= 3) alts.push(p[1]); });
+      words.push(alts);
+    });
+    return { words: words, nums: nums };
+  }
+  function textHit(tq, id, r) {
+    var hay = fold([r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy, r.article, r.note, r.warehouse].join(" | "));
+    for (var i = 0; i < tq.words.length; i++) {
+      var alts = tq.words[i], ok = false;
+      for (var j = 0; j < alts.length && !ok; j++) ok = hay.indexOf(alts[j]) !== -1;
+      if (!ok) return false;
+    }
+    var shade = fold(splitColor(r.color).num);
+    for (var k = 0; k < tq.nums.length; k++) {
+      var n = tq.nums[k];
+      if (shade === n.v) continue;
+      if (!n.shadeOnly && (id.indexOf(n.v) !== -1 && n.v.length >= 4 || fold(r.fabric).indexOf(n.v) !== -1 || fold(r.article).indexOf(n.v) !== -1)) continue;
+      return false;
+    }
+    return true;
+  }
+  /* порядок «по тону»: как цвета в справочнике (они идут по гамме), затем номер оттенка, ткань, номер рулона */
+  var toneIdx = null, toneIdxFor = null;
+  function toneOf(color) {
+    if (toneIdxFor !== state.lists.colors) {
+      toneIdx = {}; toneIdxFor = state.lists.colors;
+      state.lists.colors.forEach(function (c, i) { toneIdx[fold(c.name)] = i; });
+    }
+    var b = fold(splitColor(color).base);
+    return b in toneIdx ? toneIdx[b] : (b ? 9000 : 9999);
+  }
+  function shadeNum(color) { var n = parseFloat(String(splitColor(color).num).replace(",", ".")); return isNaN(n) ? -1 : n; }
+  function toneCmp(a, b) {
+    var ca = a.r.color || "", cb = b.r.color || "";
+    return toneOf(ca) - toneOf(cb) || fold(splitColor(ca).base).localeCompare(fold(splitColor(cb).base)) ||
+      shadeNum(ca) - shadeNum(cb) || fold(ca).localeCompare(fold(cb)) ||
+      fold(a.r.fabric).localeCompare(fold(b.r.fabric)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  }
+  /* сводка по оттенкам над списком: №, сколько рулонов, вес, ткани, стеллажи */
+  function shadeGroups(items) {
+    var map = new Map();
+    items.forEach(function (it) {
+      var key = norm(it.r.color);
+      var g = map.get(key);
+      if (!g) { g = { color: it.r.color || "", n: 0, qty: {}, fabrics: new Set(), racks: new Set(), first: it }; map.set(key, g); }
+      g.n++;
+      if (it.r.qty != null && it.r.qty > 0) { var u = it.r.unit || ""; g.qty[u] = (g.qty[u] || 0) + it.r.qty; }
+      if (it.r.fabric) g.fabrics.add(it.r.fabric);
+      if (it.r.rack) g.racks.add(String(it.r.rack));
+    });
+    return Array.from(map.values());
+  }
+  function shadesHtml(items) {
+    var gs = shadeGroups(items);
+    if (!gs.length) return "";
+    var hasNum = /(^|\s)№/.test(state.q);
+    var h = gs.slice(0, 40).map(function (g) {
+      var sc = splitColor(g.color);
+      var q = Object.keys(g.qty).map(function (u) { return String(Math.round(g.qty[u] * 10) / 10).replace(".", ",") + (u ? " " + u : ""); }).join(" + ");
+      var racks = Array.from(g.racks).sort(function (a, b) { return (parseFloat(a) || 0) - (parseFloat(b) || 0) || (a < b ? -1 : 1); });
+      var fab = Array.from(g.fabrics);
+      var tap = sc.num && !hasNum;
+      return '<' + (tap ? 'button type="button" data-shade="' + esc(sc.num) + '"' : "div") + ' class="shade">' +
+        "<span" + swatchStyle(g.color) + "></span>" +
+        '<span class="sh-body"><span class="sh-top"><b>' + (sc.num ? "№" + esc(sc.num) : "без №") + "</b><em>" + esc(sc.base || "цвет не указан") + "</em></span>" +
+        '<span class="sh-n">' + g.n + " рул." + (q ? " · " + esc(q) : "") + "</span>" +
+        (fab.length ? '<span class="sh-f">' + esc(fab.slice(0, 2).join(", ") + (fab.length > 2 ? " +" + (fab.length - 2) : "")) + "</span>" : "") +
+        '<span class="sh-r">' + (racks.length ? "стеллаж " + esc(racks.slice(0, 6).join(", ") + (racks.length > 6 ? "…" : "")) : "без места") + "</span>" +
+        "</span></" + (tap ? "button" : "div") + ">";
+    }).join("");
+    return '<div class="shades-h">' + (gs.length === 1 ? "Итого по оттенку" : "Оттенков: " + gs.length + (hasNum ? "" : ". Нажмите, чтобы оставить один")) + "</div>" +
+      '<div class="shades-g">' + h + "</div>" + (gs.length > 40 ? '<p class="hint">И ещё ' + (gs.length - 40) + ". Уточните поиск.</p>" : "");
   }
   function visibleBase() {
     var wantDeleted = state.tab === "trash";
@@ -1086,6 +1196,7 @@ form { display: grid; gap: 16px; }
     var digits = q.replace(/\s/g, "");
     var onlyDigits = /^[\d-]+$/.test(digits) && /\d/.test(digits);
     var rq = rackQuery(q);
+    var tq = q && !onlyDigits && !rq ? textQuery(q) : null;
     var out = [];
     state.rolls.forEach(function (r, id) {
       if (!!r.deleted !== wantDeleted) return;
@@ -1094,11 +1205,12 @@ form { display: grid; gap: 16px; }
         var hit;
         if (rq) hit = String(r.rack || "").toLowerCase() === String(rq.rack).toLowerCase() && (rq.floor == null || String(r.floor || "") === String(rq.floor));
         else if (onlyDigits) hit = id.indexOf(digits) !== -1;
-        else hit = [r.fabric, r.color, r.rack, r.floor, r.updatedBy, r.deletedBy, r.article, r.note].some(function (v) { return String(v || "").toLowerCase().indexOf(q) !== -1; });
+        else hit = textHit(tq, id, r);
         if (!hit) return;
       }
       out.push({ id: id, r: r });
     });
+    if (tq) { out.sort(function (a, b) { return toneCmp(a, b); }); out.tq = tq; return out; }
     out.sort(function (a, b) {
       var ta = wantDeleted ? (a.r.deletedAt || 0) : (a.r.updatedAt || 0);
       var tb = wantDeleted ? (b.r.deletedAt || 0) : (b.r.updatedAt || 0);
@@ -1185,13 +1297,13 @@ form { display: grid; gap: 16px; }
     $("#banner").innerHTML = b;
 
     var list = $("#list");
-    var html;
+    var html, items = null;
     if (!state.loaded) {
       $("#count").textContent = "";
       $("#selStart").hidden = true;
       html = '<li class="empty">Загрузка базы…</li>';
     } else {
-      var items = visible();
+      items = visible();
       var shown = items.slice(0, 100);
       var txt;
       if (state.tab === "trash") txt = items.length ? "Удалено рулонов: " + items.length + ". Отсюда их можно вернуть." : "";
@@ -1199,13 +1311,14 @@ form { display: grid; gap: 16px; }
       else if (state.q && items.nbHits != null) txt = "Найдено: " + items.nbHits + ", вместе с соседями: " + items.length;
       else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : (state.nb ? "" : ""));
       if (state.nb && !state.q.trim() && items.length) txt = "Соседи включены: введите номер рулона, и рядом появится вся его серия";
-      if (items.length > 100) txt += ". Показаны первые 100, уточните номер.";
+      if (items.length > 100) txt += items.tq ? ". Показаны первые 100: нажмите на оттенок или добавьте ткань." : ". Показаны первые 100, уточните номер.";
       $("#count").textContent = txt;
       $("#selStart").hidden = state.selecting || !items.length;
       if (!shown.length) {
         var msg;
         if (state.tab === "trash") msg = "<strong>В удалённых пусто</strong>Когда рулон заберут целиком, он появится здесь, и его можно будет вернуть при возврате.";
         else if (state.tab === "norack" && !state.q) msg = "<strong>У всех рулонов указано место</strong>Здесь появляются рулоны без стеллажа, например новые из 1С.";
+        else if (state.q && items.tq) msg = "<strong>Ничего не найдено</strong>Попробуйте одно слово: цвет («лимон», «меланж») или ткань («кулир»). Номер оттенка пишется так: №3.";
         else if (state.q) msg = "<strong>Рулон не найден</strong>Проверьте номер. Если рулон новый, нажмите «Добавить».";
         else msg = "<strong>В базе пока нет рулонов</strong>Нажмите «Добавить», введите номер рулона, стеллаж, этаж, ткань и цвет.";
         html = '<li class="empty">' + msg + "</li>";
@@ -1219,6 +1332,10 @@ form { display: grid; gap: 16px; }
       }
     }
     if (html !== lastListHtml) { list.innerHTML = html; lastListHtml = html; }
+    var shH = state.loaded && items && items.tq && state.tab !== "trash" && !state.selecting && items.length ? shadesHtml(items) : "";
+    var shEl = $("#shades");
+    if (shEl._h !== shH) { shEl.innerHTML = shH; shEl._h = shH; }
+    shEl.hidden = !shH;
 
     $("#actA").setAttribute("data-act", state.tab === "trash" ? "bulk-restore" : "bulk-edit");
     $("#actA").textContent = state.tab === "trash" ? "Вернуть" : "Изменить";
@@ -2788,6 +2905,8 @@ form { display: grid; gap: 16px; }
     }
     var at = t.closest("[data-auth-tab]");
     if (at) { state.authTab = at.getAttribute("data-auth-tab"); state.authNote = ""; render(); return; }
+    var shb = t.closest(".shade[data-shade]");
+    if (shb) { var nq = state.q.trim() + " №" + shb.getAttribute("data-shade"); state.q = nq; $("#q").value = nq; window.scrollTo({ top: 0, behavior: "smooth" }); render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
     var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
