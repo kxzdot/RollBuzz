@@ -452,7 +452,7 @@ form { display: grid; gap: 16px; }
 .oi-main { width: 100%; display: flex; align-items: stretch; border: 0; padding: 0; background: transparent; text-align: left; min-height: 64px; }
 .oi-main .swatch { flex: none; width: 10px; }
 .oi-info { flex: 1; min-width: 0; display: grid; gap: 1px; align-content: center; padding: 8px 10px 8px 12px; }
-.oi-info .num { font-family: var(--f-mono); font-weight: 600; font-size: 1rem; overflow-wrap: anywhere; }
+.oi-info .num { font-family: var(--f-mono); font-weight: 600; font-size: 0.9375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .oi-meta { font-size: 0.8125rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oi-meta.warn { color: var(--danger); }
 .oi-main .rack { margin: 0 10px 0 4px; align-self: center; min-width: 56px; padding: 13px 8px 6px; }
@@ -474,7 +474,7 @@ form { display: grid; gap: 16px; }
 .o-addform .btn { min-height: 48px; }
 .o-addform .icon-btn { width: 48px; height: 48px; }
 .o-addform .icon-btn svg { width: 24px; height: 24px; display: block; margin: auto; }
-.oc-skip { margin: 0; font-size: 0.8125rem; color: var(--muted); padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--line); overflow-wrap: anywhere; }
+.oc-skip { margin: 0; font-size: 0.8125rem; color: var(--muted); padding: 8px 12px; border-radius: 12px; border: 1px dashed var(--line); overflow-wrap: anywhere; white-space: pre-line; }
 .otag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 650; vertical-align: 3px; background: var(--tag); color: var(--tag-fg); }
 .inorders { display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--tag) 22%, var(--surface)); border: 1px solid color-mix(in srgb, var(--tag) 60%, transparent); }
 .inorders h3 { margin: 0; font-size: 0.9375rem; font-weight: 650; }
@@ -509,6 +509,15 @@ form { display: grid; gap: 16px; }
 .vlist { display: grid; gap: 6px; }
 .ml-rack { text-align: center; font-weight: 700; font-size: 0.9375rem; padding: 8px; border-radius: 12px; background: var(--tag); color: var(--tag-fg); }
 .mode .go + .go { margin-top: -6px; }
+
+
+.cut { flex: none; align-self: center; display: grid; justify-items: center; gap: 0; min-width: 64px; padding: 6px 8px; margin-left: 4px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--fg); border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+.cut small { font-size: 0.6875rem; font-weight: 650; color: var(--accent); white-space: nowrap; }
+.cut b { font-family: var(--f-mono); font-size: 1rem; font-weight: 700; white-space: nowrap; }
+.cut.whole { background: var(--surface-2); border-color: var(--line); }
+.cut.whole small { color: var(--muted); }
+.cut.big { justify-self: start; grid-auto-flow: column; gap: 8px; align-items: baseline; padding: 6px 12px; }
+.cut.big b { font-size: 1.25rem; }
 
 /* ---------- движение ---------- */
 @media (prefers-reduced-motion: no-preference) {
@@ -637,7 +646,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.1";
+  var APP_VERSION = "2.3";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1133,7 +1142,7 @@ form { display: grid; gap: 16px; }
     return '<li class="item' + (enter ? " enter" : "") + (it.nb ? " nbr" : "") + '" style="--i:' + i + '"><button type="button" class="row" data-open="' + esc(it.id) + '" aria-pressed="false">' +
       "<span" + swatchStyle(r.color) + "></span>" +
       '<span class="chk" aria-hidden="true"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="11"/><path d="M8 13.5l3.6 3.6L18.2 10"/></svg></span>' +
-      '<span class="info"><span class="num">' + numHtml(it.id, it.nb ? "" : searchDigits()) + (it.nb ? '<span class="nbtag">сосед</span>' : "") + (activeOrdersFor(it.id).some(function (x) { return x.it.state !== "done"; }) ? '<span class="otag">в заказе</span>' : "") + "</span>" +
+      '<span class="info"><span class="num">' + numHtml(it.id, it.nb ? "" : searchDigits()) + (it.nb ? '<span class="nbtag">сосед</span>' : "") + orderTag(it.id) + "</span>" +
       '<span class="fabric' + (r.fabric ? "" : " none") + '">' + esc(r.fabric || "ткань не указана") + "</span>" +
       (tags ? '<span class="tagline">' + tags + "</span>" : "") +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") + "</span>" + rackHtml(r) + "</button></li>";
@@ -1886,6 +1895,12 @@ form { display: grid; gap: 16px; }
     if (s && s.type === "detail" && $("#inOrders")) $("#inOrders").outerHTML = inOrdersHtml(s.id);
     lastListHtml = null; if (state.mode === "shared" && !state.selecting) render();
   }
+  function orderTag(id) {
+    var a = activeOrdersFor(id).filter(function (x) { return x.it.state !== "done"; });
+    if (!a.length) return "";
+    var c = cutInfo(a[0].it, state.rolls.get(id));
+    return '<span class="otag">' + (c ? (c.whole ? "в заказе: весь" : c.cut ? "в заказе: ✂ " + esc(c.text) : "в заказе: " + esc(c.text)) : "в заказе") + "</span>";
+  }
   function activeOrdersFor(id) { return (OR.byRoll && OR.byRoll.get(id)) || []; }
 
   /* ---------- экран заказов ---------- */
@@ -1950,6 +1965,7 @@ form { display: grid; gap: 16px; }
       if (o.ocr_state === "pending" || o.ocr_state === "work") h += '<p class="oc-ocr"><i class="spin"></i>Читаю номера с фото…</p>';
       else if (o.ocr_state === "fail") h += '<p class="oc-ocr warn">Номера на фото не найдены. Добавьте рулоны вручную или сканером.</p>';
       else if (o.ocr_state === "done" && !n && o.skipped) h += '<p class="oc-ocr">В документе нет рулонов Основного склада.</p>';
+      if ((o.ocr_state === "done" || o.ocr_state === "fail") && o.status !== "done") h += '<button type="button" class="link-btn oc-add" data-act="o-reocr" data-id="' + o.id + '">Прочитать фото заново</button>';
     }
     if (o.skipped) h += '<p class="oc-skip">' + esc(o.skipped) + "</p>";
     if (n) {
@@ -1971,6 +1987,19 @@ form { display: grid; gap: 16px; }
     if (o.status === "taken") return '<span class="ost taken">' + (o.taken_by_name === me ? "Вы взяли" : "Взял " + esc(o.taken_by_name || "")) + '</span><button type="button" class="mini" data-act="o-reset" data-id="' + o.id + '">Отказаться</button><button type="button" class="btn primary sm" data-act="o-done" data-id="' + o.id + '">Готово</button>';
     return '<button type="button" class="btn sm" data-act="o-take" data-id="' + o.id + '">Беру</button><button type="button" class="btn primary sm" data-act="o-done" data-id="' + o.id + '">Готово</button>';
   }
+  /* «✂ отрез 0,5 м» или «весь рулон 24,6 кг» */
+  function cutInfo(it, r) {
+    if (it.amount == null || !(+it.amount > 0)) return null;
+    var a = +it.amount, unit = it.unit || (r && r.unit) || "";
+    var whole = r && r.qty != null && unit !== "м" && (!it.unit || !r.unit || it.unit === r.unit) && Math.abs(a - r.qty) <= Math.max(0.2, r.qty * 0.02);
+    // отрез: метры или меньше, чем есть в рулоне; если рулона нет в базе и это кг — просто «взять»
+    var cut = !whole && (unit === "м" || (r && r.qty != null && a < r.qty));
+    return { whole: !!whole, cut: !!cut, text: String(a).replace(".", ",") + (unit ? " " + unit : "") };
+  }
+  function cutHtml(it, r, big) {
+    var c = cutInfo(it, r); if (!c) return "";
+    return '<span class="cut' + (c.cut ? "" : " whole") + (big ? " big" : "") + '"><small>' + (c.whole ? "весь рулон" : c.cut ? "✂ отрез" : "взять") + "</small><b>" + esc(c.text) + "</b></span>";
+  }
   function itemRow(o, it, me) {
     var r = state.rolls.get(it.roll_id), act;
     if (it.state === "done") act = '<span class="ost done">✓ ' + esc(it.done_by_name || "") + '</span><button type="button" class="mini" data-act="oi-reset" data-id="' + it.id + '" aria-label="Вернуть в работу">↺</button>';
@@ -1981,8 +2010,8 @@ form { display: grid; gap: 16px; }
       "<span" + swatchStyle(r && r.color) + "></span>" +
       '<span class="oi-info"><b class="num">' + numHtml(it.roll_id, "") + "</b>" +
       (r ? '<span class="oi-meta">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + (r.qty != null ? " · " + esc(qtyText(r)) : "") + "</span>" : '<span class="oi-meta warn">нет в базе</span>') +
-      "</span>" + (r ? rackHtml(r) : "") + "</button>" +
-      '<div class="oi-act">' + act + (it.source === "manual" && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div></li>";
+      "</span>" + cutHtml(it, r) + (r ? rackHtml(r) : "") + "</button>" +
+      '<div class="oi-act">' + act + ((it.source === "manual" || it.source === "photo") && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div></li>";
   }
   /* блок «В заказах» в карточке рулона */
   function inOrdersHtml(id) {
@@ -1994,7 +2023,7 @@ form { display: grid; gap: 16px; }
       if (it.state === "done") act = '<span class="ost done">✓ ' + esc(it.done_by_name || "") + "</span>";
       else if (it.state === "taken") act = '<span class="ost taken">' + (it.taken_by_name === me ? "Вы взяли" : esc(it.taken_by_name || "")) + '</span><button type="button" class="btn primary sm" data-act="oi-done" data-id="' + it.id + '">Готово</button>';
       else act = '<button type="button" class="btn primary sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
-      return '<div class="io"><div class="io-t"><b>' + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
+      return '<div class="io">' + cutHtml(it, state.rolls.get(id), true) + '<div class="io-t"><b>' + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
     }).join("") + "</div>";
   }
 
@@ -2132,6 +2161,132 @@ form { display: grid; gap: 16px; }
     });
     return { ours: ours, other: other };
   }
+  /* ---------- разбор документа 1С по словам с координатами ---------- */
+  // Серия в узкой колонке часто переносится: «200001287776» и ниже «6». Читаем колонку серий отдельно,
+  // склеиваем перенос, проверяем контрольной цифрой, а склад берём из той же строки таблицы.
+  function digitsOf(t) { return String(t || "").replace(/[OoОо]/g, "0").replace(/[Il|]/g, "1").replace(/\D/g, ""); }
+  function eanCheckDigit(d12) { var t = 0; for (var i = 0; i < 12; i++) t += (+d12.charAt(i)) * (i % 2 ? 3 : 1); return String((10 - t % 10) % 10); }
+  function median(a) { var b = a.slice().sort(function (x, y) { return x - y; }); return b.length ? b[b.length >> 1] : 0; }
+  /* где колонка серий: по словам первого прохода, в которых 10+ цифр */
+  function serialColumn(words) {
+    var c = words.filter(function (w) { var d = digitsOf(w.text); return d.length >= 10 && d.length <= 14 && /^2/.test(d); });
+    if (c.length < 1) return null;
+    var x0 = median(c.map(function (w) { return w.bbox.x0; })), x1 = median(c.map(function (w) { return w.bbox.x1; }));
+    var y0 = Math.min.apply(null, c.map(function (w) { return w.bbox.y0; }));
+    var hgt = median(c.map(function (w) { return w.bbox.y1 - w.bbox.y0; })) || 20;
+    return { x0: x0, x1: x1, y0: y0, lh: hgt };
+  }
+  /* серии из второго прохода (строки колонки), координаты уже в системе всей страницы */
+  function serialsFromColumn(lines) {
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var toks = String(lines[i].text || "").split(/\s+/).map(digitsOf).filter(Boolean);
+      var best = toks.sort(function (a, b) { return b.length - a.length; })[0] || "";
+      if (best.length === 13 && eanCheck(best)) { out.push({ id: best, top: lines[i].bbox.y0, bottom: lines[i].bbox.y1, sure: true }); continue; }
+      if (best.length === 12 && /^2/.test(best)) {
+        var nx = lines[i + 1], nd = nx ? digitsOf(nx.text) : "";
+        var gap = nx ? nx.bbox.y0 - lines[i].bbox.y1 : 1e9, lh = lines[i].bbox.y1 - lines[i].bbox.y0;
+        if (nd.length === 1 && gap < lh * 1.5) {
+          var full = best + nd;
+          if (eanCheck(full)) { out.push({ id: full, top: lines[i].bbox.y0, bottom: nx.bbox.y1, sure: true }); i++; continue; }
+        }
+        // перенос не прочитался: последняя цифра вычисляется, но такой номер нужно подтвердить по базе
+        out.push({ id: best + eanCheckDigit(best), top: lines[i].bbox.y0, bottom: lines[i].bbox.y1 + lh, sure: false });
+      }
+    }
+    return out;
+  }
+  /* «24,6 кг», «5 м», «244 kr» (потерянная запятая), «15.» (= 1,5) */
+  function parseQty(t) {
+    t = String(t || "").replace(/\s+/g, " ").trim();
+    var m = /(\d+(?:[.,]\d*)?)\s*(кг|kr|kg|м|m|шт)?/i.exec(t);
+    if (!m) return null;
+    var raw = m[1], u = (m[2] || "").toLowerCase(), unit = /^(к|k)/.test(u) ? "кг" : /^(м|m)/.test(u) ? "м" : u === "шт" ? "шт" : "";
+    var v;
+    if (/[.,]$/.test(raw)) { var d = raw.slice(0, -1); v = d.length > 1 ? parseFloat(d.slice(0, -1) + "." + d.slice(-1)) : parseFloat(d); }
+    else v = parseFloat(raw.replace(",", "."));
+    if (!/[.,]/.test(raw) && unit !== "м" && unit !== "шт" && v >= 60) v = raw.length === 3 ? v / 10 : raw.length === 4 ? v / 100 : v;
+    return v > 0 ? { amount: Math.round(v * 1000) / 1000, unit: unit } : null;
+  }
+  /* полный разбор: words — слова всей страницы, colLines — строки колонки серий; known(id) — есть ли рулон в базе */
+  function parseDocWords(words, colLines, known, qLines) {
+    var col = serialColumn(words);
+    var found = col ? serialsFromColumn(colLines) : [];
+    // добавить то, что первый проход прочитал целиком, а второй пропустил
+    words.forEach(function (w) {
+      var d = digitsOf(w.text);
+      if (d.length === 13 && eanCheck(d) && !found.some(function (f) { return f.id === d; })) found.push({ id: d, top: w.bbox.y0, bottom: w.bbox.y1, sure: true });
+      if (d.length === 12 && /^2/.test(d)) {
+        var full = d + eanCheckDigit(d);
+        if (!found.some(function (f) { return f.id === full || f.id.slice(0, 12) === d; })) found.push({ id: full, top: w.bbox.y0, bottom: w.bbox.y1 + (w.bbox.y1 - w.bbox.y0), sure: false });
+      }
+    });
+    var lh = col ? col.lh : 20, cx = col ? col.x0 : 1e9;
+    // склад из шапки «Склад: …» на случай, если в строке не прочитался
+    var def = "";
+    var headerText = words.filter(function (w) { return !col || w.bbox.y1 < col.y0; }).map(function (w) { return w.text; }).join(" ");
+    var hm = /склад\s*[:：]\s*([^\n]{0,40})/i.exec(headerText); if (hm) def = whOf(hm[1]);
+    var ours = [], other = [], unsure = [], qty = {};
+    found.forEach(function (f) {
+      // количество: строка колонки «Кількість» на той же высоте
+      if (qLines && qLines.length) {
+        var fm = (f.top + f.bottom) / 2, band = Math.max((f.bottom - f.top) / 2, lh * 0.6) + lh * 0.6, bestQ = null, bd = 1e9;
+        qLines.forEach(function (q) { var qm = (q.bbox.y0 + q.bbox.y1) / 2, dd = Math.abs(qm - fm); if (dd <= band && dd < bd) { bd = dd; bestQ = q; } });
+        var pq = bestQ && parseQty(bestQ.text); if (pq) qty[f.id] = pq;
+      }
+      var mid = (f.top + f.bottom) / 2, half = Math.max((f.bottom - f.top) / 2, lh * 0.6) + lh * 0.4;
+      var rowText = words.filter(function (w) { var wm = (w.bbox.y0 + w.bbox.y1) / 2; return w.bbox.x1 < cx - 5 && Math.abs(wm - mid) <= half; }).map(function (w) { return w.text; }).join(" ");
+      var wh = whOf(rowText) || def;
+      if (wh && wh !== "our") { other.push({ id: f.id, wh: wh }); return; }
+      if (!f.sure && !(known && known(f.id))) { unsure.push(f.id); return; }
+      if (ours.indexOf(f.id) === -1) ours.push(f.id);
+    });
+    // сколько строк в таблице: строки со словом склада
+    var rowsSeen = 0, lastY = -1e9;
+    words.slice().sort(function (a, b) { return a.bbox.y0 - b.bbox.y0; }).forEach(function (w) {
+      if (/(основн|р[иы]н[оу]к|1608|доп|ндс|перевал|одес)/i.test(w.text) && w.bbox.x1 < cx && (!col || w.bbox.y0 >= col.y0 - lh * 2) && w.bbox.y0 > lastY + lh * 0.8) { rowsSeen++; lastY = w.bbox.y0; }
+    });
+    return { ours: ours, other: other, unsure: unsure, rows: rowsSeen, found: found.length, qty: qty };
+  }
+
+  /* картинка → холст: увеличить, в серое, убрать линии таблицы (они мешают читать цифры) */
+  function prepCanvas(im) {
+    var k = Math.min(3, Math.max(1, 2400 / im.naturalWidth)), c = document.createElement("canvas");
+    var w = c.width = Math.round(im.naturalWidth * k), h = c.height = Math.round(im.naturalHeight * k);
+    var g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, w, h);
+    var id = g.getImageData(0, 0, w, h), px = id.data, n = w * h, lum = new Uint8Array(n), dark = new Uint8Array(n), out = new Uint8ClampedArray(n), i, x, y, s0;
+    for (i = 0; i < n; i++) { lum[i] = (px[i * 4] * 3 + px[i * 4 + 1] * 6 + px[i * 4 + 2]) / 10; dark[i] = lum[i] < 200 ? 1 : 0; out[i] = lum[i]; }
+    var minH = w * 0.15, minV = 60;
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; ) {
+        if (!dark[y * w + x]) { x++; continue; }
+        s0 = x; while (x < w && dark[y * w + x]) x++;
+        if (x - s0 > minH) for (var a = s0; a < x; a++) out[y * w + a] = 255;
+      }
+    }
+    for (x = 0; x < w; x++) {
+      for (y = 0; y < h; ) {
+        if (!dark[y * w + x]) { y++; continue; }
+        s0 = y; while (y < h && dark[y * w + x]) y++;
+        if (y - s0 > minV) for (var b = s0; b < y; b++) out[b * w + x] = 255;
+      }
+    }
+    for (i = 0; i < n; i++) { px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = out[i]; px[i * 4 + 3] = 255; }
+    g.putImageData(id, 0, 0);
+    return c;
+  }
+  function ocrWords(d) {
+    if (d.words && d.words.length) return d.words;
+    var out = [];
+    (d.blocks || []).forEach(function (b) { (b.paragraphs || []).forEach(function (p) { (p.lines || []).forEach(function (l) { (l.words || []).forEach(function (w) { out.push(w); }); }); }); });
+    return out;
+  }
+  function ocrLines(d) {
+    if (d.lines && d.lines.length) return d.lines;
+    var out = [];
+    (d.blocks || []).forEach(function (b) { (b.paragraphs || []).forEach(function (p) { (p.lines || []).forEach(function (l) { out.push(l); }); }); });
+    return out;
+  }
   function docFromText(text) {
     var t = String(text), no = "", who = "";
     var m = /(?:Замовлення|Заказ)[^\n№]{0,40}(?:№|N[oо°]?\.?|Ne)\s*(\d{3,})/i.exec(t);
@@ -2144,17 +2299,43 @@ form { display: grid; gap: 16px; }
     return loadOcr().then(function (T) {
       var url = URL.createObjectURL(blob);
       return new Promise(function (ok, bad) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = bad; im.src = url; }).then(function (im) {
-        // мелкие скриншоты увеличиваем: так цифры читаются надёжнее
-        var k = Math.min(3, Math.max(1, 2400 / im.naturalWidth)), c = document.createElement("canvas");
-        c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
-        var g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
+        var c = prepCanvas(im);
         return T.createWorker("ukr+eng").then(function (w) {
-          // режим «один блок текста»: строки таблицы не разваливаются на столбцы, склад остаётся в одной строке с серией
-          return Promise.resolve(w.setParameters ? w.setParameters({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1" }) : null).then(function () { return w.recognize(c); }).then(function (r) { w.terminate(); return (r && r.data && r.data.text) || ""; }, function (e) { w.terminate(); throw e; });
+          var res = { text: "", words: [], lines: [] };
+          function setp(p) { return Promise.resolve(w.setParameters ? w.setParameters(p) : null); }
+          // проход 1: вся страница — слова с координатами (склад в строке, номер заказа)
+          return setp({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1" }).then(function () { return w.recognize(c); }).then(function (r) {
+            res.text = (r && r.data && r.data.text) || ""; res.words = ocrWords((r && r.data) || {});
+            var col = serialColumn(res.words);
+            if (!col) return res;
+            // проход 2: только колонка серий, только цифры — так переносы и мелкие цифры читаются надёжно
+            var x0 = Math.max(0, Math.round(col.x0 - 30)), x1 = Math.min(c.width, Math.round(col.x1 + 30)), y0 = Math.max(0, Math.round(col.y0 - 120));
+            var cc = document.createElement("canvas"); cc.width = x1 - x0; cc.height = c.height - y0;
+            cc.getContext("2d").drawImage(c, x0, y0, cc.width, cc.height, 0, 0, cc.width, cc.height);
+            return setp({ tessedit_char_whitelist: "0123456789" }).then(function () { return w.recognize(cc); }).then(function (r2) {
+              res.lines = ocrLines((r2 && r2.data) || {}).map(function (l) { return { text: l.text, bbox: { x0: l.bbox.x0 + x0, y0: l.bbox.y0 + y0, x1: l.bbox.x1 + x0, y1: l.bbox.y1 + y0 } }; });
+              // проход 3: колонка «Кількість» справа от серий — сколько отрезать
+              var qx0 = Math.min(c.width - 10, Math.max(x1 - 20, Math.round(res.lines.reduce(function (m, l) { return Math.max(m, l.bbox.x1); }, 0) + 10)));
+              var qc = document.createElement("canvas"); qc.width = c.width - qx0; qc.height = c.height - y0;
+              if (qc.width < 40) return res;
+              qc.getContext("2d").drawImage(c, qx0, y0, qc.width, qc.height, 0, 0, qc.width, qc.height);
+              return setp({ tessedit_char_whitelist: "0123456789,.кгмшт" }).then(function () { return w.recognize(qc); }).then(function (r3) {
+                res.qlines = ocrLines((r3 && r3.data) || {}).map(function (l) { return { text: l.text, bbox: { x0: l.bbox.x0 + qx0, y0: l.bbox.y0 + y0, x1: l.bbox.x1 + qx0, y1: l.bbox.y1 + y0 } }; });
+                return res;
+              });
+            });
+          }).then(function (r) { w.terminate(); return r; }, function (e) { w.terminate(); throw e; });
         });
       });
     });
+  }
+  function reOcr(id) {
+    if (!guard()) return;
+    var o = OR.map.get(id); if (o) { o.ocr_state = "pending"; ordersChanged(); }
+    OR.ocrFailAt = 0;
+    api("orders?id=eq." + id, { method: "PATCH", body: { ocr_state: "pending" }, prefer: "return=minimal" })
+      .then(function () { toast("Читаю фото заново. Недостающие рулоны добавятся, лишние можно убрать крестиком."); return ordersLoad(false); })["catch"](fail);
   }
   function ocrNext() {
     if (OR.ocrBusy || !repo || repo.kind !== "shared" || Date.now() - (OR.ocrFailAt || 0) < 60000) return;
@@ -2170,10 +2351,21 @@ form { display: grid; gap: 16px; }
     api("orders?id=eq." + o.id + "&ocr_state=in.(pending,work)", { method: "PATCH", body: { ocr_state: "work" }, prefer: "return=representation" }).then(function (rows) {
       if (!rows || !rows.length) throw { skip: true };
       return photoBlob(o.photo_path);
-    }).then(ocrImage).then(function (text) {
-      var split = serialsByWarehouse(text), nums = split.ours, doc = docFromText(text);
-      var skipped = split.other.length ? "Не с нашего склада: " + split.other.map(function (x) { return x.id + " (" + x.wh + ")"; }).join(", ") : "";
-      var p = nums.length ? api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: nums.map(function (x) { var rr = resolveRoll(x); return { order_id: o.id, roll_id: rr.id || x, source: "photo" }; }), prefer: "resolution=ignore-duplicates,return=minimal" }) : Promise.resolve();
+    }).then(ocrImage).then(function (res) {
+      var text = res.text, doc = docFromText(text), split, notes = [];
+      if (res.words.length && serialColumn(res.words)) {
+        split = parseDocWords(res.words, res.lines, function (id) { return state.rolls.has(id); }, res.qlines || []);
+        if (split.unsure.length) notes.push("Проверьте по фото, номер прочитан неточно: " + split.unsure.join(", "));
+        var got = split.ours.length + split.other.length;
+        if (split.rows > got) notes.push("В документе строк: " + split.rows + ", прочитано: " + got + ". Недостающие добавьте вручную или сканером");
+      } else split = serialsByWarehouse(text);
+      var nums = split.ours;
+      if (split.other.length) notes.unshift("Не с нашего склада: " + split.other.map(function (x) { return x.id + " (" + x.wh + ")"; }).join(", "));
+      var skipped = notes.join(". ");
+      var qy = split.qty || {};
+      function itemsBody(withQty) { return nums.map(function (x) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (withQty && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; } return b; }); }
+      function post(withQty) { return api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: itemsBody(withQty), prefer: "resolution=ignore-duplicates,return=minimal" }); }
+      var p = nums.length ? post(true)["catch"](function () { return post(false); }) : Promise.resolve();
       return p.then(function () {
         return api("orders?id=eq." + o.id, { method: "PATCH", body: { ocr_state: nums.length || skipped ? "done" : "fail", doc_no: doc, skipped: skipped }, prefer: "return=minimal" });
       });
@@ -2634,6 +2826,7 @@ form { display: grid; gap: 16px; }
       case "o-add": OR.adding = +el.getAttribute("data-id"); drawOrders(); setTimeout(function () { var f = $("#oadd-" + OR.adding); if (f) f.focus(); }, 50); return;
       case "o-scan": openScan("order:" + el.getAttribute("data-id")); return;
       case "o-photo": openPhoto(+el.getAttribute("data-id")); return;
+      case "o-reocr": reOcr(+el.getAttribute("data-id")); return;
       case "viewer-close": closeViewer(); return;
       case "oi-open": var rid2 = el.getAttribute("data-id"); if (state.rolls.has(rid2)) openSheet({ type: "detail", id: rid2 }); else toast("Рулона " + rid2 + " нет в базе.", true); return;
       case "nb-toggle": state.nb = !state.nb; lsSet("sklad_nb", state.nb ? "1" : null); state.seen.clear(); lastListHtml = null; render(); return;
