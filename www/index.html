@@ -417,6 +417,26 @@ form { display: grid; gap: 16px; }
 .ftog { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px 0 10px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 600; font-size: 0.9375rem; flex: none; }
 .ftog svg { width: 22px; height: 22px; }
 .ftog[aria-pressed="true"] { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.count-row .grow { flex: 1; }
+.count-row { justify-content: flex-start; gap: 8px; }
+.ftog .fn { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: 0.75rem; display: inline-grid; place-items: center; margin-right: -6px; }
+.fchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 6px 0 12px; border-radius: 99px; border: 0; background: var(--accent-soft, #e6e9ff); color: var(--fg); font: inherit; font-size: 0.875rem; font-weight: 600; max-width: 100%; }
+.fchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fchip i.dot { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--c, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
+.fchip em { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--fg) 10%, transparent); font-size: 0.75rem; flex: none; }
+.fchip.clear { background: transparent; color: var(--accent); padding: 0 10px; }
+.ff-sec { margin: 4px 0 16px; }
+.ff-sec h3 { font-size: 0.8125rem; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+.ff-sec h3 button { text-transform: none; letter-spacing: 0; }
+.ff-chips { display: flex; flex-wrap: wrap; gap: 6px; max-height: 260px; overflow: auto; padding: 2px; }
+.ff-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 4px 12px 4px 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; font-size: 0.9375rem; text-align: left; }
+.ff-chip i.dot { width: 16px; height: 16px; border-radius: 50%; flex: none; background: var(--c, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 20%, transparent); }
+.ff-chip small { font-family: var(--f-mono); color: var(--muted); font-size: 0.75rem; }
+.ff-chip.on { border-color: var(--accent); background: var(--accent); color: #fff; }
+.ff-chip.on small { color: rgba(255,255,255,.8); }
+.ff-chip.num { font-family: var(--f-mono); font-weight: 600; }
+.ff-q { margin-bottom: 8px; }
 .count { margin: 0 2px 8px; }
 .nbtag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 99px; font-family: var(--f-body); font-size: 0.6875rem; font-weight: 650; vertical-align: 3px; background: var(--accent-soft); color: var(--accent); }
 .item.nbr .row { border-style: dashed; }
@@ -636,8 +656,11 @@ form { display: grid; gap: 16px; }
   <div id="banner"></div>
   <div class="count-row">
     <button class="ftog" id="nbToggle" type="button" data-act="nb-toggle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="9.5" y="7" width="5" height="10" rx="2.5" fill="currentColor"/><rect x="16.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Соседи</span></button>
+    <button class="ftog" id="fltBtn" type="button" data-act="flt-open" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Фильтр</span><b class="fn" id="fltN" hidden></b></button>
+    <span class="grow"></span>
     <button class="link-btn" id="selStart" type="button" data-act="sel-start" hidden>Выбрать</button>
   </div>
+  <div class="fchips" id="fchips" hidden></div>
   <p class="count" id="count" aria-live="polite"></p>
   <div class="shades" id="shades" hidden></div>
   <ul class="list" id="list"></ul>
@@ -662,7 +685,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.4";
+  var APP_VERSION = "2.5";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -679,7 +702,7 @@ form { display: grid; gap: 16px; }
     rolls: new Map(), q: "", tab: "active", sheet: null, online: navigator.onLine,
     mode: "auth", loaded: false, user: null, authTab: "login", authNote: "",
     busy: false, selecting: false, sel: new Set(), seen: new Set(),
-    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null, nb: false
+    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null, nb: false, flt: { color: "", num: "", fabric: "", rack: "", floor: "" }
   };
   var repo = null, session = null, refreshing = null;
   var toastTimer = null, lpTimer = null, lpFired = false, lastListHtml = null;
@@ -1096,6 +1119,85 @@ form { display: grid; gap: 16px; }
     out.nbHits = base.length; out.tq = base.tq;
     return out;
   }
+  /* ---------- фильтр: цвет, номер оттенка, ткань, стеллаж ---------- */
+  var fabTypeCache = new Map();
+  function fabType(f) {
+    f = String(f || "").trim(); if (!f) return "";
+    var c = fabTypeCache.get(f); if (c != null) return c;
+    c = splitFabric(f).type || f; fabTypeCache.set(f, c); return c;
+  }
+  function fltActive(F) { F = F || state.flt; return !!(F.color || F.num || F.fabric || F.rack || F.floor); }
+  function fltMatch(r, F, skip) {
+    if (F.color && skip !== "color" && fold(splitColor(r.color).base) !== fold(F.color)) return false;
+    if (F.num && skip !== "num" && skip !== "color" && fold(splitColor(r.color).num) !== fold(F.num)) return false;
+    if (F.fabric && skip !== "fabric" && fold(fabType(r.fabric)) !== fold(F.fabric)) return false;
+    if (F.rack && skip !== "rack" && fold(r.rack) !== fold(F.rack)) return false;
+    if (F.floor && skip !== "rack" && fold(r.floor) !== fold(F.floor)) return false;
+    return true;
+  }
+  /* что есть на складе для каждого раздела фильтра (с учётом остальных условий) */
+  function facets() {
+    var F = state.flt, base = visibleBase(true);
+    var colors = new Map(), nums = new Map(), fabs = new Map();
+    base.forEach(function (it) {
+      var r = it.r, sc = splitColor(r.color);
+      if (sc.base && fltMatch(r, F, "color")) { var k = fold(sc.base), c = colors.get(k); if (!c) colors.set(k, c = { name: sc.base, n: 0 }); c.n++; }
+      if (F.color && sc.num && fltMatch(r, F, "num")) { var kn = fold(sc.num), n = nums.get(kn); if (!n) nums.set(kn, n = { name: sc.num, n: 0 }); n.n++; }
+      var ft = fabType(r.fabric);
+      if (ft && fltMatch(r, F, "fabric")) { var kf = fold(ft), f = fabs.get(kf); if (!f) fabs.set(kf, f = { name: ft, n: 0 }); f.n++; }
+    });
+    var cl = Array.from(colors.values()).sort(function (a, b) { return toneOf(a.name) - toneOf(b.name) || fold(a.name).localeCompare(fold(b.name)); });
+    var nl = Array.from(nums.values()).sort(function (a, b) { return (parseFloat(a.name) || 0) - (parseFloat(b.name) || 0) || (a.name < b.name ? -1 : 1); });
+    var fl = Array.from(fabs.values()).sort(function (a, b) { return b.n - a.n || fold(a.name).localeCompare(fold(b.name)); });
+    return { colors: cl, nums: nl, fabrics: fl };
+  }
+  function dotHtml(name) { var h = colorHex(name); return '<i class="dot weave"' + (h ? ' style="--c:' + h + '"' : "") + "></i>"; }
+  function fchipsHtml() {
+    var F = state.flt; if (!fltActive(F)) return "";
+    var h = "";
+    if (F.color) h += '<button type="button" class="fchip" data-fx="color">' + dotHtml(F.color) + "<span>" + esc(F.color) + (F.num ? " №" + esc(F.num) : "") + "</span><em>✕</em></button>";
+    if (F.fabric) h += '<button type="button" class="fchip" data-fx="fabric"><span>' + esc(F.fabric) + "</span><em>✕</em></button>";
+    if (F.rack || F.floor) h += '<button type="button" class="fchip" data-fx="rack"><span>' + (F.rack ? "стеллаж " + esc(F.rack) : "") + (F.floor ? (F.rack ? ", " : "") + "этаж " + esc(F.floor) : "") + "</span><em>✕</em></button>";
+    return h + '<button type="button" class="fchip clear" data-fx="all">Сбросить</button>';
+  }
+  function filterSheetHtml(s) {
+    var F = state.flt, fc = facets(), cq = fold(s.cq || "");
+    var h = head("Фильтр");
+    var cols = fc.colors.filter(function (c) { return !cq || fold(c.name).indexOf(cq) !== -1 || fold(F.color) === fold(c.name); });
+    h += '<div class="ff-sec"><h3>Цвет' + (F.color ? '<button type="button" class="link-btn" data-ff-color="">любой</button>' : "") + "</h3>" +
+      (fc.colors.length > 12 ? '<div class="field ff-q"><input id="ff-q" type="search" placeholder="Найти цвет" autocomplete="off" value="' + esc(s.cq || "") + '"></div>' : "") +
+      '<div class="ff-chips" id="ffColors">' + (cols.length ? cols.map(function (c) {
+        return '<button type="button" class="ff-chip' + (fold(F.color) === fold(c.name) ? " on" : "") + '" data-ff-color="' + esc(c.name) + '">' + dotHtml(c.name) + "<span>" + esc(c.name) + "</span><small>" + c.n + "</small></button>";
+      }).join("") : '<p class="hint">Нет подходящих цветов.</p>') + "</div></div>";
+    if (F.color) {
+      h += '<div class="ff-sec"><h3>Номер оттенка' + (F.num ? '<button type="button" class="link-btn" data-ff-num="">любой</button>' : "") + '</h3><div class="ff-chips">' +
+        (fc.nums.length ? fc.nums.map(function (n) {
+          return '<button type="button" class="ff-chip num' + (fold(F.num) === fold(n.name) ? " on" : "") + '" data-ff-num="' + esc(n.name) + '">№' + esc(n.name) + "<small>" + n.n + "</small></button>";
+        }).join("") : '<p class="hint">У этого цвета номера не указаны.</p>') + "</div></div>";
+    }
+    h += '<div class="ff-sec"><h3>Ткань' + (F.fabric ? '<button type="button" class="link-btn" data-ff-fab="">любая</button>' : "") + '</h3><div class="ff-chips">' +
+      (fc.fabrics.length ? fc.fabrics.map(function (f) {
+        return '<button type="button" class="ff-chip' + (fold(F.fabric) === fold(f.name) ? " on" : "") + '" data-ff-fab="' + esc(f.name) + '"><span>' + esc(f.name) + "</span><small>" + f.n + "</small></button>";
+      }).join("") : '<p class="hint">Нет подходящих тканей.</p>') + "</div></div>";
+    h += '<div class="ff-sec"><h3>Место</h3><div class="two"><div class="field"><label for="ff-rack">Стеллаж</label><input id="ff-rack" type="text" class="mono" value="' + esc(F.rack) + '" placeholder="любой"></div>' +
+      '<div class="field"><label for="ff-floor">Этаж</label><input id="ff-floor" type="text" inputmode="numeric" class="mono" value="' + esc(F.floor) + '" placeholder="любой"></div></div></div>';
+    var n = visibleBase().length;
+    h += '<div class="actions"><button class="btn" type="button" data-act="flt-reset"' + (fltActive(F) ? "" : " disabled") + '>Сбросить</button>' +
+      '<button class="btn primary" type="button" data-act="close" id="ffShow">' + (n ? "Показать: " + n : "Ничего не найдено") + "</button></div>";
+    return h;
+  }
+  function fltChanged(redraw) {
+    state.seen.clear(); lastListHtml = null; render();
+    var s = state.sheet;
+    if (s && s.type === "filter") {
+      if (redraw) {
+        var sc = $("#sheetBody") ? $("#sheetBody").scrollTop : 0;
+        drawSheet(true);
+        if ($("#sheetBody")) $("#sheetBody").scrollTop = sc;
+      } else { var b = $("#ffShow"), n = visibleBase().length; if (b) b.textContent = n ? "Показать: " + n : "Ничего не найдено"; }
+    }
+  }
+
   /* ---------- поиск словами: «кулир лимон», «меланж №3», «черный» ---------- */
   // русские корни → украинские (цвета и ткани в 1С записаны по-украински)
   var SYN = [["серебр", "сриб"], ["бел", "бил"], ["сер", "сир"], ["черн", "чорн"], ["красн", "червон"], ["желт", "жовт"], ["розов", "рожев"],
@@ -1172,7 +1274,7 @@ form { display: grid; gap: 16px; }
   function shadesHtml(items) {
     var gs = shadeGroups(items);
     if (!gs.length) return "";
-    var hasNum = /(^|\s)№/.test(state.q);
+    var hasNum = /(^|\s)№/.test(state.q) || !!state.flt.num;
     var h = gs.slice(0, 40).map(function (g) {
       var sc = splitColor(g.color);
       var q = Object.keys(g.qty).map(function (u) { return String(Math.round(g.qty[u] * 10) / 10).replace(".", ",") + (u ? " " + u : ""); }).join(" + ");
@@ -1190,8 +1292,9 @@ form { display: grid; gap: 16px; }
     return '<div class="shades-h">' + (gs.length === 1 ? "Итого по оттенку" : "Оттенков: " + gs.length + (hasNum ? "" : ". Нажмите, чтобы оставить один")) + "</div>" +
       '<div class="shades-g">' + h + "</div>" + (gs.length > 40 ? '<p class="hint">И ещё ' + (gs.length - 40) + ". Уточните поиск.</p>" : "");
   }
-  function visibleBase() {
+  function visibleBase(noFlt) {
     var wantDeleted = state.tab === "trash";
+    var F = state.flt, fa = !noFlt && fltActive(F);
     var q = state.q.trim().toLowerCase();
     var digits = q.replace(/\s/g, "");
     var onlyDigits = /^[\d-]+$/.test(digits) && /\d/.test(digits);
@@ -1201,6 +1304,7 @@ form { display: grid; gap: 16px; }
     state.rolls.forEach(function (r, id) {
       if (!!r.deleted !== wantDeleted) return;
       if (state.tab === "norack" && r.rack) return;
+      if (fa && !fltMatch(r, F)) return;
       if (q) {
         var hit;
         if (rq) hit = String(r.rack || "").toLowerCase() === String(rq.rack).toLowerCase() && (rq.floor == null || String(r.floor || "") === String(rq.floor));
@@ -1210,7 +1314,7 @@ form { display: grid; gap: 16px; }
       }
       out.push({ id: id, r: r });
     });
-    if (tq) { out.sort(function (a, b) { return toneCmp(a, b); }); out.tq = tq; return out; }
+    if (tq || fa) { out.sort(function (a, b) { return toneCmp(a, b); }); out.tq = tq || { words: [], nums: [] }; return out; }
     out.sort(function (a, b) {
       var ta = wantDeleted ? (a.r.deletedAt || 0) : (a.r.updatedAt || 0);
       var tb = wantDeleted ? (b.r.deletedAt || 0) : (b.r.updatedAt || 0);
@@ -1283,6 +1387,12 @@ form { display: grid; gap: 16px; }
     $("#qClear").hidden = !state.q;
     $("#qScan").hidden = !!state.q;
     $("#nbToggle").setAttribute("aria-pressed", state.nb ? "true" : "false");
+    var fcnt = ["color", "fabric", "rack"].filter(function (k) { return k === "rack" ? state.flt.rack || state.flt.floor : state.flt[k]; }).length;
+    $("#fltBtn").setAttribute("aria-pressed", fcnt ? "true" : "false");
+    $("#fltN").hidden = !fcnt; $("#fltN").textContent = fcnt || "";
+    var fch = $("#fchips"), fhh = fchipsHtml();
+    if (fch._h !== fhh) { fch.innerHTML = fhh; fch._h = fhh; }
+    fch.hidden = !fhh;
     var net = $("#net");
     net.className = "net" + (state.online ? "" : " off");
     $("#netText").textContent = state.online ? "Онлайн" : "Нет соединения";
@@ -1309,7 +1419,7 @@ form { display: grid; gap: 16px; }
       if (state.tab === "trash") txt = items.length ? "Удалено рулонов: " + items.length + ". Отсюда их можно вернуть." : "";
       else if (state.tab === "norack") txt = items.length ? (state.q ? "Найдено без места: " + items.length : "Рулоны без стеллажа: " + items.length + ". Откройте рулон и укажите место") : "";
       else if (state.q && items.nbHits != null) txt = "Найдено: " + items.nbHits + ", вместе с соседями: " + items.length;
-      else txt = state.q ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : (state.nb ? "" : ""));
+      else txt = state.q || fltActive() ? "Найдено: " + items.length : (items.length ? "Последние изменения сверху" : (state.nb ? "" : ""));
       if (state.nb && !state.q.trim() && items.length) txt = "Соседи включены: введите номер рулона, и рядом появится вся его серия";
       if (items.length > 100) txt += items.tq ? ". Показаны первые 100: нажмите на оттенок или добавьте ткань." : ". Показаны первые 100, уточните номер.";
       $("#count").textContent = txt;
@@ -1318,6 +1428,7 @@ form { display: grid; gap: 16px; }
         var msg;
         if (state.tab === "trash") msg = "<strong>В удалённых пусто</strong>Когда рулон заберут целиком, он появится здесь, и его можно будет вернуть при возврате.";
         else if (state.tab === "norack" && !state.q) msg = "<strong>У всех рулонов указано место</strong>Здесь появляются рулоны без стеллажа, например новые из 1С.";
+        else if (!state.q && fltActive()) msg = "<strong>Ничего не найдено</strong>Под этот фильтр рулонов нет. Нажмите «Сбросить» над списком.";
         else if (state.q && items.tq) msg = "<strong>Ничего не найдено</strong>Попробуйте одно слово: цвет («лимон», «меланж») или ткань («кулир»). Номер оттенка пишется так: №3.";
         else if (state.q) msg = "<strong>Рулон не найден</strong>Проверьте номер. Если рулон новый, нажмите «Добавить».";
         else msg = "<strong>В базе пока нет рулонов</strong>Нажмите «Добавить», введите номер рулона, стеллаж, этаж, ткань и цвет.";
@@ -1431,6 +1542,7 @@ form { display: grid; gap: 16px; }
     return h + "</dl>";
   }
   function sheetHtml(s) {
+    if (s.type === "filter") return filterSheetHtml(s);
     if (s.type === "detail") {
       var r = state.rolls.get(s.id);
       if (!r) return head("Рулон не найден");
@@ -2906,11 +3018,27 @@ form { display: grid; gap: 16px; }
     var at = t.closest("[data-auth-tab]");
     if (at) { state.authTab = at.getAttribute("data-auth-tab"); state.authNote = ""; render(); return; }
     var shb = t.closest(".shade[data-shade]");
+    if (shb && state.flt.color && !state.q.trim()) { state.flt.num = shb.getAttribute("data-shade"); window.scrollTo({ top: 0, behavior: "smooth" }); fltChanged(); return; }
     if (shb) { var nq = state.q.trim() + " №" + shb.getAttribute("data-shade"); state.q = nq; $("#q").value = nq; window.scrollTo({ top: 0, behavior: "smooth" }); render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
     var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
     var rt = t.closest("[data-retry]"); if (rt) { modeRetry(+rt.getAttribute("data-retry")); return; }
+    var ffc = t.closest("[data-ff-color]");
+    if (ffc) { var vc = ffc.getAttribute("data-ff-color"); state.flt.color = fold(vc) === fold(state.flt.color) ? "" : vc; state.flt.num = ""; fltChanged(true); return; }
+    var ffn = t.closest("[data-ff-num]");
+    if (ffn) { var vn = ffn.getAttribute("data-ff-num"); state.flt.num = fold(vn) === fold(state.flt.num) ? "" : vn; fltChanged(true); return; }
+    var fff = t.closest("[data-ff-fab]");
+    if (fff) { var vf = fff.getAttribute("data-ff-fab"); state.flt.fabric = fold(vf) === fold(state.flt.fabric) ? "" : vf; fltChanged(true); return; }
+    var fx = t.closest("[data-fx]");
+    if (fx) {
+      var k = fx.getAttribute("data-fx");
+      if (k === "all") state.flt = { color: "", num: "", fabric: "", rack: "", floor: "" };
+      else if (k === "color") { state.flt.color = ""; state.flt.num = ""; }
+      else if (k === "rack") { state.flt.rack = ""; state.flt.floor = ""; }
+      else state.flt[k] = "";
+      fltChanged(true); return;
+    }
     var pv = t.closest("[data-pk-val]");
     if (pv && state.pick) { choosePick(pv.getAttribute("data-pk-val")); return; }
     if (t.closest("[data-pk-add]") && state.pick) { addPick(); return; }
@@ -2948,6 +3076,8 @@ form { display: grid; gap: 16px; }
       case "o-reocr": reOcr(+el.getAttribute("data-id")); return;
       case "viewer-close": closeViewer(); return;
       case "oi-open": var rid2 = el.getAttribute("data-id"); if (state.rolls.has(rid2)) openSheet({ type: "detail", id: rid2 }); else toast("Рулона " + rid2 + " нет в базе.", true); return;
+      case "flt-open": exitSelect(); openSheet({ type: "filter", cq: "" }); return;
+      case "flt-reset": state.flt = { color: "", num: "", fabric: "", rack: "", floor: "" }; if (state.sheet) state.sheet.cq = ""; fltChanged(true); return;
       case "nb-toggle": state.nb = !state.nb; lsSet("sklad_nb", state.nb ? "1" : null); state.seen.clear(); lastListHtml = null; render(); return;
       case "open-roll": openSheet({ type: "detail", id: el.getAttribute("data-id") }); return;
       case "mode-close": closeMode(); return;
@@ -3005,6 +3135,17 @@ form { display: grid; gap: 16px; }
   document.addEventListener("contextmenu", function (e) { if (e.target.closest && e.target.closest(".row")) e.preventDefault(); });
 
   $("#q").addEventListener("input", function (e) { state.q = e.target.value; render(); });
+  document.addEventListener("input", function (e) {
+    var id = e.target && e.target.id, s = state.sheet;
+    if (!s || s.type !== "filter") return;
+    if (id === "ff-q") {
+      s.cq = e.target.value;
+      var tmp = document.createElement("div"); tmp.innerHTML = filterSheetHtml(s);
+      var nc = tmp.querySelector("#ffColors"), oc = $("#ffColors"); if (nc && oc) oc.innerHTML = nc.innerHTML;
+    } else if (id === "ff-rack" || id === "ff-floor") {
+      state.flt[id === "ff-rack" ? "rack" : "floor"] = e.target.value.trim(); fltChanged(false);
+    }
+  });
   $("#q").addEventListener("keydown", function (e) { if (e.key === "Enter") e.target.blur(); });
   window.addEventListener("online", function () { state.online = true; render(); });
   window.addEventListener("offline", function () { state.online = false; render(); });
