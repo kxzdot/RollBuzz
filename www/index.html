@@ -564,7 +564,10 @@ form { display: grid; gap: 16px; }
 .ocard.st-done::before { background: var(--ok); }
 .ocard.st-done { opacity: 0.85; }
 .oc-head { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8125rem; color: var(--muted); }
-.oc-head time { font-family: var(--f-mono); white-space: nowrap; }
+.oc-head time { font-family: var(--f-mono); white-space: nowrap; margin-left: auto; }
+.oc-del { flex: none; margin: -6px -6px 0 2px; height: 32px; min-width: 32px; padding: 0 8px; border-radius: 10px; border: 0; background: var(--surface-2); color: var(--muted); font: inherit; font-size: 0.875rem; font-weight: 700; }
+.oc-del.armed { background: var(--danger); color: #fff; }
+.ocard.removing { opacity: .4; transition: opacity .2s; }
 .oc-chat { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .otype { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; background: var(--surface-2); color: var(--fg); }
 .otype.t-acorn, .otype.t-market, .otype.t-move { background: #e8590c; color: #fff; }
@@ -791,7 +794,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.9";
+  var APP_VERSION = "3.0";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2268,7 +2271,8 @@ form { display: grid; gap: 16px; }
     if (!repo || repo.kind !== "shared") return;
     OR.map = new Map(); OR.last = ""; OR.loaded = false; OR.missing = false; OR.known = null;
     ordersLoad(true);
-    OR.timer = setInterval(function () { if (!document.hidden && navigator.onLine) ordersLoad(false); }, 10000);
+    OR.tick = 0;
+    OR.timer = setInterval(function () { if (!document.hidden && navigator.onLine) ordersLoad(++OR.tick % 12 === 0); }, 10000);
   }
   function ordersStop() { clearInterval(OR.timer); OR.timer = null; }
   function ordersLoad(full) {
@@ -2282,9 +2286,14 @@ form { display: grid; gap: 16px; }
       path = "orders?select=*,order_items(*)&changed_at=gte." + encodeURIComponent(new Date(Date.parse(OR.last) - 60000).toISOString()) + "&order=changed_at.asc&limit=500";
       OR.busy = api(path);
     }
+    var wasFull = full || !OR.last;
     return OR.busy.then(function (rows) {
       OR.busy = null;
       var fresh = [];
+      if (wasFull && OR.loaded) {   // полная загрузка: убрать заказы, удалённые управляющим
+        var keep = new Set((rows || []).map(function (o) { return o.id; }));
+        OR.map.forEach(function (o, id) { if (!keep.has(id)) OR.map["delete"](id); });
+      }
       (rows || []).forEach(function (o) {
         (o.order_items || []).sort(function (a, b) { return a.id - b.id; });
         if (OR.known && !OR.known.has(o.id)) fresh.push(o);
@@ -2773,7 +2782,8 @@ form { display: grid; gap: 16px; }
   function orderCard(o) {
     var its = o.order_items || [], n = its.length, d = itemsDone(o), me = (state.user && state.user.name) || "";
     var h = '<article class="ocard st-' + o.status + '" id="oc-' + o.id + '">' +
-      '<div class="oc-head"><span class="oc-chat">' + typeBadge(o) + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time></div>" +
+      '<div class="oc-head"><span class="oc-chat">' + typeBadge(o) + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time>" +
+      (state.isAdmin ? '<button type="button" class="oc-del' + (OR.delArm === o.id ? " armed" : "") + '" data-act="o-del" data-id="' + o.id + '" aria-label="Удалить заказ">' + (OR.delArm === o.id ? "Удалить?" : "✕") + "</button>" : "") + "</div>" +
       '<div class="oc-who">' + esc(o.author || "Без имени") + (o.doc_no ? '<span class="oc-doc">' + esc(o.doc_no) + "</span>" : "") + "</div>";
     if (o.text) h += '<p class="oc-text">' + esc(o.text) + "</p>";
     if (o.photo_path) {
@@ -2854,6 +2864,26 @@ form { display: grid; gap: 16px; }
       var lab = itemLabel(o, it);
       return '<div class="io">' + (lab ? '<span class="oi-lab big">' + esc(lab) + "</span>" : "") + cutHtml(it, state.rolls.get(id), true) + '<div class="io-t"><b>' + typeBadge(o) + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
     }).join("") + "</div>";
+  }
+
+  /* удалить заказ (только управляющий): первое нажатие спрашивает, второе удаляет */
+  function orderDelete(id) {
+    if (!state.isAdmin || !guard()) return;
+    if (OR.delArm !== id) {
+      OR.delArm = id; drawOrders();
+      clearTimeout(OR.delTimer); OR.delTimer = setTimeout(function () { if (OR.delArm === id) { OR.delArm = null; drawOrders(); } }, 4000);
+      return;
+    }
+    OR.delArm = null; clearTimeout(OR.delTimer);
+    var card = $("#oc-" + id); if (card) card.classList.add("removing");
+    api("rpc/order_delete", { method: "POST", body: { p_id: id } }).then(function (msg) {
+      OR.map["delete"](id); ordersChanged();
+      toast(typeof msg === "string" ? msg : "Заказ удалён");
+      if (repo && repo.refresh) repo.refresh();
+    })["catch"](function (e) {
+      if (card) card.classList.remove("removing");
+      toast(e && e.status === 404 ? "Выполните update-14.sql в Supabase, чтобы удалять заказы." : /управляющий/.test((e && e.message) || "") ? "Удалять заказы может только управляющий." : "Не удалось удалить заказ. Проверьте связь.", true);
+    });
   }
 
   /* ---------- действия ---------- */
@@ -3722,6 +3752,7 @@ form { display: grid; gap: 16px; }
       case "prihod-open": openMode("prihod"); return;
       case "sum-open": openSum(); return;
       case "rep-open": openRep(); return;
+      case "o-del": orderDelete(+el.getAttribute("data-id")); return;
       case "rep-close": closeRep(); return;
       case "rep-type": REP.type = el.getAttribute("data-id"); autoSelect(); drawRep(); return;
       case "rep-make": REP.step = "sheet"; drawRep(); var rr = $("#repRoot .orders"); if (rr) rr.scrollTop = 0; return;
