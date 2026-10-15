@@ -568,6 +568,18 @@ form { display: grid; gap: 16px; }
 .oc-del { flex: none; margin: -6px -6px 0 2px; height: 32px; min-width: 32px; padding: 0 8px; border-radius: 10px; border: 0; background: var(--surface-2); color: var(--muted); font: inherit; font-size: 0.875rem; font-weight: 700; }
 .oc-del.armed { background: var(--danger); color: #fff; }
 .ocard.removing { opacity: .4; transition: opacity .2s; }
+.oi-amt { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 12px 12px; border-top: 1px dashed var(--line); background: var(--surface-2); }
+.oi-amt label { grid-column: 1 / -1; display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
+.oi-amt input { height: 46px; padding: 0 12px; border-radius: 10px; border: 1.5px solid var(--accent); background: var(--bg); color: var(--fg); font-size: 1.125rem; }
+.oi-amt .amt-u { grid-column: 1 / -1; display: flex; gap: 6px; }
+.oi-amt .amt-u button { flex: 1; height: 40px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; font-weight: 700; }
+.oi-amt .amt-u button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.oi-amt .btn.sm { height: 44px; }
+.amt-hint { grid-column: 1 / -1; margin: 0; font-size: 0.75rem; color: var(--muted); }
+.oi.movable { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.oc-items.sorting .oi { transition: transform .18s ease; }
+.oc-items.sorting .oi.dragging { transition: none; position: relative; z-index: 5; box-shadow: 0 12px 30px rgba(0,0,0,.28); border-color: var(--accent); }
+.oc-items.sorting { touch-action: none; }
 .oc-chat { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .otype { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; background: var(--surface-2); color: var(--fg); }
 .otype.t-acorn, .otype.t-market, .otype.t-move { background: #e8590c; color: #fff; }
@@ -794,7 +806,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.1";
+  var APP_VERSION = "3.3";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2737,11 +2749,12 @@ form { display: grid; gap: 16px; }
   }
   function typeBadge(o) { var t = orderType(o); return t ? '<span class="otype t-' + t + '">' + OTYPES[t].name + "</span>" : ""; }
   /* метка рулона в заказе почты: «Иващенко №1», сверху вниз */
+  function isCutItem(it) { var c = cutInfo(it, state.rolls.get(it.roll_id)); return !!(c && c.cut); }
   function itemLabel(o, it) {
-    if (orderType(o) !== "post") return "";
-    var its = o.order_items || [], i = its.indexOf(it);
-    if (i < 0) its.forEach(function (x, k) { if (x.id === it.id) i = k; });
-    if (its.length < 1 || i < 0) return "";
+    if (orderType(o) !== "post" || isCutItem(it)) return "";   // отрезы не нумеруются
+    var its = (o.order_items || []).slice().sort(itemOrder).filter(function (x) { return !isCutItem(x); }), i = -1;
+    its.forEach(function (x, k) { if (x.id === it.id) i = k; });
+    if (i < 0) return "";
     var c = orderClient(o);
     return (c ? c + " " : "") + "№" + (i + 1);
   }
@@ -2759,6 +2772,7 @@ form { display: grid; gap: 16px; }
   }
   function drawOrders() {
     var box = $("#ordersIn"); if (!box) return;
+    if (DRAG.on) { DRAG.redraw = true; return; }
     var sc = box.parentNode.scrollTop;
     var chats = new Map(), na = 0, nd = 0;
     OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (o.status !== "done") na++; else if (recentDone(o)) nd++; });
@@ -2847,12 +2861,39 @@ form { display: grid; gap: 16px; }
     else if (r && r.deleted) act = '<span class="ost">Уже выдан' + (r.deletedBy ? ": " + esc(r.deletedBy) : "") + '</span><button type="button" class="btn sm" data-act="oi-take" data-id="' + it.id + '">Всё равно беру</button>';
     else act = '<button type="button" class="btn sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
     var lab = itemLabel(o, it);
-    return '<li class="oi st-' + it.state + (r && r.deleted && it.state !== "done" ? " gone" : "") + '"><button type="button" class="oi-main" data-act="oi-open" data-id="' + esc(it.roll_id) + '">' +
+    return '<li class="oi st-' + it.state + (r && r.deleted && it.state !== "done" ? " gone" : "") + (state.isAdmin && (o.order_items || []).length > 1 ? " movable" : "") + '" data-item="' + it.id + '" data-order="' + o.id + '"><button type="button" class="oi-main" data-act="oi-open" data-id="' + esc(it.roll_id) + '">' +
       "<span" + swatchStyle(r && r.color) + "></span>" +
       '<span class="oi-info">' + (lab ? '<span class="oi-lab">' + esc(lab) + "</span>" : "") + '<b class="num">' + numHtml(it.roll_id, "") + "</b>" +
       (r ? '<span class="oi-meta">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + (r.qty != null ? " · " + esc(qtyText(r)) : "") + "</span>" : '<span class="oi-meta warn">нет в базе</span>') +
       "</span>" + cutHtml(it, r) + (r ? rackHtml(r) : "") + "</button>" +
-      '<div class="oi-act">' + act + ((it.source === "manual" || it.source === "photo") && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div></li>";
+      '<div class="oi-act">' + (state.isAdmin && it.state !== "done" ? '<button type="button" class="mini" data-act="oi-amt" data-id="' + it.id + '" aria-label="Изменить количество">✎</button>' : "") + act + ((it.source === "manual" || it.source === "photo") && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div>" +
+      (OR.amtEdit === it.id ? amtEditHtml(it, r) : "") + "</li>";
+  }
+  /* управляющий: поправить, сколько резать / брать */
+  function amtEditHtml(it, r) {
+    var unit = OR.amtUnit || it.unit || (r && r.unit) || "м";
+    return '<form class="oi-amt" data-id="' + it.id + '" novalidate autocomplete="off"><label><span>Сколько</span><input id="amt-' + it.id + '" type="text" inputmode="decimal" class="mono" placeholder="весь рулон" value="' + esc(it.amount == null ? "" : kgFmt(+it.amount)) + '"></label>' +
+      '<div class="amt-u">' + ["м", "кг"].map(function (u) { return '<button type="button" class="' + (u === unit ? "on" : "") + '" data-act="amt-unit" data-id="' + u + '">' + u + "</button>"; }).join("") + "</div>" +
+      '<button type="button" class="btn sm" data-act="amt-cancel">Отмена</button><button type="submit" class="btn primary sm">Сохранить</button>' +
+      '<p class="amt-hint">Пусто — рулон целиком. Метры всегда отрез.</p></form>';
+  }
+  function amtSave(id) {
+    if (!guard()) return;
+    var inp = $("#amt-" + id); if (!inp) return;
+    var v = kgNum(inp.value), it = null, o0 = null;
+    OR.map.forEach(function (o) { (o.order_items || []).forEach(function (x) { if (x.id === id) { it = x; o0 = o; } }); });
+    if (!it) return;
+    if (isNaN(v) || (v !== null && (v <= 0 || v > 1000))) { toast("Количество числом, например 2,5", true); inp.focus(); return; }
+    var r = state.rolls.get(it.roll_id), unit = v === null ? "" : (OR.amtUnit || it.unit || (r && r.unit) || "м");
+    var body = { amount: v, unit: unit, amount_sure: true };
+    OR.amtEdit = null; OR.amtUnit = null;
+    var old = { amount: it.amount, unit: it.unit, amount_sure: it.amount_sure };
+    it.amount = v; it.unit = unit; it.amount_sure = true; drawOrders();
+    api("order_items?id=eq." + id, { method: "PATCH", body: body, prefer: "return=minimal" })["catch"](function () {
+      return api("order_items?id=eq." + id, { method: "PATCH", body: { amount: v, unit: unit }, prefer: "return=minimal" });
+    }).then(function () { toast(v === null ? "Рулон целиком" : "Записано: " + kgFmt(v) + " " + unit); })["catch"](function () {
+      it.amount = old.amount; it.unit = old.unit; it.amount_sure = old.amount_sure; drawOrders(); toast("Не удалось сохранить. Проверьте связь.", true);
+    });
   }
   /* блок «В заказах» в карточке рулона */
   function inOrdersHtml(id) {
@@ -2868,6 +2909,70 @@ form { display: grid; gap: 16px; }
       return '<div class="io">' + (lab ? '<span class="oi-lab big">' + esc(lab) + "</span>" : "") + cutHtml(it, state.rolls.get(id), true) + '<div class="io-t"><b>' + typeBadge(o) + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
     }).join("") + "</div>";
   }
+
+  /* ---------- управляющий: зажать рулон в заказе и перетащить выше или ниже ---------- */
+  var DRAG = { on: false, timer: null, li: null, redraw: false, justEnded: 0 };
+  function dragStart(li, y) {
+    var ul = li.parentNode, items = Array.prototype.slice.call(ul.children).filter(function (x) { return x.classList.contains("oi"); });
+    DRAG.on = true; DRAG.li = li; DRAG.ul = ul; DRAG.items = items; DRAG.from = items.indexOf(li); DRAG.to = DRAG.from; DRAG.y0 = y;
+    DRAG.rects = items.map(function (x) { var r = x.getBoundingClientRect(); return { top: r.top, h: r.height }; });
+    DRAG.gap = items.length > 1 ? DRAG.rects[1].top - DRAG.rects[0].top - DRAG.rects[0].h : 8;
+    li.classList.add("dragging"); ul.classList.add("sorting");
+    try { navigator.vibrate && navigator.vibrate(25); } catch (e) {}
+  }
+  function dragMove(y) {
+    var dy = y - DRAG.y0, R = DRAG.rects, from = DRAG.from, me = R[from], mid = me.top + me.h / 2 + dy, to = from;
+    for (var i = 0; i < R.length; i++) {
+      if (i < from && mid < R[i].top + R[i].h / 2) { to = i; break; }
+      if (i > from && mid > R[i].top + R[i].h / 2) to = i;
+    }
+    DRAG.to = to;
+    DRAG.li.style.transform = "translateY(" + dy + "px)";
+    var shift = me.h + DRAG.gap;
+    DRAG.items.forEach(function (x, i) {
+      if (i === from) return;
+      var t = 0;
+      if (from < to && i > from && i <= to) t = -shift;
+      if (from > to && i < from && i >= to) t = shift;
+      x.style.transform = t ? "translateY(" + t + "px)" : "";
+    });
+  }
+  function dragEnd(cancel) {
+    if (!DRAG.on) return;
+    var oid = +DRAG.li.getAttribute("data-order"), from = DRAG.from, to = DRAG.to;
+    DRAG.items.forEach(function (x) { x.style.transform = ""; });
+    DRAG.li.classList.remove("dragging"); DRAG.ul.classList.remove("sorting");
+    DRAG.on = false; DRAG.justEnded = Date.now();
+    var o = OR.map.get(oid);
+    if (!cancel && o && from !== to) {
+      var its = (o.order_items || []).slice().sort(itemOrder), moved = its.splice(from, 1)[0];
+      its.splice(to, 0, moved);
+      var changes = [];
+      its.forEach(function (it, i) { if (it.pos !== i + 1) { it.pos = i + 1; changes.push(it); } });
+      o.order_items = its;
+      DRAG.redraw = false; drawOrders();
+      Promise.all(changes.map(function (it) { return api("order_items?id=eq." + it.id, { method: "PATCH", body: { pos: it.pos }, prefer: "return=minimal" }); }))
+        .then(function () { toast("Порядок рулонов сохранён"); })
+        ["catch"](function (e) { toast(e && e.status === 400 ? "Выполните update-15.sql в Supabase, чтобы менять порядок." : "Не удалось сохранить порядок. Проверьте связь.", true); ordersLoad(true); });
+    } else if (DRAG.redraw) { DRAG.redraw = false; drawOrders(); }
+  }
+  document.addEventListener("pointerdown", function (e) {
+    var li = e.target.closest && e.target.closest("#ordersRoot li.oi.movable");
+    if (!li || !state.isAdmin || e.target.closest(".oi-act")) return;
+    var y = e.clientY, x = e.clientX;
+    clearTimeout(DRAG.timer);
+    DRAG.px = x; DRAG.py = y; DRAG.pending = li;
+    DRAG.timer = setTimeout(function () { if (DRAG.pending === li) { DRAG.pending = null; dragStart(li, DRAG.py); } }, 380);
+  });
+  document.addEventListener("pointermove", function (e) {
+    if (DRAG.pending && (Math.abs(e.clientY - DRAG.py) > 8 || Math.abs(e.clientX - DRAG.px) > 8)) { clearTimeout(DRAG.timer); DRAG.pending = null; }
+    if (DRAG.on) { e.preventDefault(); dragMove(e.clientY); }
+  });
+  document.addEventListener("touchmove", function (e) { if (DRAG.on) e.preventDefault(); }, { passive: false });
+  document.addEventListener("pointerup", function () { clearTimeout(DRAG.timer); DRAG.pending = null; if (DRAG.on) dragEnd(false); });
+  document.addEventListener("pointercancel", function () { clearTimeout(DRAG.timer); DRAG.pending = null; if (DRAG.on) dragEnd(false); });
+  document.addEventListener("click", function (e) { if (Date.now() - DRAG.justEnded < 400 && e.target.closest && e.target.closest("#ordersRoot li.oi")) { e.stopPropagation(); e.preventDefault(); } }, true);
+  document.addEventListener("contextmenu", function (e) { if (e.target.closest && e.target.closest("#ordersRoot li.oi.movable")) e.preventDefault(); });
 
   /* удалить заказ (только управляющий): первое нажатие спрашивает, второе удаляет */
   function orderDelete(id) {
@@ -3770,6 +3875,9 @@ form { display: grid; gap: 16px; }
       case "sum-open": openSum(); return;
       case "rep-open": openRep(); return;
       case "o-del": orderDelete(+el.getAttribute("data-id")); return;
+      case "oi-amt": var ai = +el.getAttribute("data-id"); OR.amtEdit = OR.amtEdit === ai ? null : ai; OR.amtUnit = null; drawOrders(); setTimeout(function () { var f = $("#amt-" + ai); if (f) { f.focus(); try { f.select(); } catch (x) {} } }, 50); return;
+      case "amt-unit": OR.amtUnit = el.getAttribute("data-id"); Array.prototype.forEach.call(el.parentNode.children, function (b) { b.classList.toggle("on", b === el); }); return;
+      case "amt-cancel": OR.amtEdit = null; OR.amtUnit = null; drawOrders(); return;
       case "rep-close": closeRep(); return;
       case "rep-type": REP.type = el.getAttribute("data-id"); autoSelect(); drawRep(); return;
       case "rep-make": REP.step = "sheet"; drawRep(); var rr = $("#repRoot .orders"); if (rr) rr.scrollTop = 0; return;
@@ -3845,6 +3953,7 @@ form { display: grid; gap: 16px; }
     e.preventDefault();
     if (e.target.matches("#form")) saveForm();
     else if (e.target.matches(".o-addform")) { var oid = +e.target.getAttribute("data-id"); orderAddItem(oid, val("#oadd-" + oid)); }
+    else if (e.target.matches(".oi-amt")) amtSave(+e.target.getAttribute("data-id"));
     else if (e.target.matches("#modeForm")) modeStart();
     else if (e.target.matches("#modeAdd")) modeAdd(val("#m-code"), false);
     else if (e.target.matches("#authForm")) submitAuth();
