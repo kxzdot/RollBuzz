@@ -1604,7 +1604,7 @@ form { display: grid; gap: 16px; }
     var kg = r.kgLabel != null || r.kgReal != null;
     if (r.qty == null && !r.warehouse && !r.article && !r.note && !kg) return "";
     var h = '<dl class="facts c1">';
-    if (kg) h += "<dt>Вес при приходе</dt><dd>их <b>" + kgFmt(r.kgLabel) + "</b> кг · наши <b>" + kgFmt(r.kgReal) + "</b> кг" + (r.kgLabel != null && r.kgReal != null ? ' <span class="kgd' + (r.kgReal < r.kgLabel - 0.001 ? " minus" : "") + '">' + kgDiff(r.kgLabel, r.kgReal) + "</span>" : "") + (r.kgBy ? '<br><span class="muted">взвесил ' + esc(r.kgBy) + (r.kgAt ? ", " + ago(r.kgAt) : "") + "</span>" : "") + "</dd>";
+    if (kg) h += "<dt>Вес при приходе</dt><dd>" + (r.kgLabel == null ? "без наклейки" : "их <b>" + kgFmt(r.kgLabel) + "</b> кг") + " · наши <b>" + kgFmt(r.kgReal) + "</b> кг" + (r.kgLabel != null && r.kgReal != null ? ' <span class="kgd' + (r.kgReal < r.kgLabel - 0.001 ? " minus" : "") + '">' + kgDiff(r.kgLabel, r.kgReal) + "</span>" : "") + (r.kgBy ? '<br><span class="muted">взвесил ' + esc(r.kgBy) + (r.kgAt ? ", " + ago(r.kgAt) : "") + "</span>" : "") + "</dd>";
     if (r.qty != null) h += "<dt>Остаток" + (r.c1Date ? " на " + esc(r.c1Date.split("-").reverse().join(".")) : "") + "</dt><dd>" + esc(qtyText(r)) + (r.in1c ? "" : ' <span class="warn-tag">нет в остатках 1С</span>') + "</dd>";
     if (r.warehouse) h += "<dt>Склад</dt><dd>" + esc(r.warehouse) + "</dd>";
     if (r.article) h += "<dt>Артикул</dt><dd>" + esc(r.article) + "</dd>";
@@ -2042,10 +2042,10 @@ form { display: grid; gap: 16px; }
   function kgPending(e) { return e.id && (e.st === "ok" || e.st === "same") && !e.kgSaved; }
   function kgRowHtml(e) {
     if (!e.id || (e.st !== "ok" && e.st !== "same")) return "";
-    if (e.kgSaved && !e.kgEdit) return '<button type="button" class="kg-done" data-kgedit="' + esc(e.code) + '">их <b>' + kgFmt(e.kgL) + "</b> · наши <b>" + kgFmt(e.kgR) + "</b> кг" +
+    if (e.kgSaved && !e.kgEdit) return '<button type="button" class="kg-done" data-kgedit="' + esc(e.code) + '">' + (e.kgL == null ? "без наклейки" : "их <b>" + kgFmt(e.kgL) + "</b>") + " · наши <b>" + kgFmt(e.kgR) + "</b> кг" +
       (e.kgL != null && e.kgR != null ? ' <span class="kgd' + (e.kgR < e.kgL - 0.001 ? " minus" : "") + '">' + kgDiff(e.kgL, e.kgR) + "</span>" : "") + ' <span class="kg-ed">изменить</span></button>';
     return '<div class="kg-row" data-code="' + esc(e.code) + '">' +
-      '<label><span>Их кг</span><input type="text" inputmode="decimal" enterkeyhint="next" class="mono" data-kg="l" data-code="' + esc(e.code) + '" value="' + esc(e.inL || "") + '" placeholder="наклейка"></label>' +
+      '<label><span>Их кг</span><input type="text" inputmode="decimal" enterkeyhint="next" class="mono" data-kg="l" data-code="' + esc(e.code) + '" value="' + esc(e.inL || "") + '" placeholder="нет наклейки"></label>' +
       '<label><span>Наши кг</span><input type="text" inputmode="decimal" enterkeyhint="done" class="mono" data-kg="r" data-code="' + esc(e.code) + '" value="' + esc(e.inR || "") + '" placeholder="весы"></label>' +
       '<button type="button" class="btn primary sm" data-kgsave="' + esc(e.code) + '"' + (e.kgBusy ? " disabled" : "") + ">✓</button>" +
       (e.kgErr ? '<span class="kg-err">' + esc(e.kgErr) + "</span>" : "") + "</div>";
@@ -2099,7 +2099,7 @@ form { display: grid; gap: 16px; }
     }
     M.recent[code] = now;
     // приход: у предыдущих рулонов вес уже вписан полностью — сохраняем сами
-    if (M.prihod) M.log.forEach(function (x) { if (kgPending(x) && !x.kgBusy && String(x.inL || "").trim() && String(x.inR || "").trim()) kgSave(x.code); });
+    if (M.prihod) M.log.forEach(function (x) { if (kgPending(x) && !x.kgBusy && String(x.inR || "").trim()) kgSave(x.code); });
     var e = { code: code, id: null, st: "wait", text: "", fresh: true };
     M.log.unshift(e); drawLog();
     if (!/^\d[\d-]{0,29}$/.test(code)) { e.st = "err"; e.text = "Это не номер рулона: в номере только цифры."; beep(false); drawLog(); return; }
