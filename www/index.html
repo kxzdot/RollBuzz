@@ -370,10 +370,11 @@ form { display: grid; gap: 16px; }
 .mode-top .cam-toggle svg { width: 24px; height: 24px; }
 @media (max-width: 420px) { .dock:has(#voiceBtn:not([hidden])) .dl { display: none; } .dock:has(#voiceBtn:not([hidden])) #modeBtn { width: 60px; padding: 0; justify-content: center; } }
 @media (max-width: 520px) {
-  .dock:has(#prihodBtn:not([hidden])) .dl { display: none; }
-  .dock:has(#prihodBtn:not([hidden])) #modeBtn { width: 60px; padding: 0; justify-content: center; }
-  .dock:has(#prihodBtn:not([hidden])) #add { width: 60px; padding: 0; font-size: 0; justify-content: center; }
-  .dock:has(#prihodBtn:not([hidden])) #add span { font-size: 1.75rem; margin: 0; }
+  .dock.compact .dl { display: none; }
+  .dock.compact #modeBtn { width: 60px; padding: 0; justify-content: center; }
+  .dock.compact #add { width: 60px; padding: 0; font-size: 0; justify-content: center; }
+  .dock.compact #add span { font-size: 1.75rem; margin: 0; }
+  .dock.compact #voiceBtn { width: 52px; }
 }
 .dock-btn.prihod { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .mode-preset { display: block; font-weight: 650; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1540,6 +1541,7 @@ form { display: grid; gap: 16px; }
     $("#add").hidden = sel || state.tab === "trash" || state.mode === "auth";
     $("#modeBtn").hidden = $("#add").hidden || state.mode === "local";
     $("#prihodBtn").hidden = $("#modeBtn").hidden;
+    $(".dock").classList.toggle("compact", !$("#prihodBtn").hidden);
     $("#voiceBtn").hidden = $("#add").hidden || !voiceAvailable();
   }
   function enterSelect(id) { state.selecting = true; state.sel = new Set(id ? [id] : []); applySelectUi(); }
