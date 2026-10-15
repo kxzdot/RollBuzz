@@ -481,6 +481,44 @@ form { display: grid; gap: 16px; }
 .obtn { position: relative; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); color: var(--fg); box-shadow: var(--lift); flex: none; }
 .obtn svg { width: 24px; height: 24px; display: block; margin: auto; }
 .obtn .badge { position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 20px; text-align: center; font-family: var(--f-mono); }
+#repRoot .orders { position: fixed; inset: 0; z-index: 17; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+.o-top .rep-open { margin-left: auto; }
+.rep-from-orders { width: 100%; margin: 10px 0 0; }
+.rep-bar { display: flex; gap: 10px; align-items: end; margin: 0 0 12px; }
+.rep-bar .btn { flex: 1; height: 48px; }
+.rep-date { display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
+.rep-date input { height: 48px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; font-size: 1rem; }
+.rep-hint { margin: 10px 2px; }
+.a4wrap { display: block; width: 100%; overflow: hidden; padding-bottom: 40px; }
+.a4wrap .a4 { margin: 0 0 14px; }
+.a4, .a4stage .a4 { width: 794px; height: 1123px; box-sizing: border-box; padding: 38px 36px; background: #fff; color: #111; font-family: Arial, "Helvetica Neue", sans-serif; font-size: 13px; box-shadow: 0 2px 10px rgba(0,0,0,.18); position: relative; overflow: hidden; }
+.a4stage { position: fixed; left: -10000px; top: 0; }
+.a4stage .a4 { box-shadow: none; }
+.a4 table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.a4 th, .a4 td { border: 1px solid #222; padding: 3px 5px; height: 26px; vertical-align: middle; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.a4 th { font-size: 11px; font-weight: 700; text-align: center; white-space: normal; line-height: 1.1; }
+.a4 td.code { font-family: "Courier New", monospace; font-size: 13px; }
+.a4 td.num { text-align: right; }
+.a4 td.mgr { font-style: italic; }
+.a4 tr.cl td { font-style: italic; }
+.a4 tr.gap td { height: 8px; border-left-color: #222; border-right-color: #222; }
+.a4 td[contenteditable]:focus { outline: 2px solid #2f3fb5; background: #eef0ff; }
+.a4 .hd { margin-bottom: 8px; }
+.a4 .hd th { font-size: 13px; width: 9%; }
+.a4 .hd th.big { font-size: 17px; width: 30%; letter-spacing: .06em; }
+.a4 .ret { margin-top: 14px; }
+.a4 .ret b { display: block; text-align: center; margin-bottom: 4px; letter-spacing: .08em; }
+.a4 .pg { position: absolute; right: 36px; bottom: 14px; font-size: 10px; color: #777; }
+.a4.nakl h1 { font-size: 22px; text-align: center; margin: 0 0 6px; letter-spacing: .04em; }
+.a4.nakl .box { display: inline-block; min-width: 160px; height: 26px; border: 1.5px solid #222; border-radius: 4px; vertical-align: middle; }
+.a4.nakl .dt { text-align: center; margin: 0 0 14px; }
+.a4.nakl .ln { display: flex; gap: 10px; margin: 0 0 8px; align-items: baseline; }
+.a4.nakl .ln span { white-space: nowrap; font-style: italic; }
+.a4.nakl .ln b { flex: 1; border-bottom: 1px solid #222; min-height: 20px; font-size: 16px; font-weight: 600; padding: 0 6px; }
+.a4.nakl .grid { margin-top: 12px; }
+.a4 .tot { width: 45%; margin: 12px 0 0 auto; }
+.a4 .tot th { text-align: left; font-size: 14px; }
+.a4 .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 30px; margin-top: 26px; font-weight: 700; }
 #sumRoot .orders { position: fixed; inset: 0; z-index: 16; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .sum-sec { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin: 0 0 12px; }
 .sum-sec h3 { margin: 0 0 10px; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
@@ -727,6 +765,7 @@ form { display: grid; gap: 16px; }
 <div id="sheetRoot"></div>
 <div id="ordersRoot"></div>
 <div id="sumRoot"></div>
+<div id="repRoot"></div>
 <div id="modeRoot"></div>
 <div id="pickRoot"></div>
 <div id="scanRoot"></div>
@@ -737,7 +776,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.7";
+  var APP_VERSION = "2.8";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -902,7 +941,7 @@ form { display: grid; gap: 16px; }
     writeSession(null);
     if (repo && repo.stop) repo.stop();
     repo = null;
-    state.user = null; state.isAdmin = false; $("#sumBtn").hidden = true; closeSum(); state.mode = "auth"; state.rolls = new Map(); state.loaded = false;
+    state.user = null; state.isAdmin = false; $("#sumBtn").hidden = true; closeSum(); closeRep(); state.mode = "auth"; state.rolls = new Map(); state.loaded = false;
     state.sel = new Set(); state.selecting = false; state.authTab = "login"; state.authNote = note || "";
     state.q = ""; state.tab = "active"; lastListHtml = null;
     $("#q").value = "";
@@ -1929,6 +1968,7 @@ form { display: grid; gap: 16px; }
     try { lv = JSON.parse(last || "{}") || {}; } catch (e) { lv = {}; }
     var prihod = kind === "prihod";
     if (prihod) { try { pv = JSON.parse(lsGet("sklad_prihod_last") || "{}") || {}; } catch (e) { pv = {}; } }
+    if (prihod) lv = {};   // в приходе место не подставляем: его часто ещё не знают
     state.mode2 = { step: "setup", prihod: prihod, rack: lv.rack || "", floor: lv.floor || "", fabric: pv.fabric || "", color: pv.color || "", series: "", log: [], count: 0, cam: true, queue: Promise.resolve(), recent: {} };
     drawMode(true);
   }
@@ -1955,8 +1995,9 @@ form { display: grid; gap: 16px; }
         '<p class="hint">Выберите ткань и цвет партии и стеллаж, куда кладёте. Потом сканируйте рулоны подряд: каждый новый номер сразу появится в базе с этой тканью, цветом и местом.</p>' +
         '<form id="modeForm" novalidate autocomplete="off">' + presetFields(M) + '<div class="err" id="e-m-preset"></div>' +
         '<div class="field"><label for="m-series">Серия <span class="opt">необязательно</span></label><input id="m-series" type="text" inputmode="numeric" class="mono" placeholder="первые цифры номера, например 2000012877" value="' + esc(M.series) + '"></div>' +
-        '<div class="two"><div class="field"><label for="m-rack">Стеллаж</label><input id="m-rack" type="text" class="mono" value="' + esc(M.rack) + '"><div class="err" id="e-m-rack"></div></div>' +
-        '<div class="field"><label for="m-floor">Этаж</label><input id="m-floor" type="text" inputmode="numeric" class="mono" placeholder="нет" value="' + esc(M.floor) + '"></div></div>' +
+        '<div class="two"><div class="field"><label for="m-rack">Стеллаж <span class="opt">необязательно</span></label><input id="m-rack" type="text" class="mono" placeholder="пока не знаю" value="' + esc(M.rack) + '"><div class="err" id="e-m-rack"></div></div>' +
+        '<div class="field"><label for="m-floor">Этаж <span class="opt">необязательно</span></label><input id="m-floor" type="text" inputmode="numeric" class="mono" placeholder="нет" value="' + esc(M.floor) + '"></div></div>' +
+        '<p class="hint">Без стеллажа рулоны попадут во вкладку «Без места», место можно указать позже.</p>' +
         '<button type="submit" class="btn primary go">' + ICON_SCAN + "<span>Начать приход</span></button>" +
         '<button type="button" class="btn go" data-act="scan-moderack">' + ICON_SCAN + "<span>Отсканировать штрихкод стеллажа</span></button></form></div></div>";
       root.innerHTML = h;
@@ -2014,7 +2055,8 @@ form { display: grid; gap: 16px; }
     var M = state.mode2; if (!M) return;
     var rack = val("#m-rack"), floor = val("#m-floor");
     var e = $("#e-m-rack");
-    if (!rack) { if (e) e.textContent = "Укажите стеллаж."; $("#m-rack").classList.add("bad"); return; }
+    if (!rack && !M.prihod) { if (e) e.textContent = "Укажите стеллаж."; $("#m-rack").classList.add("bad"); return; }
+    if (!rack) floor = "";
     if (floor.length > 10) floor = floor.slice(0, 10);
     M.rack = rack; M.floor = floor;
     M.fabric = joinFabric(val("#f-fabric"), val("#f-fabric2"));
@@ -2140,14 +2182,14 @@ form { display: grid; gap: 16px; }
   function modeProcess(e) {
     var M = state.mode2; if (!M) return;
     if (!state.online) { e.st = "err"; e.retry = true; e.text = "Нет соединения. Рулон не записан."; beep(false); drawLog(); return; }
-    var res = resolveRoll(e.code), d = { rack: M.rack, floor: M.floor };
+    var res = resolveRoll(e.code), d = M.rack ? { rack: M.rack, floor: M.floor } : {};
     if (res.many) { e.st = "err"; e.text = "С этим номером несколько рулонов: " + res.many.join(", ") + ". Введите номер полностью."; beep(false); drawLog(); return; }
     if (res.id) {
       var r = state.rolls.get(res.id);
       e.id = res.id; e.fabric = r.fabric; e.color = r.color; e.prev = { rack: r.rack, floor: r.floor || "", deleted: r.deleted };
       if (M.prihod) { if (!r.fabric && M.fabric) d.fabric = M.fabric; if (!r.color && M.color) d.color = M.color; }
-      if (!r.deleted && r.rack === M.rack && (r.floor || "") === M.floor && !d.fabric && !d.color) {
-        e.st = "same"; e.text = "уже лежит здесь";
+      if (!r.deleted && (!M.rack || (r.rack === M.rack && (r.floor || "") === M.floor)) && !d.fabric && !d.color) {
+        e.st = "same"; e.text = M.rack ? "уже лежит здесь" : (r.rack ? "уже в базе, лежит: " + place(r) : "уже в базе");
         if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.kgSaved = true; e.kgL = r.kgLabel; e.kgR = r.kgReal; } setTimeout(kgFocusFirst, 50); }
         beep(true); drawLog(); return;
       }
@@ -2155,7 +2197,7 @@ form { display: grid; gap: 16px; }
       return repo.updateMany([res.id], d).then(function () {
         e.st = "ok"; e.kind = r.deleted ? "restored" : "moved";
         if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.inL = r.kgLabel == null ? "" : kgFmt(r.kgLabel); e.inR = r.kgReal == null ? "" : kgFmt(r.kgReal); } setTimeout(kgFocusFirst, 50); }
-        e.text = r.deleted ? "возвращён из удалённых" : (r.rack && (r.rack !== M.rack || (r.floor || "") !== M.floor) ? "перенесён: был " + place(r) : "место записано");
+        e.text = r.deleted ? "возвращён из удалённых" : !M.rack ? "уже в базе" : (r.rack && (r.rack !== M.rack || (r.floor || "") !== M.floor) ? "перенесён: был " + place(r) : "место записано");
         if (d.fabric || d.color) { e.fabric = d.fabric || r.fabric; e.color = d.color || r.color; e.text += ", ткань и цвет заполнены"; }
         if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) e.text += " · не из серии " + M.series;
         if (state.mode2 === M) M.count++;
@@ -2163,9 +2205,9 @@ form { display: grid; gap: 16px; }
       }, function (err) { modeFail(e, err); });
     }
     e.id = e.code; e.fabric = M.fabric; e.color = M.color;
-    d.fabric = M.fabric; d.color = M.color;
+    d.fabric = M.fabric; d.color = M.color; if (!("rack" in d)) { d.rack = ""; d.floor = ""; }
     return repo.insert(e.code, d).then(function () {
-      e.st = "ok"; e.kind = "new"; e.text = "новый рулон";
+      e.st = "ok"; e.kind = "new"; e.text = M.rack ? "новый рулон" : "новый рулон, без места";
       if (M.prihod) setTimeout(kgFocusFirst, 50);
       if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) { e.text = "новый рулон · не из серии " + M.series + ", проверьте"; e.warn = true; }
       if (state.mode2 === M) M.count++;
@@ -2362,7 +2404,7 @@ form { display: grid; gap: 16px; }
   function drawSum() {
     var box = $("#sumIn"); if (!box) return;
     var per = [["today", "Сегодня"], ["yday", "Вчера"], ["week", "7 дней"]], ti = per.map(function (x) { return x[0]; }).indexOf(SUM.period);
-    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="sum-close" aria-label="Назад">←</button><h2>Сводка</h2></div>' +
+    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="sum-close" aria-label="Назад">←</button><h2>Сводка</h2><button type="button" class="btn primary sm rep-open" data-act="rep-open">Отчёты А4</button></div>' +
       '<div class="tabs" style="--n:3;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
       per.map(function (x) { return '<button class="tab" type="button" data-act="sum-per" data-id="' + x[0] + '" aria-selected="' + (x[0] === SUM.period) + '">' + x[1] + "</button>"; }).join("") + "</div><div style=\"height:12px\"></div>";
     if (SUM.err) h += '<p class="banner err">Не удалось загрузить сводку. Проверьте интернет.</p>';
@@ -2382,16 +2424,236 @@ form { display: grid; gap: 16px; }
     box.innerHTML = h;
   }
 
+  /* ---------- отчёты управляющего на А4: почта и накладная на рынок ---------- */
+  var REP = { open: false, date: "", type: "post", orders: null, err: null, busy: false };
+  var H2C_LIB = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+  var JSPDF_LIB = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+  var libs = {};
+  function loadLib(url, test) {
+    if (test()) return Promise.resolve();
+    if (libs[url]) return libs[url];
+    libs[url] = new Promise(function (ok, bad) {
+      var s = document.createElement("script"); s.src = url; s.async = true;
+      s.onload = function () { test() ? ok() : bad(new Error("lib")); };
+      s.onerror = function () { delete libs[url]; bad(new Error("lib")); };
+      document.head.appendChild(s);
+    });
+    return libs[url];
+  }
+  function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function dmy(s) { var p = s.split("-"); return p[2] + "." + p[1] + "." + p[0]; }
+  var MONTHS_UA = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
+  function openRep() {
+    if (!state.isAdmin) return;
+    REP.open = true; if (!REP.date) REP.date = ymd(new Date());
+    closeSheet(true);
+    $("#repRoot").innerHTML = '<div class="orders in" role="dialog" aria-label="Отчёты"><div class="mode-in rep-in" id="repIn"></div></div>';
+    repLoad();
+  }
+  function closeRep() {
+    if (!REP.open) return false;
+    REP.open = false;
+    var root = $("#repRoot"), m = root.firstChild;
+    if (m) { m.classList.add("out"); setTimeout(function () { if (!REP.open) root.innerHTML = ""; }, 220); }
+    return true;
+  }
+  function repLoad() {
+    var my = REP.date, d0 = new Date(my + "T00:00:00"), d1 = new Date(d0); d1.setDate(d1.getDate() + 1);
+    REP.orders = null; REP.err = null; drawRep();
+    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(id,roll_id,state,amount,unit,done_by_name)&status=eq.done&done_at=gte." +
+      encodeURIComponent(d0.toISOString()) + "&done_at=lt." + encodeURIComponent(d1.toISOString()) + "&order=done_at")
+      .then(function (rows) { if (REP.date !== my) return; REP.orders = rows || []; drawRep(); })
+      ["catch"](function (e) { if (REP.date !== my) return; REP.err = e; drawRep(); });
+  }
+  /* короткие названия, как пишут от руки */
+  var WL = "[а-яёіїєґa-z'’]*";
+  var ABBR = [[new RegExp("без\\s*еластан" + WL, "ig"), ""], [new RegExp("з\\s+еластан" + WL, "ig"), "+лайкра"], [/\([^)]*\)/g, ""],
+    [new RegExp("футер\\s*тринит" + WL, "ig"), "3-х нит"], [new RegExp("футер\\s*двонит" + WL, "ig"), "2-х нит"], [new RegExp("тринит" + WL, "ig"), "3-х нит"], [new RegExp("двонит" + WL, "ig"), "2-х нит"],
+    [new RegExp("з\\s*нач[іиеё]с" + WL, "ig"), "з нач."], [new RegExp("(^|\\s)(начіс|начес)" + WL, "ig"), "$1нач."], [new RegExp("петл" + WL, "ig"), "пет."], [new RegExp("(діагонал|диагонал)" + WL, "ig"), "д."],
+    [new RegExp("трикотаж\\s+", "ig"), ""], [new RegExp("пеньє|пенье|penye", "ig"), ""], [new RegExp("однотонн" + WL, "ig"), ""], [new RegExp("бавовн" + WL, "ig"), ""], [/\s{2,}/g, " "]];
+  function shortFabric(f) {
+    var s = String(f || "");
+    ABBR.forEach(function (a) { s = s.replace(a[0], a[1]); });
+    s = s.trim();
+    return s.length > 30 ? s.slice(0, 29).trim() + "…" : s;
+  }
+  function shortId(id) { var m = /^2(\d{12})$/.exec(String(id)); return m ? m[1].replace(/^0+/, "") : String(id); }
+  function managerName(o) {
+    var ws = String(o.author || "").split(/\s+/).filter(function (w) { return w && !/^менеджер$/i.test(w) && !/^[A-Z][A-Za-z]*D$/.test(w) && !/^[A-Z]{3,}$/.test(w); });
+    return ws[0] || "";
+  }
+  function orderNo(o) {
+    var m = /№\s*(\d{3,7})/.exec(o.doc_no || "") || /(?:№|N|#)\s*(\d{4,7})(?!\d)/.exec(o.text || "");
+    return m ? "№" + m[1] : "";
+  }
+  function deliveryOf(o) {
+    var t = fold(o.text);
+    if (/нова\s*пошт|новая\s*почт|(^|\s)нп(\s|\d|$)/.test(t)) return "НП";
+    if (/укр\s*пошт|укрпочт/.test(t)) return "Укрпошта";
+    if (/фур[аиуы]/.test(t)) return "Фура";
+    if (/нац\w*\s*дост|делив|delivery/.test(t)) return "Нац. дост.";
+    if (/самовив|самовыв/.test(t)) return "Самовивіз";
+    if (/meest|міст\s*експрес|мист/.test(t)) return "Meest";
+    return "";
+  }
+  function clientFull(o) {
+    var lines = String(o.text || "").split(/\n/).map(function (l) { return l.trim(); }), best = "", aw = fold(o.author).split(/\s+/);
+    lines.forEach(function (l) {
+      if (!/^[A-ZА-ЯІЇЄҐЁ][a-zа-яіїєґё'’ʼ-]+(\s+[A-ZА-ЯІЇЄҐЁ][a-zа-яіїєґё'’ʼ.-]+){0,2}$/.test(l)) return;
+      var ws = l.split(/\s+/);
+      if (ws.some(function (w) { return NOT_NAME.test(w); })) return;
+      if (ws.length === 1 && aw.indexOf(fold(l)) !== -1) return;
+      best = l;
+    });
+    return best ? best.split(/\s+/)[0] : orderClient(o).split(/,/)[0];
+  }
+  function pointCode(o) { var m = /(?:^|[\s,.;:])(1\d{3})(?=[\s,.;:]|$)/m.exec(String(o.text || "") + " " + String(o.chat_title || "")); return m ? m[1] : ""; }
+  function itemRowData(o, it) {
+    var r = state.rolls.get(it.roll_id) || {};
+    var c = cutInfo(it, r), kg = "", m = "";
+    var unit = it.unit || r.unit || "";
+    if (c && c.cut && unit === "м") m = kgFmt(+it.amount);
+    else if (c && c.cut) kg = kgFmt(+it.amount);
+    else kg = r.kgReal != null ? kgFmt(r.kgReal) : (r.qty != null && (r.unit || "кг") === "кг" ? kgFmt(Math.round(r.qty * 100) / 100) : (it.amount != null && unit !== "м" ? kgFmt(+it.amount) : ""));
+    var name = [shortFabric(r.fabric), r.color || ""].filter(Boolean).join(" ") || "—";
+    return { code: shortId(it.roll_id), name: name, kg: kg, m: m };
+  }
+  function repOrders() {
+    return (REP.orders || []).filter(function (o) {
+      var t = orderType(o) || "post";
+      return REP.type === "post" ? t === "post" || t === "" : t === REP.type;
+    });
+  }
+  function cellE(t, cls) { return "<td" + (cls ? ' class="' + cls + '"' : "") + ' contenteditable="true">' + esc(t == null ? "" : t) + "</td>"; }
+  /* бланк «Склад» для почты и Acorn: по заказу — менеджер, №, рулоны, клиент и доставка */
+  function postPages(list) {
+    var rows = [];
+    list.forEach(function (o) {
+      var its = (o.order_items || []).slice().sort(function (a, b) { return a.id - b.id; });
+      var left = [managerName(o), orderNo(o)];
+      its.forEach(function (it, i) { var d = itemRowData(o, it); rows.push("<tr>" + cellE(left[i] || "", "mgr") + cellE(d.code, "code") + cellE(d.name) + cellE(d.kg, "num") + cellE(d.m, "num") + cellE("") + cellE("") + cellE("") + "</tr>"); });
+      if (!its.length) rows.push("<tr>" + cellE(left[0], "mgr") + cellE("") + cellE((o.text || "").split("\n")[0]) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
+      var cl = clientFull(o), dl = deliveryOf(o);
+      rows.push("<tr class=\"cl\">" + cellE(its.length < 2 ? left[1] || "" : "", "mgr") + cellE("") + cellE("V• " + cl + (dl ? " (" + dl + ")" : "")) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
+      rows.push('<tr class="gap"><td colspan="8"></td></tr>');
+    });
+    var PER = 30, pages = [], date = dmy(REP.date), fio = (state.user && state.user.name) || "";
+    for (var i = 0; i < Math.max(rows.length, 1); i += PER) pages.push(rows.slice(i, i + PER));
+    return pages.map(function (pr, pi) {
+      var last = pi === pages.length - 1, pad = "";
+      for (var k = pr.length; k < PER; k++) pad += "<tr>" + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>";
+      return '<div class="a4 post"><table class="hd"><tr><th>Дата</th>' + cellE(date) + "<th class=\"big\">СКЛАД</th><th>ФИО</th>" + cellE(fio) + "</tr></table>" +
+        '<table class="grid"><colgroup><col style="width:12%"><col style="width:13%"><col><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"><col style="width:7%"></colgroup>' +
+        "<thead><tr><th>ИО менеджер</th><th>ШтрихКод</th><th>Название ткани</th><th>Кг</th><th>Метры Пог</th><th>Цена за ед.</th><th>Сумма</th><th>Общ сумма</th></tr></thead><tbody>" + pr.join("") + pad + "</tbody></table>" +
+        (last ? '<div class="ret"><b>ВОЗВРАТ</b><table class="grid"><thead><tr><th style="width:18%">от кого</th><th>НАИМЕНОВАНИЕ ТОВАРА</th><th style="width:16%">штрих-код</th><th style="width:9%">ВЕС</th><th style="width:7%">М</th></tr></thead><tbody>' +
+          [0, 1, 2, 3].map(function () { return "<tr>" + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>"; }).join("") + "</tbody></table></div>" : "") +
+        '<div class="pg">Лист ' + (pi + 1) + " из " + pages.length + "</div></div>";
+    }).join("");
+  }
+  /* накладная на рынок / перемещение */
+  function marketPages(list) {
+    var rows = [], codes = {};
+    list.forEach(function (o) {
+      var pc = pointCode(o); if (pc) codes[pc] = (codes[pc] || 0) + 1;
+      (o.order_items || []).slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (it, i) {
+        var d = itemRowData(o, it);
+        rows.push("<tr>" + cellE(i === 0 ? pc : "", "mgr") + cellE(d.name) + cellE(d.m ? "м" : "") + cellE(d.code, "code") + cellE(d.m ? d.m + " м" : d.kg ? d.kg + " кг" : "", "num") + cellE("") + "</tr>");
+      });
+      rows.push('<tr class="gap"><td colspan="6"></td></tr>');
+    });
+    var top = Object.keys(codes).sort(function (a, b) { return codes[b] - codes[a]; })[0] || "";
+    var komu = REP.type === "market" ? (top === "1608" || !top ? "1608 общий рынок" : top + " рынок") : "";
+    var dt = REP.date.split("-"), PER = 22, pages = [];
+    for (var i = 0; i < Math.max(rows.length, 1); i += PER) pages.push(rows.slice(i, i + PER));
+    return pages.map(function (pr, pi) {
+      var pad = ""; for (var k = pr.length; k < PER; k++) pad += "<tr>" + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>";
+      return '<div class="a4 nakl"><h1>НАКЛАДНА № <span class="box" contenteditable="true"></span></h1>' +
+        '<p class="dt">від «<span contenteditable="true">' + +dt[2] + '</span>» <span contenteditable="true">' + MONTHS_UA[+dt[1] - 1] + "</span> " + dt[0] + " р.</p>" +
+        '<p class="ln"><span>Кому відпущено</span><b contenteditable="true">' + esc(komu) + '</b></p><p class="ln"><span>Від кого прийнято</span><b contenteditable="true">Основной склад</b></p>' +
+        '<p class="ln"><span>Через кого</span><b contenteditable="true"></b></p>' +
+        '<table class="grid"><colgroup><col style="width:9%"><col><col style="width:9%"><col style="width:15%"><col style="width:13%"><col style="width:10%"></colgroup>' +
+        "<thead><tr><th>№ з/п</th><th>Назва і сорт товарів</th><th>Один. вимір.</th><th>Кількість</th><th>Ціна</th><th>Сума</th></tr></thead><tbody>" + pr.join("") + pad + "</tbody></table>" +
+        (pi === pages.length - 1 ? '<table class="tot"><tr><th>Підсумок</th><td contenteditable="true"></td></tr><tr><th>ПДВ 20%</th><td contenteditable="true"></td></tr><tr><th>Разом</th><td contenteditable="true"></td></tr></table>' +
+          '<div class="sign"><span>Директор ____________</span><span>Гол. бухгалтер ____________</span><span>Здав ____________</span><span>Прийняв ____________</span></div>' : "") +
+        '<div class="pg">Лист ' + (pi + 1) + " из " + pages.length + "</div></div>";
+    }).join("");
+  }
+  function drawRep() {
+    var box = $("#repIn"); if (!box) return;
+    var types = [["post", "Почта"], ["market", "Рынок"], ["move", "Перемещение"], ["acorn", "Acorn"]], ti = types.map(function (x) { return x[0]; }).indexOf(REP.type);
+    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="rep-close" aria-label="Назад">←</button><h2>Отчёты</h2></div>' +
+      '<div class="rep-bar"><label class="rep-date"><span>Дата</span><input type="date" id="repDate" value="' + esc(REP.date) + '"></label>' +
+      '<button type="button" class="btn primary" data-act="rep-pdf" id="repPdf"' + (REP.busy || !REP.orders ? " disabled" : "") + ">" + (REP.busy ? "Готовлю PDF…" : "PDF для печати") + "</button></div>" +
+      '<div class="tabs" style="--n:4;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
+      types.map(function (x) { return '<button class="tab" type="button" data-act="rep-type" data-id="' + x[0] + '" aria-selected="' + (x[0] === REP.type) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+    if (REP.err) h += '<p class="banner err">Не удалось загрузить заказы. Проверьте интернет.</p>';
+    else if (!REP.orders) h += '<p class="oc-ocr"><i class="spin"></i>Собираю заказы…</p>';
+    else {
+      var list = repOrders(), n = list.reduce(function (a, o) { return a + (o.order_items || []).length; }, 0);
+      h += '<p class="hint rep-hint">' + (list.length ? "Выполнено заказов: " + list.length + ", рулонов: " + n + ". Лист заполнен сам: проверьте и поправьте, нажав на любую ячейку. Потом «PDF для печати»." : "За " + dmy(REP.date) + " выполненных заказов этого типа нет. Можно выбрать другую дату или распечатать пустой бланк.") + "</p>";
+      h += '<div class="a4wrap" id="repPages">' + (REP.type === "market" || REP.type === "move" ? marketPages(list) : postPages(list)) + "</div>";
+    }
+    box.innerHTML = h;
+    fitA4();
+    var di = $("#repDate"); if (di) di.addEventListener("change", function () { if (di.value) { REP.date = di.value; repLoad(); } });
+  }
+  function fitA4() {
+    var w = $("#repPages"), box = $("#repIn"); if (!w || !box) return;
+    var cs = getComputedStyle(box), inner = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
+    var k = Math.min(1, (inner || 360) / 794);
+    Array.prototype.forEach.call(w.querySelectorAll(".a4"), function (p) { p.style.zoom = k; });
+  }
+  function repPdf() {
+    var pages = document.querySelectorAll("#repPages .a4"); if (!pages.length || REP.busy) return;
+    REP.busy = true; var btn = $("#repPdf"); if (btn) { btn.disabled = true; btn.textContent = "Готовлю PDF…"; }
+    var name = "otchet-" + REP.type + "-" + REP.date + ".pdf";
+    var stage = document.createElement("div"); stage.className = "a4stage";
+    Array.prototype.forEach.call(pages, function (p) { var c = p.cloneNode(true); c.style.zoom = 1; c.removeAttribute("style"); stage.appendChild(c); });
+    document.body.appendChild(stage);
+    function done(msg, err) { REP.busy = false; if (stage.parentNode) stage.parentNode.removeChild(stage); var b = $("#repPdf"); if (b) { b.disabled = false; b.textContent = "PDF для печати"; } if (msg) toast(msg, err); }
+    Promise.all([loadLib(H2C_LIB, function () { return !!window.html2canvas; }), loadLib(JSPDF_LIB, function () { return !!(window.jspdf && window.jspdf.jsPDF); })]).then(function () {
+      var pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" }), seq = Promise.resolve();
+      Array.prototype.forEach.call(stage.children, function (p, i) {
+        seq = seq.then(function () { return window.html2canvas(p, { scale: 2, backgroundColor: "#ffffff", logging: false }); }).then(function (cv) {
+          if (i) pdf.addPage();
+          pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+        });
+      });
+      return seq.then(function () { return pdf; });
+    }).then(function (pdf) {
+      var native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (!native || !repo || repo.kind !== "shared") { pdf.save(name); done("PDF сохранён: " + name); return; }
+      // в приложении файл нельзя скачать напрямую: кладём в хранилище и открываем в браузере, там «Печать» или «Поделиться»
+      var blob = pdf.output("blob"), path = "reports/" + REP.date + "-" + REP.type + "-" + Date.now() + ".pdf", base = CFG.url.replace(/\/+$/, "") + "/storage/v1/object/";
+      return ensureToken().then(function (t) {
+        var hd = { apikey: CFG.key, Authorization: "Bearer " + t };
+        return fetch(base + "orders/" + path, { method: "POST", headers: Object.assign({ "Content-Type": "application/pdf", "x-upsert": "true" }, hd), body: blob }).then(function (r) {
+          if (!r.ok) throw new Error("upload " + r.status);
+          return fetch(base + "sign/orders/" + path, { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, hd), body: JSON.stringify({ expiresIn: 86400 }) });
+        }).then(function (r) { if (!r.ok) throw new Error("sign " + r.status); return r.json(); });
+      }).then(function (j) {
+        var u = j.signedURL || j.signedUrl; if (!u) throw new Error("sign");
+        done("PDF готов, открываю в браузере");
+        window.location.href = CFG.url.replace(/\/+$/, "") + "/storage/v1" + (u.charAt(0) === "/" ? "" : "/") + u;
+      });
+    })["catch"](function (e) {
+      var m = String(e && e.message || "");
+      done(/upload 4|sign 4/.test(m) ? "Нет прав сохранить PDF: выполните update-13.sql в Supabase." : /lib/.test(m) ? "Не загрузились модули для PDF. Проверьте интернет." : "Не получилось сделать PDF. Попробуйте ещё раз.", true);
+    });
+  }
+
   /* ---------- тип заказа: Почта / Acorn / Рынок / Перемещение ---------- */
   var OTYPES = { acorn: { name: "Acorn", pri: 1 }, market: { name: "Рынок", pri: 1 }, move: { name: "Перемещение", pri: 1 }, post: { name: "Почта", pri: 0 } };
+  // заказы от этих людей всегда Acorn (имя автора сообщения в Telegram)
+  var ACORN_AUTHORS = /(^|\s)(андрей|андрий|andrey|andrii|andriy|andrew)(\s|$)/;
   function orderType(o) {
-    if (o._typeFor === o.text + "|" + o.chat_title + "|" + o.doc_no) return o._type;
+    if (o._typeFor === o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author) return o._type;
     var title = fold(o.chat_title), all = title + " " + fold(o.text), t = "";
-    if (/acorn|акорн/.test(all)) t = "acorn";
-    else if (/перемещ|перемищ|переміщ|перемiщ/.test(all)) t = "move";
+    if (/acorn|акорн/.test(all) || ACORN_AUTHORS.test(fold(o.author))) t = "acorn";
     else if (/р[иы]нок|рынк|ринк/.test(title) || /(^|\s)(на\s+)?р[иы]нок|1608/.test(fold(o.text))) t = "market";
+    else if (/перемещ|перемищ|переміщ|перемiщ/.test(all)) t = "move";
     else if (/нова\s*пошт|нов(ая|ой|ую)\s*почт|укр\s*пошт|пошт|почт|(^|\s)нп(\s|$|\d)|видделен|виддил|отделен|склад\s*№?\s*\d/.test(all) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
-    o._typeFor = o.text + "|" + o.chat_title + "|" + o.doc_no; o._type = t;
+    o._typeFor = o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author; o._type = t;
     return t;
   }
   /* клиент: строка-имя из текста («Калахан Ірина», «Иващенко»), иначе заказчик из документа */
@@ -2440,7 +2702,8 @@ form { display: grid; gap: 16px; }
     var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="orders-close" aria-label="Назад">←</button><h2>Заказы</h2></div>' +
       '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
       '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
-      '<button class="tab" type="button" data-act="o-tab" data-id="done" aria-selected="' + (OR.tab === "done") + '">Выполнены<span class="n">' + nd + "</span></button></div>";
+      '<button class="tab" type="button" data-act="o-tab" data-id="done" aria-selected="' + (OR.tab === "done") + '">Выполнены<span class="n">' + nd + "</span></button></div>" +
+      (state.isAdmin && OR.tab === "done" ? '<button type="button" class="btn primary rep-from-orders" data-act="rep-open">Отчёт за день на А4</button>' : "");
     if (chats.size > 1) {
       h += '<div class="o-chats"><button type="button" class="ochip' + (OR.chat === "all" ? " on" : "") + '" data-act="o-chat" data-id="all">Все группы</button>';
       chats.forEach(function (t, id) { h += '<button type="button" class="ochip' + (OR.chat === id ? " on" : "") + '" data-act="o-chat" data-id="' + esc(id) + '">' + esc(t) + "</button>"; });
@@ -3405,6 +3668,10 @@ form { display: grid; gap: 16px; }
       case "mode-open": openMode(); return;
       case "prihod-open": openMode("prihod"); return;
       case "sum-open": openSum(); return;
+      case "rep-open": openRep(); return;
+      case "rep-close": closeRep(); return;
+      case "rep-type": REP.type = el.getAttribute("data-id"); drawRep(); return;
+      case "rep-pdf": repPdf(); return;
       case "sum-close": closeSum(); return;
       case "sum-per": SUM.period = el.getAttribute("data-id"); sumLoad(); return;
       case "voice": voiceAdd(); return;
@@ -3511,6 +3778,7 @@ form { display: grid; gap: 16px; }
   function backAction() {
     if (state.pick) { closePicker(); return true; }
     if (closeViewer()) return true;
+    if (closeRep()) return true;
     if (closeSum()) return true;
     if (closeScan()) return true;
     if (state.mode2) { closeMode(); return true; }
