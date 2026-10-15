@@ -377,6 +377,20 @@ form { display: grid; gap: 16px; }
 }
 .dock-btn.prihod { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .mode-preset { display: block; font-weight: 650; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml:has(.kg-row), .ml:has(.kg-done) { flex-wrap: wrap; }
+.kg-row { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin: 0 12px 12px 22px; }
+.ml > .kg-done { flex-basis: 100%; margin: -4px 12px 10px 22px; }
+.kg-row label { display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
+.kg-row input { width: 100%; min-width: 0; height: 44px; padding: 0 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); font-size: 1.0625rem; }
+.kg-row input:focus { border-color: var(--accent); outline: none; }
+.kg-row .btn.sm { height: 44px; min-width: 48px; }
+.kg-err { grid-column: 1 / -1; color: var(--danger); font-size: 0.8125rem; font-weight: 600; }
+.ml.needkg { border-color: var(--accent) !important; box-shadow: 0 0 0 1.5px var(--accent); }
+.kg-done { justify-self: start; padding: 3px 0; border: 0; background: none; color: var(--fg); font: inherit; font-size: 0.875rem; text-align: left; }
+.kg-done b { font-family: var(--f-mono); }
+.kg-ed { color: var(--accent); font-weight: 600; margin-left: 4px; }
+.kgd { font-family: var(--f-mono); font-size: 0.8125rem; padding: 0 6px; border-radius: 6px; background: var(--surface-2); }
+.kgd.minus { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 .ml.ok.warn .ml-st, .ml.warn .ml-st { color: #b06f00 !important; font-weight: 650; }
 .opt { font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
 @media (max-width: 420px) { .net:not(.off) #netText { display: none; } .brand h1 { font-size: 1.1875rem; } }
@@ -722,7 +736,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.6";
+  var APP_VERSION = "2.7";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -766,6 +780,9 @@ form { display: grid; gap: 16px; }
     return p(d.getDate()) + "." + p(d.getMonth() + 1) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
   }
   function place(r) { return r.rack ? r.rack + " стеллаж" + (r.floor ? " (" + r.floor + " этаж)" : "") : "место не указано"; }
+  function kgNum(t) { t = String(t == null ? "" : t).replace(/\s/g, "").replace(",", "."); if (!t) return null; var v = parseFloat(t); return isFinite(v) && /^\d+(\.\d+)?$/.test(t) ? Math.round(v * 1000) / 1000 : NaN; }
+  function kgFmt(v) { return v == null ? "—" : String(v).replace(".", ","); }
+  function kgDiff(a, b) { if (a == null || b == null) return ""; var d = Math.round((b - a) * 1000) / 1000; return (d > 0 ? "+" : d < 0 ? "−" : "±") + String(Math.abs(d)).replace(".", ","); }
   function qtyText(r) { return r.qty == null ? "" : String(Math.round(r.qty * 1000) / 1000).replace(".", ",") + (r.unit ? " " + r.unit : ""); }
   var COLOR_MAP = {"белый": "#f5f5f2", "молочный": "#f3ecd9", "экрю": "#efe6cf", "слоновая кость": "#f1e7cd", "кремовый": "#f3e5b8", "ванильный": "#f3e2a9", "шампань": "#ecd9b5", "бежевый": "#d8c3a0", "песочный": "#d6bf94", "кэмел": "#b98b53", "золотистый": "#c9a64a", "светло-серый": "#c4c6cc", "серебристый": "#b8bcc4", "серый": "#8e9099", "серый меланж": "#a3a5ab", "стальной": "#6f7885", "темно-серый": "#4f525a", "графитовый": "#3b3e45", "антрацит": "#2b2e33", "черный": "#16161a", "красный": "#c62828", "алый": "#e0303a", "кирпичный": "#a8412f", "терракотовый": "#c4623f", "бордовый": "#6d1a2c", "вишневый": "#7b1230", "марсала": "#7a3141", "винный": "#5e1f33", "коралловый": "#ee6f5e", "лососевый": "#f29a85", "персиковый": "#f6c4a3", "абрикосовый": "#f2b07a", "оранжевый": "#f08a24", "морковный": "#e8741f", "желтый": "#f4d03f", "лимонный": "#f1e04a", "горчичный": "#d2a02a", "охра": "#c48a1f", "салатовый": "#9fd356", "лаймовый": "#b8d82f", "светло-зеленый": "#7fc77f", "зеленый": "#2e8b57", "травяной": "#4a9d3a", "бутылочный": "#0e4b36", "темно-зеленый": "#1f4d33", "изумрудный": "#0b8a63", "оливковый": "#7b7d3a", "хаки": "#8a8456", "мятный": "#a5dcc4", "фисташковый": "#b7d3a0", "шалфей": "#9aa88a", "бирюзовый": "#1fb5ad", "морская волна": "#2a9d9a", "аквамарин": "#6fd3c4", "голубой": "#6bb7ee", "небесный": "#9fd0f2", "васильковый": "#5a7fdc", "джинсовый": "#4a6a95", "синий": "#2c5fc4", "электрик": "#1e4fe0", "темно-синий": "#16275f", "индиго": "#34327f", "чернильный": "#1b2140", "фиолетовый": "#7a3fb0", "баклажановый": "#4a2342", "сливовый": "#6b2d5c", "лиловый": "#b08fd1", "сиреневый": "#c3a6e0", "лавандовый": "#cdbfe6", "розовый": "#f19ab6", "нежно-розовый": "#f7d0dc", "пудровый": "#e8c9c4", "ярко-розовый": "#e8458f", "фуксия": "#c2185b", "малиновый": "#b3175e", "коричневый": "#6a4328", "шоколадный": "#4b2e20", "кофейный": "#7a5538", "капучино": "#b79a7e", "какао": "#8a6a55", "орех": "#8b5e3c", "рыжий": "#b5651d", "тауп": "#8b7d73", "чорний": "#16161a", "білий": "#f5f5f2", "молоко": "#f3ecd9", "молочний": "#f3ecd9", "екрю": "#efe6cf", "беж": "#d8c3a0", "бежевий": "#d8c3a0", "світлий беж": "#e6d6b8", "сірий": "#8e9099", "світло-сірий": "#c4c6cc", "блідо-сірий": "#cfd1d6", "темно-сірий": "#4f525a", "графіт": "#3b3e45", "сірий графіт": "#4a4d55", "меланж": "#a3a5ab", "сніжний меланж": "#e4e5e8", "шоколад": "#4b2e20", "мокко": "#6f4e3d", "коричневий": "#6a4328", "червоний": "#c62828", "малиново-червоний": "#b5173f", "бордовий": "#6d1a2c", "бордо": "#6d1a2c", "рожевий": "#f19ab6", "блідо-рожевий": "#f7d0dc", "пудра": "#e8c9c4", "сакура": "#f4c2d0", "барбі": "#e8458f", "малиновий": "#b3175e", "корал": "#ee6f5e", "персик": "#f6c4a3", "помаранчевий": "#f08a24", "жовтий": "#f4d03f", "лимон": "#f1e04a", "гірчиця": "#d2a02a", "хакі": "#8a8456", "хакі беж": "#a89f7c", "оливка": "#7b7d3a", "зелений": "#2e8b57", "темно-зелений": "#1f4d33", "зелена трава": "#4a9d3a", "смарагд": "#0b8a63", "ментол": "#a5dcc4", "м'ятний": "#a5dcc4", "тіффані": "#81d8d0", "бірюзовий": "#1fb5ad", "блакитний": "#6bb7ee", "блідо-блакитний": "#bcdcf3", "сіро-блакитний": "#8fa6bd", "блідо-васильковий": "#a9b8ea", "темно-лазурний": "#1f5f8b", "електрик": "#1e4fe0", "синій": "#2c5fc4", "темно-синій": "#16275f", "чорнильно-синій": "#1b2140", "індиго": "#34327f", "фіолетовий": "#7a3fb0", "ліловий": "#b08fd1", "бузок": "#c3a6e0", "салатовий": "#9fd356", "блідо-салатовий": "#cfe8a8", "світло-салатовий": "#b9e07f", "лайм": "#b8d82f", "засмага": "#d9a58a", "цегляний": "#a8412f", "айворі": "#f1e7cd", "олива": "#7b7d3a", "оливковий": "#8a8c45", "рудий": "#b5651d", "койот": "#8b6b4a", "вишня": "#5e1f33", "трава": "#4a9d3a", "моко": "#6f4e3d", "ванільний": "#f3e2a9", "м'ята": "#a5dcc4", "хвиля": "#2a9d9a", "бузина": "#4a2342", "баклажан": "#4a2342", "кофейний": "#7a5538", "визон": "#7a6a5a", "неон": "#39e75f", "лазурний": "#2f8fd8", "фуксія": "#c2185b", "чорно-білий": "#7d7d7d", "грі": "#9a9da3", "пудровий": "#e8c9c4", "пильно-рожевий": "#d8a7a7", "яскравий рожевий": "#e8458f", "неон жовтий": "#e8f53a", "небесно-блакитний": "#9fd0f2", "ніжно-рожевий": "#f7d0dc", "синій джинс": "#4a6a95", "бірюза": "#1fb5ad", "лимонний": "#f1e04a", "райський": "#3fae6a", "темний шоколад": "#3a2318", "світлий шоколад": "#7b5640", "темний бежевий": "#b89c78", "темний": "#3b3e45", "золотий": "#c9a64a", "срібний": "#b8bcc4", "молочний пудровий": "#f3ecd9", "світло-сірий меланж": "#d0d2d6", "сірий меланж": "#a8aab0", "сірий грі": "#9a9da3", "коричневий тауп": "#8b7d73", "темний меланж": "#6a6c72", "темний грі": "#5e6068", "темно-сірий меланж": "#5c5f66", "синьо-сірий графіт": "#4a4d55", "темно-сірий графіт": "#4a4d55", "світлий бежевий пудровий": "#e6d6b8", "бежевий меланж": "#d9c9ae", "рожева засмага": "#d9a58a", "мокко-молоко": "#c9b39a", "блідий хакі беж": "#a89f7c", "бежевий коричневий": "#8b6b4a", "коричневий моко": "#6f4e3d", "темний коричневий": "#4f3020", "бежевий пудровий": "#e8c9c4", "молочний ванільний": "#f3e2a9", "світлий жовтий": "#f6e27a", "блідо-жовтий": "#f7e9a0", "темний хакі": "#5f5a3a", "жовтий лимонний": "#f1e04a", "світлий оливковий": "#8a8c45", "більш олива": "#7b7d3a", "цитрус лайм": "#b8d82f", "більш салатовий": "#9fd356", "яскраво-салатовий": "#9fd356", "світло-зелений": "#7fc77f", "неоновий зелений": "#39e75f", "неоново-зелений": "#39e75f", "зелений райський": "#3fae6a", "м'ята зелена": "#a5dcc4", "зелений смарагд": "#0b8a63", "темний смарагд": "#0b8a63", "морська хвиля": "#2a9d9a", "світлий блакитний": "#a8d3f2", "темно-блакитний": "#3a7fc0", "гнила вишня": "#5e1f33"};
   var COLOR_KEYS = Object.keys(COLOR_MAP).sort(function (a, b) { return b.length - a.length; });
@@ -916,12 +933,15 @@ form { display: grid; gap: 16px; }
       deletedAt: x.deleted_at ? Date.parse(x.deleted_at) : null, updatedAt: x.updated_at ? Date.parse(x.updated_at) : 0,
       updatedBy: x.updated_by_name || "", deletedBy: x.deleted_by_name || "",
       qty: x.qty == null ? null : Number(x.qty), unit: x.unit || "", warehouse: x.warehouse || "", article: x.article || "", note: x.note || "",
-      in1c: !!x.in_1c, c1Date: x.c1_date || "", changedAt: x.changed_at ? Date.parse(x.changed_at) : 0
+      in1c: !!x.in_1c, c1Date: x.c1_date || "", changedAt: x.changed_at ? Date.parse(x.changed_at) : 0,
+      kgLabel: x.kg_label == null ? null : Number(x.kg_label), kgReal: x.kg_real == null ? null : Number(x.kg_real), kgBy: x.kg_by || "", kgAt: x.kg_at ? Date.parse(x.kg_at) : null
     };
   }
   function toRow(d) {
     var o = {};
     ["rack", "floor", "fabric", "color", "deleted"].forEach(function (k) { if (k in d) o[k] = d[k]; });
+    if ("kgLabel" in d) o.kg_label = d.kgLabel;
+    if ("kgReal" in d) o.kg_real = d.kgReal;
     return o;
   }
   function inList(ids) { return "in.(" + ids.map(encodeURIComponent).join(",") + ")"; }
@@ -1043,14 +1063,14 @@ form { display: grid; gap: 16px; }
       stop: function () {},
       get: function (id) { return Promise.resolve(m.has(id) ? m.get(id) : null); },
       insert: function (id, d) {
-        m.set(id, { rack: d.rack, floor: d.floor || "", fabric: d.fabric || "", color: d.color || "", deleted: false, deletedAt: null, updatedAt: Date.now(), updatedBy: who, deletedBy: "" });
+        m.set(id, { rack: d.rack, floor: d.floor || "", fabric: d.fabric || "", color: d.color || "", kgLabel: d.kgLabel == null ? null : d.kgLabel, kgReal: d.kgReal == null ? null : d.kgReal, deleted: false, deletedAt: null, updatedAt: Date.now(), updatedBy: who, deletedBy: "" });
         log(id, "add", place(m.get(id))); emit(); return Promise.resolve();
       },
       updateMany: function (ids, d) {
         ids.forEach(function (id) {
           var r = m.get(id); if (!r) return;
           var n = Object.assign({}, r), act = "edit", det = [];
-          ["rack", "floor", "fabric", "color"].forEach(function (k) { if (k in d && d[k] !== r[k]) { n[k] = d[k]; det.push(k + ": " + (r[k] || "—") + " → " + (d[k] || "—")); } });
+          ["rack", "floor", "fabric", "color", "kgLabel", "kgReal"].forEach(function (k) { if (k in d && d[k] !== r[k]) { n[k] = d[k]; det.push(k + ": " + (r[k] == null || r[k] === "" ? "—" : r[k]) + " → " + (d[k] == null || d[k] === "" ? "—" : d[k])); } });
           if ("deleted" in d && d.deleted !== r.deleted) {
             n.deleted = d.deleted; act = d.deleted ? "delete" : "restore";
             n.deletedAt = d.deleted ? Date.now() : null; n.deletedBy = d.deleted ? who : "";
@@ -1111,6 +1131,7 @@ form { display: grid; gap: 16px; }
     if (e && e.notFound) toast("Рулона уже нет в базе. Список обновлён.", true);
     else if (e && e.status === 409) toast("Рулон с таким номером уже есть.", true);
     else if (e && (e.status === 401 || e.status === 403)) toast("Нет доступа. Войдите заново.", true);
+    else if (e && /kg_(label|real)/.test(e.message || "")) toast("В базе нет полей для веса: выполните update-12.sql в Supabase.", true);
     else toast("Не удалось сохранить. Проверьте связь и повторите.", true);
   }
 
@@ -1580,8 +1601,10 @@ form { display: grid; gap: 16px; }
       }).join("") + "</ul>" + (others.length > 24 ? '<p class="hint">Показаны ближайшие 24.</p>' : "") + "</div>";
   }
   function c1Html(r) {
-    if (r.qty == null && !r.warehouse && !r.article && !r.note) return "";
+    var kg = r.kgLabel != null || r.kgReal != null;
+    if (r.qty == null && !r.warehouse && !r.article && !r.note && !kg) return "";
     var h = '<dl class="facts c1">';
+    if (kg) h += "<dt>Вес при приходе</dt><dd>их <b>" + kgFmt(r.kgLabel) + "</b> кг · наши <b>" + kgFmt(r.kgReal) + "</b> кг" + (r.kgLabel != null && r.kgReal != null ? ' <span class="kgd' + (r.kgReal < r.kgLabel - 0.001 ? " minus" : "") + '">' + kgDiff(r.kgLabel, r.kgReal) + "</span>" : "") + (r.kgBy ? '<br><span class="muted">взвесил ' + esc(r.kgBy) + (r.kgAt ? ", " + ago(r.kgAt) : "") + "</span>" : "") + "</dd>";
     if (r.qty != null) h += "<dt>Остаток" + (r.c1Date ? " на " + esc(r.c1Date.split("-").reverse().join(".")) : "") + "</dt><dd>" + esc(qtyText(r)) + (r.in1c ? "" : ' <span class="warn-tag">нет в остатках 1С</span>') + "</dd>";
     if (r.warehouse) h += "<dt>Склад</dt><dd>" + esc(r.warehouse) + "</dd>";
     if (r.article) h += "<dt>Артикул</dt><dd>" + esc(r.article) + "</dd>";
@@ -1644,6 +1667,8 @@ form { display: grid; gap: 16px; }
         '<input id="f-fabric2" type="text" placeholder="уточнение" aria-label="Уточнение ткани" value="' + esc(fs.rest) + '"></div></div>' +
       '<div class="field"><span class="lbl">Цвет</span><div class="combo num">' + pickBtn("color", cs.base) +
         '<input id="f-colornum" type="text" inputmode="text" placeholder="№" aria-label="Номер оттенка" value="' + esc(cs.num) + '"></div></div>' +
+      (bulk ? "" : '<div class="two"><div class="field"><label for="f-kgl">Их кг <span class="opt">с наклейки</span></label><input id="f-kgl" type="text" inputmode="decimal" class="mono" placeholder="—" value="' + esc(v.kgl == null ? "" : kgFmt(v.kgl)) + '"><div class="err" id="e-kgl"></div></div>' +
+        '<div class="field"><label for="f-kgr">Наши кг <span class="opt">по весам</span></label><input id="f-kgr" type="text" inputmode="decimal" class="mono" placeholder="—" value="' + esc(v.kgr == null ? "" : kgFmt(v.kgr)) + '"><div class="err" id="e-kgr"></div></div></div>') +
       '<div class="form-err" id="form-err" role="alert"></div>' +
       '<div class="actions"><button type="button" class="btn" data-act="' + (editing ? "back-detail" : "close") + '">Отмена</button><button type="submit" class="btn primary" id="saveBtn">Сохранить</button></div></form>';
     return h;
@@ -1912,7 +1937,9 @@ form { display: grid; gap: 16px; }
     state.mode2 = null;
     var root = $("#modeRoot"), m = root.firstChild;
     if (m) { m.classList.add("out"); setTimeout(function () { if (!state.mode2) root.innerHTML = ""; }, 220); }
-    if (n) toast((M0.prihod ? "Принято рулонов: " : "Записано рулонов: ") + n);
+    var nk = M0.prihod ? M0.log.filter(kgPending).length : 0;
+    if (nk) toast("Принято рулонов: " + n + ". Без веса: " + nk + ", вес можно вписать в карточке рулона (Изменить).", true);
+    else if (n) toast((M0.prihod ? "Принято рулонов: " : "Записано рулонов: ") + n);
     lastListHtml = null; render();
     return true;
   }
@@ -1973,6 +2000,7 @@ form { display: grid; gap: 16px; }
   }
   function countText(M) {
     var n = M.count;
+    if (M.prihod) { var nk = M.log.filter(kgPending).length; return n ? "Принято: " + n + (nk ? ", без веса: " + nk : "") : "Сканируйте рулоны"; }
     return n ? "Записано: " + n : "Сканируйте рулоны";
   }
   function resumeModeCam() {
@@ -2003,16 +2031,52 @@ form { display: grid; gap: 16px; }
     return M.log.slice(0, 80).map(function (e, i) {
       if (e.st === "rack") return '<li class="ml-rack' + (e.fresh ? " fresh" : "") + '">' + esc(e.text) + "</li>";
       var meta = [e.fabric, e.color].filter(Boolean).join(", ");
-      return '<li class="ml ' + e.st + (e.warn ? " warn" : "") + (e.fresh ? " fresh" : "") + '"><span' + swatchStyle(e.color) + "></span>" +
+      return '<li class="ml ' + e.st + (e.warn ? " warn" : "") + (e.fresh ? " fresh" : "") + (M.prihod && kgPending(e) ? " needkg" : "") + '"><span' + swatchStyle(e.color) + "></span>" +
         '<div class="ml-body"><b class="num">' + numHtml(e.id || e.code, "") + "</b>" + (meta ? '<span class="ml-meta">' + esc(meta) + "</span>" : "") +
         '<span class="ml-st">' + (e.st === "wait" ? "записываю…" : esc(e.text)) + "</span></div>" +
         (e.st === "ok" ? '<button type="button" class="ml-undo" data-undo="' + i + '">Отменить</button>' : "") +
-        (e.st === "err" && e.retry ? '<button type="button" class="ml-undo" data-retry="' + i + '">Повторить</button>' : "") + "</li>";
+        (e.st === "err" && e.retry ? '<button type="button" class="ml-undo" data-retry="' + i + '">Повторить</button>' : "") + (M.prihod ? kgRowHtml(e) : "") + "</li>";
     }).join("");
   }
+  /* ---------- вес при приходе: «их кг» с наклейки и «наши кг» по весам, у каждого рулона ---------- */
+  function kgPending(e) { return e.id && (e.st === "ok" || e.st === "same") && !e.kgSaved; }
+  function kgRowHtml(e) {
+    if (!e.id || (e.st !== "ok" && e.st !== "same")) return "";
+    if (e.kgSaved && !e.kgEdit) return '<button type="button" class="kg-done" data-kgedit="' + esc(e.code) + '">их <b>' + kgFmt(e.kgL) + "</b> · наши <b>" + kgFmt(e.kgR) + "</b> кг" +
+      (e.kgL != null && e.kgR != null ? ' <span class="kgd' + (e.kgR < e.kgL - 0.001 ? " minus" : "") + '">' + kgDiff(e.kgL, e.kgR) + "</span>" : "") + ' <span class="kg-ed">изменить</span></button>';
+    return '<div class="kg-row" data-code="' + esc(e.code) + '">' +
+      '<label><span>Их кг</span><input type="text" inputmode="decimal" enterkeyhint="next" class="mono" data-kg="l" data-code="' + esc(e.code) + '" value="' + esc(e.inL || "") + '" placeholder="наклейка"></label>' +
+      '<label><span>Наши кг</span><input type="text" inputmode="decimal" enterkeyhint="done" class="mono" data-kg="r" data-code="' + esc(e.code) + '" value="' + esc(e.inR || "") + '" placeholder="весы"></label>' +
+      '<button type="button" class="btn primary sm" data-kgsave="' + esc(e.code) + '"' + (e.kgBusy ? " disabled" : "") + ">✓</button>" +
+      (e.kgErr ? '<span class="kg-err">' + esc(e.kgErr) + "</span>" : "") + "</div>";
+  }
+  function kgEntry(code) { var M = state.mode2; if (!M) return null; for (var i = 0; i < M.log.length; i++) if (M.log[i].code === code && M.log[i].id) return M.log[i]; return null; }
+  function kgFocusFirst() {
+    var M = state.mode2; if (!M || !M.prihod) return;
+    var e = M.log.filter(kgPending)[0];
+    if (!e) { if (!M.cam) { var mc = $("#m-code"); if (mc) mc.focus(); } return; }
+    var inp = document.querySelector('#modeLog input[data-kg="' + (e.inL ? "r" : "l") + '"][data-code="' + e.code + '"]');
+    if (inp && document.activeElement !== inp) { inp.focus({ preventScroll: false }); }
+  }
+  function kgSave(code) {
+    var e = kgEntry(code); if (!e || e.kgBusy || !guard()) return;
+    var l = kgNum(e.inL), r = kgNum(e.inR);
+    if (l === null && r === null) { e.kgErr = "Впишите хотя бы один вес."; drawLog(); kgRefocus(code, "l"); return; }
+    if (isNaN(l) || isNaN(r) || l > 500 || r > 500) { e.kgErr = "Вес числом, например 24,6"; drawLog(); kgRefocus(code, isNaN(l) || l > 500 ? "l" : "r"); return; }
+    e.kgBusy = true; e.kgErr = ""; drawLog();
+    repo.updateMany([e.id], { kgLabel: l, kgReal: r }).then(function () {
+      e.kgBusy = false; e.kgSaved = true; e.kgEdit = false; e.kgL = l; e.kgR = r; beep(true); drawLog(); kgFocusFirst();
+    }, function (err) {
+      e.kgBusy = false; e.kgErr = /kg_(label|real)/.test((err && err.message) || "") ? "В базе нет полей для веса: выполните update-12.sql" : "Не сохранено, проверьте связь.";
+      beep(false); drawLog();
+    });
+  }
+  function kgRefocus(code, f) { var inp = document.querySelector('#modeLog input[data-kg="' + f + '"][data-code="' + code + '"]'); if (inp) inp.focus(); }
   function drawLog() {
     var M = state.mode2, el = $("#modeLog"); if (!M || !el) return;
+    var ae = document.activeElement, keep = ae && ae.getAttribute && ae.getAttribute("data-kg") ? { code: ae.getAttribute("data-code"), f: ae.getAttribute("data-kg"), pos: ae.selectionStart } : null;
     el.innerHTML = logHtml(M);
+    if (keep) { var ni = document.querySelector('#modeLog input[data-kg="' + keep.f + '"][data-code="' + keep.code + '"]'); if (ni) { ni.focus({ preventScroll: true }); try { ni.setSelectionRange(keep.pos, keep.pos); } catch (x) {} } }
     M.log.forEach(function (e) { e.fresh = false; });
     var c = $("#modeCount"); if (c) c.textContent = countText(M);
   }
@@ -2034,6 +2098,8 @@ form { display: grid; gap: 16px; }
       }
     }
     M.recent[code] = now;
+    // приход: у предыдущих рулонов вес уже вписан полностью — сохраняем сами
+    if (M.prihod) M.log.forEach(function (x) { if (kgPending(x) && !x.kgBusy && String(x.inL || "").trim() && String(x.inR || "").trim()) kgSave(x.code); });
     var e = { code: code, id: null, st: "wait", text: "", fresh: true };
     M.log.unshift(e); drawLog();
     if (!/^\d[\d-]{0,29}$/.test(code)) { e.st = "err"; e.text = "Это не номер рулона: в номере только цифры."; beep(false); drawLog(); return; }
@@ -2078,10 +2144,15 @@ form { display: grid; gap: 16px; }
       var r = state.rolls.get(res.id);
       e.id = res.id; e.fabric = r.fabric; e.color = r.color; e.prev = { rack: r.rack, floor: r.floor || "", deleted: r.deleted };
       if (M.prihod) { if (!r.fabric && M.fabric) d.fabric = M.fabric; if (!r.color && M.color) d.color = M.color; }
-      if (!r.deleted && r.rack === M.rack && (r.floor || "") === M.floor && !d.fabric && !d.color) { e.st = "same"; e.text = "уже лежит здесь"; beep(true); drawLog(); return; }
+      if (!r.deleted && r.rack === M.rack && (r.floor || "") === M.floor && !d.fabric && !d.color) {
+        e.st = "same"; e.text = "уже лежит здесь";
+        if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.kgSaved = true; e.kgL = r.kgLabel; e.kgR = r.kgReal; } setTimeout(kgFocusFirst, 50); }
+        beep(true); drawLog(); return;
+      }
       if (r.deleted) d.deleted = false;
       return repo.updateMany([res.id], d).then(function () {
         e.st = "ok"; e.kind = r.deleted ? "restored" : "moved";
+        if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.inL = r.kgLabel == null ? "" : kgFmt(r.kgLabel); e.inR = r.kgReal == null ? "" : kgFmt(r.kgReal); } setTimeout(kgFocusFirst, 50); }
         e.text = r.deleted ? "возвращён из удалённых" : (r.rack && (r.rack !== M.rack || (r.floor || "") !== M.floor) ? "перенесён: был " + place(r) : "место записано");
         if (d.fabric || d.color) { e.fabric = d.fabric || r.fabric; e.color = d.color || r.color; e.text += ", ткань и цвет заполнены"; }
         if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) e.text += " · не из серии " + M.series;
@@ -2093,6 +2164,7 @@ form { display: grid; gap: 16px; }
     d.fabric = M.fabric; d.color = M.color;
     return repo.insert(e.code, d).then(function () {
       e.st = "ok"; e.kind = "new"; e.text = "новый рулон";
+      if (M.prihod) setTimeout(kgFocusFirst, 50);
       if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) { e.text = "новый рулон · не из серии " + M.series + ", проверьте"; e.warn = true; }
       if (state.mode2 === M) M.count++;
       beep(true); drawLog();
@@ -3019,6 +3091,7 @@ form { display: grid; gap: 16px; }
     ["roll", "rack", "floor"].forEach(function (k) { var el = $("#f-" + k); if (el) v[k] = el.value.trim(); });
     v.fabric = joinFabric(val("#f-fabric"), val("#f-fabric2")); v.color = joinColor(val("#f-color"), val("#f-colornum"));
     var nf = $("#f-nofloor"); if (nf) v.nofloor = nf.checked;
+    if ($("#f-kgl")) { v.kgl = val("#f-kgl"); v.kgr = val("#f-kgr"); }
   }
   function openPicker(kind) {
     snapshotForm();
@@ -3131,9 +3204,18 @@ form { display: grid; gap: 16px; }
     }
     if (!vals.rack) { fieldErr("rack", "Укажите номер стеллажа."); bad = true; }
     if (vals.floor.length > 10) { fieldErr("floor", "Слишком длинно."); bad = true; }
+    var kgl = $("#f-kgl") ? kgNum(val("#f-kgl")) : undefined, kgr = $("#f-kgr") ? kgNum(val("#f-kgr")) : undefined;
+    if (kgl !== undefined) { fieldErr("kgl", ""); fieldErr("kgr", ""); }
+    if (kgl !== undefined && (isNaN(kgl) || kgl > 500)) { fieldErr("kgl", "Число, например 24,6"); bad = true; }
+    if (kgr !== undefined && (isNaN(kgr) || kgr > 500)) { fieldErr("kgr", "Число, например 24,1"); bad = true; }
     if (bad || !guard()) return;
     setBusy(true, "Сохранить");
     var d = { rack: vals.rack, floor: vals.floor, fabric: vals.fabric, color: vals.color };
+    if (kgl !== undefined) {
+      var r0 = s.type === "edit" ? state.rolls.get(s.id) || {} : {};
+      if (kgl !== (r0.kgLabel == null ? null : r0.kgLabel)) d.kgLabel = kgl;
+      if (kgr !== (r0.kgReal == null ? null : r0.kgReal)) d.kgReal = kgr;
+    }
     if (s.type === "edit") {
       repo.updateMany([s.id], d).then(function () {
         setBusy(false, "Сохранить"); openSheet({ type: "detail", id: s.id }); toast("Изменения сохранены");
@@ -3287,6 +3369,8 @@ form { display: grid; gap: 16px; }
     if (shb) { var nq = state.q.trim() + " №" + shb.getAttribute("data-shade"); state.q = nq; $("#q").value = nq; window.scrollTo({ top: 0, behavior: "smooth" }); render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
     var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
+    var ks = t.closest("[data-kgsave]"); if (ks) { kgSave(ks.getAttribute("data-kgsave")); return; }
+    var ke = t.closest("[data-kgedit]"); if (ke) { var ee = kgEntry(ke.getAttribute("data-kgedit")); if (ee) { ee.kgEdit = true; ee.kgSaved = false; ee.inL = ee.kgL == null ? "" : kgFmt(ee.kgL); ee.inR = ee.kgR == null ? "" : kgFmt(ee.kgR); drawLog(); kgRefocus(ee.code, "l"); } return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
     var rt = t.closest("[data-retry]"); if (rt) { modeRetry(+rt.getAttribute("data-retry")); return; }
     var ffc = t.closest("[data-ff-color]");
@@ -3370,7 +3454,7 @@ form { display: grid; gap: 16px; }
       case "bulk-restore": if (state.sel.size) restore(Array.from(state.sel)); return;
     }
     if (!s) return;
-    if (act === "edit-one") { var r = state.rolls.get(s.id) || {}; openSheet({ type: "edit", id: s.id, values: { roll: s.id, rack: r.rack, floor: r.floor, fabric: r.fabric, color: r.color } }); }
+    if (act === "edit-one") { var r = state.rolls.get(s.id) || {}; openSheet({ type: "edit", id: s.id, values: { roll: s.id, rack: r.rack, floor: r.floor, fabric: r.fabric, color: r.color, kgl: r.kgLabel, kgr: r.kgReal } }); }
     else if (act === "back-detail") openSheet({ type: "detail", id: s.id });
     else if (act === "ask-delete-one") openSheet({ type: "confirm", kind: "delete", ids: [s.id], back: s.id });
     else if (act === "ask-purge-one") openSheet({ type: "confirm", kind: "purge", ids: [s.id], back: s.id });
@@ -3405,6 +3489,8 @@ form { display: grid; gap: 16px; }
 
   $("#q").addEventListener("input", function (e) { state.q = e.target.value; render(); });
   document.addEventListener("input", function (e) {
+    var kf = e.target && e.target.getAttribute && e.target.getAttribute("data-kg");
+    if (kf) { var ke2 = kgEntry(e.target.getAttribute("data-code")); if (ke2) { if (kf === "l") ke2.inL = e.target.value; else ke2.inR = e.target.value; ke2.kgErr = ""; } return; }
     var id = e.target && e.target.id, s = state.sheet;
     if (!s || s.type !== "filter") return;
     if (id === "ff-q") {
@@ -3432,7 +3518,11 @@ form { display: grid; gap: 16px; }
     if (state.q) { state.q = ""; $("#q").value = ""; render(); return true; }
     return false;
   }
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape") backAction(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { backAction(); return; }
+    var kf = e.key === "Enter" && e.target && e.target.getAttribute && e.target.getAttribute("data-kg");
+    if (kf) { e.preventDefault(); var code = e.target.getAttribute("data-code"); if (kf === "l") kgRefocus(code, "r"); else kgSave(code); }
+  });
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) { if (scanTarget) closeScan(); Scan.stop(); }
     else if (state.mode2 && state.mode2.step === "run" && state.mode2.cam) resumeModeCam();
