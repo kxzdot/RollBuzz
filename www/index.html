@@ -484,6 +484,21 @@ form { display: grid; gap: 16px; }
 #repRoot .orders { position: fixed; inset: 0; z-index: 17; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .o-top .rep-open { margin-left: auto; }
 .rep-from-orders { width: 100%; margin: 10px 0 0; }
+.rep-quick { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 2px 6px; }
+.rep-list { list-style: none; margin: 0; padding: 0 0 90px; display: grid; gap: 8px; }
+.rep-day { font-size: 0.8125rem; font-weight: 700; color: var(--muted); margin: 8px 2px 0; text-transform: uppercase; letter-spacing: .04em; }
+.rep-o { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; }
+.rep-o.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.rep-chk { flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--line); display: grid; place-items: center; font-weight: 800; color: #fff; }
+.rep-o.on .rep-chk { background: var(--accent); border-color: var(--accent); }
+.rep-ob { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.rep-ob b { font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-ob span { font-size: 0.8125rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-st { flex: none; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
+.rep-st.done { background: color-mix(in srgb, #2e8b57 18%, var(--surface)); color: #23784a; }
+.rep-go { position: sticky; bottom: 0; padding: 12px 0 calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--bg) 30%); }
+.rep-go .btn { width: 100%; height: 54px; }
+.link-btn.inline { padding: 0; font-size: inherit; }
 .rep-bar { display: flex; gap: 10px; align-items: end; margin: 0 0 12px; }
 .rep-bar .btn { flex: 1; height: 48px; }
 .rep-date { display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
@@ -776,7 +791,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.8";
+  var APP_VERSION = "2.9";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2425,7 +2440,7 @@ form { display: grid; gap: 16px; }
   }
 
   /* ---------- отчёты управляющего на А4: почта и накладная на рынок ---------- */
-  var REP = { open: false, date: "", type: "post", orders: null, err: null, busy: false };
+  var REP = { open: false, date: "", type: "post", orders: null, err: null, busy: false, step: "pick", sel: new Set(), days: 14 };
   var H2C_LIB = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
   var JSPDF_LIB = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
   var libs = {};
@@ -2445,7 +2460,7 @@ form { display: grid; gap: 16px; }
   var MONTHS_UA = ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"];
   function openRep() {
     if (!state.isAdmin) return;
-    REP.open = true; if (!REP.date) REP.date = ymd(new Date());
+    REP.open = true; REP.date = ymd(new Date()); REP.step = "pick";
     closeSheet(true);
     $("#repRoot").innerHTML = '<div class="orders in" role="dialog" aria-label="Отчёты"><div class="mode-in rep-in" id="repIn"></div></div>';
     repLoad();
@@ -2458,12 +2473,23 @@ form { display: grid; gap: 16px; }
     return true;
   }
   function repLoad() {
-    var my = REP.date, d0 = new Date(my + "T00:00:00"), d1 = new Date(d0); d1.setDate(d1.getDate() + 1);
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - REP.days + 1);
+    var my = REP.days;
     REP.orders = null; REP.err = null; drawRep();
-    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(id,roll_id,state,amount,unit,done_by_name)&status=eq.done&done_at=gte." +
-      encodeURIComponent(d0.toISOString()) + "&done_at=lt." + encodeURIComponent(d1.toISOString()) + "&order=done_at")
-      .then(function (rows) { if (REP.date !== my) return; REP.orders = rows || []; drawRep(); })
-      ["catch"](function (e) { if (REP.date !== my) return; REP.err = e; drawRep(); });
+    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(id,roll_id,state,amount,unit,done_by_name)&created_at=gte." +
+      encodeURIComponent(d0.toISOString()) + "&order=created_at.desc")
+      .then(function (rows) {
+        if (REP.days !== my) return;
+        REP.orders = (rows || []).sort(function (a, b) { return Date.parse(b.created_at) - Date.parse(a.created_at); });
+        if (!REP.sel.size) autoSelect();
+        drawRep();
+      })["catch"](function (e) { if (REP.days !== my) return; REP.err = e; drawRep(); });
+  }
+  /* сразу отмечены выполненные сегодня заказы выбранного типа */
+  function autoSelect() {
+    var today = ymd(new Date());
+    REP.sel = new Set();
+    repOrders().forEach(function (o) { if (o.status === "done" && o.done_at && ymd(new Date(o.done_at)) === today) REP.sel.add(o.id); });
   }
   /* короткие названия, как пишут от руки */
   var WL = "[а-яёіїєґa-z'’]*";
@@ -2524,6 +2550,9 @@ form { display: grid; gap: 16px; }
       return REP.type === "post" ? t === "post" || t === "" : t === REP.type;
     });
   }
+  function repSelected() {
+    return repOrders().filter(function (o) { return REP.sel.has(o.id); }).sort(function (a, b) { return Date.parse(a.done_at || a.created_at) - Date.parse(b.done_at || b.created_at); });
+  }
   function cellE(t, cls) { return "<td" + (cls ? ' class="' + cls + '"' : "") + ' contenteditable="true">' + esc(t == null ? "" : t) + "</td>"; }
   /* бланк «Склад» для почты и Acorn: по заказу — менеджер, №, рулоны, клиент и доставка */
   function postPages(list) {
@@ -2578,24 +2607,46 @@ form { display: grid; gap: 16px; }
         '<div class="pg">Лист ' + (pi + 1) + " из " + pages.length + "</div></div>";
     }).join("");
   }
+  function repPickHtml() {
+    var list = repOrders(), h = "", lastDay = "";
+    if (!list.length) return '<p class="hint rep-hint">За последние ' + REP.days + " дней заказов этого типа нет.</p>";
+    var nsel = list.filter(function (o) { return REP.sel.has(o.id); }).length;
+    h += '<div class="rep-quick"><button type="button" class="link-btn" data-act="rep-sel" data-id="today">Выполненные сегодня</button><button type="button" class="link-btn" data-act="rep-sel" data-id="done">Все выполненные</button><button type="button" class="link-btn" data-act="rep-sel" data-id="none">Снять всё</button></div>';
+    h += '<ul class="rep-list">' + list.map(function (o) {
+      var d = new Date(o.created_at), day = ymd(d), its = o.order_items || [];
+      var head = day !== lastDay ? '<li class="rep-day">' + (day === ymd(new Date()) ? "Сегодня" : dmy(day)) + "</li>" : "";
+      lastDay = day;
+      var who = [managerName(o), orderNo(o)].filter(Boolean).join(" "), cl = REP.type === "market" || REP.type === "move" ? pointCode(o) : clientFull(o);
+      var on = REP.sel.has(o.id);
+      return head + '<li><button type="button" class="rep-o' + (on ? " on" : "") + '" data-rep-o="' + o.id + '" aria-pressed="' + on + '">' +
+        '<span class="rep-chk" aria-hidden="true">' + (on ? "✓" : "") + "</span>" +
+        '<span class="rep-ob"><b>' + esc(who || o.author || "Заказ") + (cl ? " · " + esc(cl) : "") + "</b>" +
+        "<span>" + esc(String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0")) + " · рулонов: " + its.length + " · " + esc(o.chat_title || "") + "</span></span>" +
+        '<span class="rep-st ' + (o.status === "done" ? "done" : "") + '">' + (o.status === "done" ? "выполнен" : "в работе") + "</span></button></li>";
+    }).join("") + "</ul>";
+    h += '<div class="rep-go"><button type="button" class="btn primary" data-act="rep-make"' + (nsel ? "" : " disabled") + ">Сформировать лист" + (nsel ? " (" + nsel + ")" : "") + "</button></div>";
+    return h;
+  }
   function drawRep() {
     var box = $("#repIn"); if (!box) return;
+    var sc = box.parentNode ? box.parentNode.scrollTop : 0;
     var types = [["post", "Почта"], ["market", "Рынок"], ["move", "Перемещение"], ["acorn", "Acorn"]], ti = types.map(function (x) { return x[0]; }).indexOf(REP.type);
-    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="rep-close" aria-label="Назад">←</button><h2>Отчёты</h2></div>' +
-      '<div class="rep-bar"><label class="rep-date"><span>Дата</span><input type="date" id="repDate" value="' + esc(REP.date) + '"></label>' +
-      '<button type="button" class="btn primary" data-act="rep-pdf" id="repPdf"' + (REP.busy || !REP.orders ? " disabled" : "") + ">" + (REP.busy ? "Готовлю PDF…" : "PDF для печати") + "</button></div>" +
-      '<div class="tabs" style="--n:4;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
-      types.map(function (x) { return '<button class="tab" type="button" data-act="rep-type" data-id="' + x[0] + '" aria-selected="' + (x[0] === REP.type) + '">' + x[1] + "</button>"; }).join("") + "</div>";
-    if (REP.err) h += '<p class="banner err">Не удалось загрузить заказы. Проверьте интернет.</p>';
-    else if (!REP.orders) h += '<p class="oc-ocr"><i class="spin"></i>Собираю заказы…</p>';
-    else {
-      var list = repOrders(), n = list.reduce(function (a, o) { return a + (o.order_items || []).length; }, 0);
-      h += '<p class="hint rep-hint">' + (list.length ? "Выполнено заказов: " + list.length + ", рулонов: " + n + ". Лист заполнен сам: проверьте и поправьте, нажав на любую ячейку. Потом «PDF для печати»." : "За " + dmy(REP.date) + " выполненных заказов этого типа нет. Можно выбрать другую дату или распечатать пустой бланк.") + "</p>";
+    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="' + (REP.step === "sheet" ? "rep-back" : "rep-close") + '" aria-label="Назад">←</button><h2>' + (REP.step === "sheet" ? "Лист " + (types[ti] || [0, ""])[1].toLowerCase() : "Отчёты") + "</h2>" +
+      (REP.step === "sheet" ? '<button type="button" class="btn primary sm rep-open" data-act="rep-pdf" id="repPdf"' + (REP.busy ? " disabled" : "") + ">" + (REP.busy ? "Готовлю PDF…" : "PDF для печати") + "</button>" : "") + "</div>";
+    if (REP.step === "pick") {
+      h += '<div class="tabs" style="--n:4;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
+        types.map(function (x) { return '<button class="tab" type="button" data-act="rep-type" data-id="' + x[0] + '" aria-selected="' + (x[0] === REP.type) + '">' + x[1] + "</button>"; }).join("") + "</div>";
+      h += '<p class="hint rep-hint">Отметьте заказы для листа. Показаны заказы за ' + REP.days + ' дней' + (REP.days < 60 ? ', <button type="button" class="link-btn inline" data-act="rep-more">показать за 60</button>' : "") + ".</p>";
+      if (REP.err) h += '<p class="banner err">Не удалось загрузить заказы. Проверьте интернет.</p>';
+      else if (!REP.orders) h += '<p class="oc-ocr"><i class="spin"></i>Собираю заказы…</p>';
+      else h += repPickHtml();
+    } else {
+      var list = repSelected(), n = list.reduce(function (a, o) { return a + (o.order_items || []).length; }, 0);
+      h += '<p class="hint rep-hint">Заказов: ' + list.length + ", рулонов: " + n + ". Проверьте лист и поправьте, нажав на любую ячейку.</p>";
       h += '<div class="a4wrap" id="repPages">' + (REP.type === "market" || REP.type === "move" ? marketPages(list) : postPages(list)) + "</div>";
     }
     box.innerHTML = h;
-    fitA4();
-    var di = $("#repDate"); if (di) di.addEventListener("change", function () { if (di.value) { REP.date = di.value; repLoad(); } });
+    if (REP.step === "sheet") fitA4(); else if (box.parentNode) box.parentNode.scrollTop = sc;
   }
   function fitA4() {
     var w = $("#repPages"), box = $("#repIn"); if (!w || !box) return;
@@ -2703,7 +2754,7 @@ form { display: grid; gap: 16px; }
       '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
       '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
       '<button class="tab" type="button" data-act="o-tab" data-id="done" aria-selected="' + (OR.tab === "done") + '">Выполнены<span class="n">' + nd + "</span></button></div>" +
-      (state.isAdmin && OR.tab === "done" ? '<button type="button" class="btn primary rep-from-orders" data-act="rep-open">Отчёт за день на А4</button>' : "");
+      (state.isAdmin && OR.tab === "done" ? '<button type="button" class="btn primary rep-from-orders" data-act="rep-open">Отчёт на А4</button>' : "");
     if (chats.size > 1) {
       h += '<div class="o-chats"><button type="button" class="ochip' + (OR.chat === "all" ? " on" : "") + '" data-act="o-chat" data-id="all">Все группы</button>';
       chats.forEach(function (t, id) { h += '<button type="button" class="ochip' + (OR.chat === id ? " on" : "") + '" data-act="o-chat" data-id="' + esc(id) + '">' + esc(t) + "</button>"; });
@@ -3634,6 +3685,8 @@ form { display: grid; gap: 16px; }
     if (shb) { var nq = state.q.trim() + " №" + shb.getAttribute("data-shade"); state.q = nq; $("#q").value = nq; window.scrollTo({ top: 0, behavior: "smooth" }); render(); return; }
     if (t.closest("#qClear")) { state.q = ""; $("#q").value = ""; render(); $("#q").focus(); return; }
     var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
+    var ro = t.closest("[data-rep-o]");
+    if (ro) { var oid2 = +ro.getAttribute("data-rep-o"); if (REP.sel.has(oid2)) REP.sel["delete"](oid2); else REP.sel.add(oid2); drawRep(); return; }
     var ks = t.closest("[data-kgsave]"); if (ks) { kgSave(ks.getAttribute("data-kgsave")); return; }
     var ke = t.closest("[data-kgedit]"); if (ke) { var ee = kgEntry(ke.getAttribute("data-kgedit")); if (ee) { ee.kgEdit = true; ee.kgSaved = false; ee.inL = ee.kgL == null ? "" : kgFmt(ee.kgL); ee.inR = ee.kgR == null ? "" : kgFmt(ee.kgR); drawLog(); kgRefocus(ee.code, "l"); } return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
@@ -3670,7 +3723,16 @@ form { display: grid; gap: 16px; }
       case "sum-open": openSum(); return;
       case "rep-open": openRep(); return;
       case "rep-close": closeRep(); return;
-      case "rep-type": REP.type = el.getAttribute("data-id"); drawRep(); return;
+      case "rep-type": REP.type = el.getAttribute("data-id"); autoSelect(); drawRep(); return;
+      case "rep-make": REP.step = "sheet"; drawRep(); var rr = $("#repRoot .orders"); if (rr) rr.scrollTop = 0; return;
+      case "rep-back": REP.step = "pick"; drawRep(); return;
+      case "rep-more": REP.days = 60; repLoad(); return;
+      case "rep-sel":
+        var k = el.getAttribute("data-id"), today = ymd(new Date());
+        if (k === "none") REP.sel = new Set();
+        else if (k === "today") autoSelect();
+        else repOrders().forEach(function (o) { if (o.status === "done") REP.sel.add(o.id); });
+        drawRep(); return;
       case "rep-pdf": repPdf(); return;
       case "sum-close": closeSum(); return;
       case "sum-per": SUM.period = el.getAttribute("data-id"); sumLoad(); return;
@@ -3778,6 +3840,7 @@ form { display: grid; gap: 16px; }
   function backAction() {
     if (state.pick) { closePicker(); return true; }
     if (closeViewer()) return true;
+    if (REP.open && REP.step === "sheet") { REP.step = "pick"; drawRep(); return true; }
     if (closeRep()) return true;
     if (closeSum()) return true;
     if (closeScan()) return true;
