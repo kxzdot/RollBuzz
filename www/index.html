@@ -794,7 +794,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.0";
+  var APP_VERSION = "3.1";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2295,7 +2295,7 @@ form { display: grid; gap: 16px; }
         OR.map.forEach(function (o, id) { if (!keep.has(id)) OR.map["delete"](id); });
       }
       (rows || []).forEach(function (o) {
-        (o.order_items || []).sort(function (a, b) { return a.id - b.id; });
+        (o.order_items || []).sort(itemOrder);
         if (OR.known && !OR.known.has(o.id)) fresh.push(o);
         OR.map.set(o.id, o);
         if (o.changed_at && Date.parse(o.changed_at) > (Date.parse(OR.last) || 0)) OR.last = o.changed_at;
@@ -2360,6 +2360,9 @@ form { display: grid; gap: 16px; }
   /* выполненные заказы видны 5 часов, потом исчезают */
   var DONE_KEEP = 5 * 3600e3;
   function recentDone(o) { return o.status === "done" && Date.now() - Date.parse(o.done_at || o.changed_at || o.created_at) < DONE_KEEP; }
+  /* порядок рулонов в заказе: как в документе (pos), иначе как добавлены */
+  function itemOrder(a, b) { var pa = a.pos == null ? 1e9 : a.pos, pb = b.pos == null ? 1e9 : b.pos; return pa - pb || a.id - b.id; }
+
   /* ---------- сводка управляющего ---------- */
   var SUM = { open: false, period: "today", data: null, busy: false };
   function sumRange(p) {
@@ -2567,7 +2570,7 @@ form { display: grid; gap: 16px; }
   function postPages(list) {
     var rows = [];
     list.forEach(function (o) {
-      var its = (o.order_items || []).slice().sort(function (a, b) { return a.id - b.id; });
+      var its = (o.order_items || []).slice().sort(itemOrder);
       var left = [managerName(o), orderNo(o)];
       its.forEach(function (it, i) { var d = itemRowData(o, it); rows.push("<tr>" + cellE(left[i] || "", "mgr") + cellE(d.code, "code") + cellE(d.name) + cellE(d.kg, "num") + cellE(d.m, "num") + cellE("") + cellE("") + cellE("") + "</tr>"); });
       if (!its.length) rows.push("<tr>" + cellE(left[0], "mgr") + cellE("") + cellE((o.text || "").split("\n")[0]) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
@@ -2593,7 +2596,7 @@ form { display: grid; gap: 16px; }
     var rows = [], codes = {};
     list.forEach(function (o) {
       var pc = pointCode(o); if (pc) codes[pc] = (codes[pc] || 0) + 1;
-      (o.order_items || []).slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (it, i) {
+      (o.order_items || []).slice().sort(itemOrder).forEach(function (it, i) {
         var d = itemRowData(o, it);
         rows.push("<tr>" + cellE(i === 0 ? pc : "", "mgr") + cellE(d.name) + cellE(d.m ? "м" : "") + cellE(d.code, "code") + cellE(d.m ? d.m + " м" : d.kg ? d.kg + " кг" : "", "num") + cellE("") + "</tr>");
       });
@@ -3070,7 +3073,7 @@ form { display: grid; gap: 16px; }
     else v = parseFloat(raw.replace(",", "."));
     if (!/[.,]/.test(raw) && unit !== "м" && unit !== "шт" && v >= 60) v = raw.length === 3 ? v / 10 : raw.length === 4 ? v / 100 : v;
     // целое число без запятой: запятая могла потеряться (0,3 → 3, 1,5 → 15). Метры до 20 и вес до 30 обычно целые, но проверяются по итогу и базе
-    if (!sep && /^\d{1,2}$/.test(raw) && raw.charAt(0) !== "0") sure = (unit === "м" || unit === "шт") && v >= 1;
+    if (!sep && /^\d{1,2}$/.test(raw) && raw.charAt(0) !== "0") sure = (unit === "м" && v >= 1 && (v < 10 || v % 10 === 0)) || (unit === "шт" && v >= 1);   // «25 м» может быть «2,5 м»; «10 м» — нет (1С не пишет «1,0»)
     return v > 0 ? { amount: Math.round(v * 1000) / 1000, unit: unit, sep: sep, sure: sep || sure, raw: raw } : null;
   }
   /* полный разбор: words — слова всей страницы, colLines — строки колонки серий; known(id) — есть ли рулон в базе */
@@ -3118,7 +3121,8 @@ form { display: grid; gap: 16px; }
       var ids = Object.keys(qty), sum = ids.reduce(function (a, k) { return a + qty[k].amount; }, 0);
       if (tl && ids.length === found.length) {
         var near = function (a, b) { return Math.abs(a - b) < 0.011; };
-        if (near(sum, tl.amount)) ids.forEach(function (k) { qty[k].sure = true; });
+        // итог подтверждает, только если в нём есть запятая или у всех строк она есть: иначе запятая могла потеряться везде («25» и «25» вместо «2,5»)
+        if (near(sum, tl.amount)) { if (tl.sep || ids.every(function (k) { return qty[k].sep; })) ids.forEach(function (k) { qty[k].sure = true; }); }
         else {
           // одна строка с потерянной запятой: делим её на 10 или 100 и смотрим, сойдётся ли
           var fixed = false;
@@ -3141,7 +3145,8 @@ form { display: grid; gap: 16px; }
     words.slice().sort(function (a, b) { return a.bbox.y0 - b.bbox.y0; }).forEach(function (w) {
       if (/(основн|р[иы]н[оу]к|1608|доп|ндс|перевал|одес)/i.test(w.text) && w.bbox.x1 < cx && (!col || w.bbox.y0 >= col.y0 - lh * 2) && w.bbox.y0 > lastY + lh * 0.8) { rowsSeen++; lastY = w.bbox.y0; }
     });
-    return { ours: ours, other: other, unsure: unsure, rows: rowsSeen, found: found.length, qty: qty };
+    var pos = {}; found.forEach(function (f) { if (!(f.id in pos)) pos[f.id] = f.top; });
+    return { ours: ours, other: other, unsure: unsure, rows: rowsSeen, found: found.length, qty: qty, pos: pos };
   }
 
   /* картинка → холст: увеличить, в серое, убрать линии таблицы (они мешают читать цифры) */
@@ -3254,30 +3259,42 @@ form { display: grid; gap: 16px; }
       var fixedIds = [];
       split.unsure = split.unsure.filter(function (u) {
         if (u.length !== 13) return true;
+        // сравниваем первые 12 цифр (последняя — контрольная, она считается из них): одна неверная цифра допустима
         var hit = [];
         state.rolls.forEach(function (r, id) {
           if (id.length !== 13 || split.ours.indexOf(id) !== -1) return;
-          var dd = 0; for (var i = 0; i < 13 && dd < 2; i++) if (id.charAt(i) !== u.charAt(i)) dd++;
-          if (dd === 1) hit.push(id);
+          var dd = 0; for (var i = 0; i < 12 && dd < 2; i++) if (id.charAt(i) !== u.charAt(i)) dd++;
+          if (dd <= 1) hit.push(id);
         });
         if (hit.length !== 1) return true;
-        split.ours.push(hit[0]); if (split.qty && split.qty[u]) split.qty[hit[0]] = split.qty[u]; fixedIds.push(hit[0]); return false;
+        split.ours.push(hit[0]); if (split.qty && split.qty[u]) split.qty[hit[0]] = split.qty[u];
+        if (split.pos && u in split.pos) split.pos[hit[0]] = split.pos[u];
+        fixedIds.push(hit[0]); return false;
       });
       if (fixedIds.length) notes.push("Номер прочитан с ошибкой и найден по базе, сверьте с фото: " + fixedIds.join(", "));
       if (split.unsure.length) notes.push("Проверьте по фото, номер прочитан неточно: " + split.unsure.join(", "));
         var got = split.ours.length + split.other.length;
         if (split.rows > got) notes.push("В документе строк: " + split.rows + ", прочитано: " + got + ". Недостающие добавьте вручную или сканером");
       } else split = serialsByWarehouse(text);
-      var nums = split.ours;
+      var nums = split.ours.slice();
+      if (split.pos) nums.sort(function (a, b) { return (split.pos[a] == null ? 1e9 : split.pos[a]) - (split.pos[b] == null ? 1e9 : split.pos[b]); });
       if (split.other.length) notes.unshift("Не с нашего склада: " + split.other.map(function (x) { return x.id + " (" + x.wh + ")"; }).join(", "));
       var skipped = notes.join(". ");
       var qy = split.qty || {};
       nums.forEach(function (x) { var rr = resolveRoll(x); if (qy[x]) checkQty(qy[x], state.rolls.get(rr.id || x)); });
       if (nums.some(function (x) { return qy[x] && !qy[x].sure; })) notes.push("Проверьте по фото количество, отмеченное «?»");
       skipped = notes.join(". ");
-      function itemsBody(withQty) { return nums.map(function (x) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (withQty && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; if (withQty === 2) b.amount_sure = qy[x].sure !== false; } return b; }); }
-      function post(withQty) { return api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: itemsBody(withQty), prefer: "resolution=ignore-duplicates,return=minimal" }); }
-      var p = nums.length ? post(2)["catch"](function () { return post(1); })["catch"](function () { return post(0); }) : Promise.resolve();
+      function itemsBody(lv) { return nums.map(function (x, i) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (lv >= 3) b.pos = i + 1; if (lv >= 1 && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; if (lv >= 2) b.amount_sure = qy[x].sure !== false; } return b; }); }
+      function post(lv) { return api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: itemsBody(lv), prefer: "resolution=ignore-duplicates,return=minimal" }); }
+      var p = nums.length ? post(3)["catch"](function () { return post(2); })["catch"](function () { return post(1); })["catch"](function () { return post(0); }) : Promise.resolve();
+      // при повторном чтении: уже добавленным рулонам выставить порядок как в документе
+      p = p.then(function () {
+        var have = (OR.map.get(o.id) || o).order_items || [];
+        return Promise.all(have.map(function (it) {
+          var k = nums.indexOf(it.roll_id); if (k < 0 || it.pos === k + 1) return null;
+          return api("order_items?id=eq." + it.id, { method: "PATCH", body: { pos: k + 1 }, prefer: "return=minimal" })["catch"](function () {});
+        }));
+      });
       return p.then(function () {
         return api("orders?id=eq." + o.id, { method: "PATCH", body: { ocr_state: nums.length || skipped ? "done" : "fail", doc_no: doc, skipped: skipped }, prefer: "return=minimal" });
       });
