@@ -369,6 +369,16 @@ form { display: grid; gap: 16px; }
 .mode-top .cam-toggle { width: 44px; height: 44px; flex: none; }
 .mode-top .cam-toggle svg { width: 24px; height: 24px; }
 @media (max-width: 420px) { .dock:has(#voiceBtn:not([hidden])) .dl { display: none; } .dock:has(#voiceBtn:not([hidden])) #modeBtn { width: 60px; padding: 0; justify-content: center; } }
+@media (max-width: 520px) {
+  .dock:has(#prihodBtn:not([hidden])) .dl { display: none; }
+  .dock:has(#prihodBtn:not([hidden])) #modeBtn { width: 60px; padding: 0; justify-content: center; }
+  .dock:has(#prihodBtn:not([hidden])) #add { width: 60px; padding: 0; font-size: 0; justify-content: center; }
+  .dock:has(#prihodBtn:not([hidden])) #add span { font-size: 1.75rem; margin: 0; }
+}
+.dock-btn.prihod { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.mode-preset { display: block; font-weight: 650; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml.ok.warn .ml-st, .ml.warn .ml-st { color: #b06f00 !important; font-weight: 650; }
+.opt { font-weight: 400; color: var(--muted); font-size: 0.8125rem; }
 @media (max-width: 420px) { .net:not(.off) #netText { display: none; } .brand h1 { font-size: 1.1875rem; } }
 .mode-add input { width: 100%; min-width: 0; height: 54px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); font-family: var(--f-mono); font-size: 1.1875rem; }
 .mode-add input:focus { border-color: var(--accent); outline: none; }
@@ -456,6 +466,23 @@ form { display: grid; gap: 16px; }
 .obtn { position: relative; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); color: var(--fg); box-shadow: var(--lift); flex: none; }
 .obtn svg { width: 24px; height: 24px; display: block; margin: auto; }
 .obtn .badge { position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 20px; text-align: center; font-family: var(--f-mono); }
+#sumRoot .orders { position: fixed; inset: 0; z-index: 16; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
+.sum-sec { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; margin: 0 0 12px; }
+.sum-sec h3 { margin: 0 0 10px; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.sum-big { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.sum-big div { display: grid; gap: 2px; }
+.sum-big b { font-family: var(--f-mono); font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.sum-big span { font-size: 0.8125rem; color: var(--muted); }
+.sum-types { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.sum-types span { font-size: 0.875rem; padding: 4px 10px; border-radius: 99px; background: var(--surface-2); }
+.sum-types span b { font-family: var(--f-mono); margin-left: 4px; }
+.sum-tbl { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.sum-tbl th { text-align: right; font-size: 0.75rem; font-weight: 600; color: var(--muted); padding: 0 0 6px 8px; }
+.sum-tbl th:first-child, .sum-tbl td:first-child { text-align: left; padding-left: 0; }
+.sum-tbl td { text-align: right; padding: 8px 0 8px 8px; border-top: 1px solid var(--line); font-family: var(--f-mono); }
+.sum-tbl td:first-child { font-family: inherit; font-weight: 600; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sum-note { font-size: 0.8125rem; color: var(--muted); margin: 8px 0 0; }
+.role-tag { display: inline-block; padding: 2px 10px; border-radius: 99px; background: var(--fg); color: var(--bg); font-size: 0.8125rem; font-weight: 700; }
 #ordersRoot .orders { position: fixed; inset: 0; z-index: 15; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .o-top { display: flex; align-items: center; gap: 12px; }
 .o-top h2 { margin: 0; font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; }
@@ -471,6 +498,11 @@ form { display: grid; gap: 16px; }
 .oc-head { display: flex; justify-content: space-between; gap: 10px; font-size: 0.8125rem; color: var(--muted); }
 .oc-head time { font-family: var(--f-mono); white-space: nowrap; }
 .oc-chat { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.otype { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; background: var(--surface-2); color: var(--fg); }
+.otype.t-acorn, .otype.t-market, .otype.t-move { background: #e8590c; color: #fff; }
+.otype.t-post { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); }
+.oi-lab.big { font-size: 1rem; padding: 3px 10px; margin: 0 0 6px; display: inline-block; }
+.oi-lab { justify-self: start; font-size: 0.8125rem; font-weight: 700; padding: 1px 8px; border-radius: 6px; background: var(--fg); color: var(--bg); margin-bottom: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oc-who { font-weight: 650; font-size: 1.0625rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .oc-doc { font-weight: 500; font-size: 0.875rem; color: var(--muted); }
 .oc-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
@@ -522,7 +554,8 @@ form { display: grid; gap: 16px; }
 .v-img img { display: block; width: 100%; }
 .v-img.zoom img { width: 250%; max-width: none; }
 @media (prefers-reduced-motion: no-preference) {
-  #ordersRoot .orders.in { animation: modein 0.34s var(--ease) both; }
+  #ordersRoot .orders.in, #sumRoot .orders.in { animation: modein 0.34s var(--ease) both; }
+  #sumRoot .orders.out { animation: modeout 0.2s ease-in both; }
   #ordersRoot .orders.out { animation: modeout 0.2s ease-in both; }
   .spin { animation: rot 0.8s linear infinite; }
   @keyframes rot { to { transform: rotate(360deg); } }
@@ -551,6 +584,8 @@ form { display: grid; gap: 16px; }
 .cut b { font-family: var(--f-mono); font-size: 1rem; font-weight: 700; white-space: nowrap; }
 .cut.whole { background: var(--surface-2); border-color: var(--line); }
 .cut.whole small { color: var(--muted); }
+.cut.unsure { background: color-mix(in srgb, #e8a10c 18%, var(--surface)); border-color: #e8a10c; border-style: dashed; }
+.cut.unsure small { color: #b06f00; }
 .cut.big { justify-self: start; grid-auto-flow: column; gap: 8px; align-items: baseline; padding: 6px 12px; }
 .cut.big b { font-size: 1.25rem; }
 
@@ -631,6 +666,7 @@ form { display: grid; gap: 16px; }
     <div class="brand" id="brandBar">
       <div class="title"><svg class="logo" aria-hidden="true"><use href="#logo"/></svg><h1>Склад тканей</h1></div>
       <span class="net" id="net"><i></i><span id="netText">Онлайн</span></span>
+      <button class="obtn" id="sumBtn" type="button" data-act="sum-open" aria-label="Сводка управляющего" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><rect x="5.5" y="11" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="10.5" y="6" width="3" height="11.5" rx="1" fill="currentColor"/><rect x="15.5" y="9" width="3" height="8.5" rx="1" fill="currentColor"/></svg></button>
       <button class="obtn" id="ordersBtn" type="button" data-act="orders-open" aria-label="Заказы" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9 4.5V3.5h6v1M8.5 10h7M8.5 13.5h7M8.5 17h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg><span class="badge" hidden></span></button>
       <button class="avatar" id="userBtn" type="button" data-act="account" aria-label="Профиль"></button>
     </div>
@@ -666,7 +702,7 @@ form { display: grid; gap: 16px; }
   <ul class="list" id="list"></ul>
 </div>
 
-<div class="dock"><button class="dock-btn mic" id="voiceBtn" type="button" data-act="voice" aria-label="Голосовой ввод" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="dock-btn" id="modeBtn" type="button" data-act="mode-open" aria-label="Раскладка" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18M20 3v18M4 9h16M4 15h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="12" r="2" fill="currentColor"/><circle cx="14" cy="12" r="2" fill="currentColor"/><circle cx="11" cy="6" r="2" fill="currentColor"/></svg><span class="dl">Раскладка</span></button><button class="fab" id="add" type="button" data-act="add" aria-label="Добавить рулон" hidden><span>+</span>Добавить</button></div>
+<div class="dock"><button class="dock-btn mic" id="voiceBtn" type="button" data-act="voice" aria-label="Голосовой ввод" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></button><button class="dock-btn" id="modeBtn" type="button" data-act="mode-open" aria-label="Раскладка" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3v18M20 3v18M4 9h16M4 15h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="12" r="2" fill="currentColor"/><circle cx="14" cy="12" r="2" fill="currentColor"/><circle cx="11" cy="6" r="2" fill="currentColor"/></svg><span class="dl">Раскладка</span></button><button class="dock-btn prihod" id="prihodBtn" type="button" data-act="prihod-open" aria-label="Приход" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8.5 12 4l9 4.5v9L12 22l-9-4.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M12 9v7M8.8 12.8 12 16l3.2-3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Приход</span></button><button class="fab" id="add" type="button" data-act="add" aria-label="Добавить рулон" hidden><span>+</span>Добавить</button></div>
 <div class="actionbar" id="actionBar" hidden>
   <div class="inner">
     <button class="btn" id="actA" type="button" disabled>Изменить</button>
@@ -675,6 +711,7 @@ form { display: grid; gap: 16px; }
 </div>
 <div id="sheetRoot"></div>
 <div id="ordersRoot"></div>
+<div id="sumRoot"></div>
 <div id="modeRoot"></div>
 <div id="pickRoot"></div>
 <div id="scanRoot"></div>
@@ -685,7 +722,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "2.5";
+  var APP_VERSION = "2.6";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -847,7 +884,7 @@ form { display: grid; gap: 16px; }
     writeSession(null);
     if (repo && repo.stop) repo.stop();
     repo = null;
-    state.user = null; state.mode = "auth"; state.rolls = new Map(); state.loaded = false;
+    state.user = null; state.isAdmin = false; $("#sumBtn").hidden = true; closeSum(); state.mode = "auth"; state.rolls = new Map(); state.loaded = false;
     state.sel = new Set(); state.selecting = false; state.authTab = "login"; state.authNote = note || "";
     state.q = ""; state.tab = "active"; lastListHtml = null;
     $("#q").value = "";
@@ -1044,7 +1081,16 @@ form { display: grid; gap: 16px; }
     render();
   }
   function onDataError() { state.loaded = true; state.mode = "error"; render(); }
-  function startRepo() { repo.subscribe(onData, onDataError); loadLists(); ordersStart(); }
+  function startRepo() { repo.subscribe(onData, onDataError); loadLists(); ordersStart(); loadRole(); }
+  /* роль: управляющий (profiles.is_admin) видит сводку и загрузку из 1С */
+  function loadRole() {
+    state.isAdmin = false;
+    if (!repo || repo.kind !== "shared") return;
+    api("profiles?select=is_admin").then(function (rows) {
+      state.isAdmin = !!(rows && rows[0] && rows[0].is_admin);
+      $("#sumBtn").hidden = !state.isAdmin;
+    })["catch"](function () {});
+  }
 
   /* ---------- сообщения ---------- */
   function toast(msg, isErr) {
@@ -1369,7 +1415,7 @@ form { display: grid; gap: 16px; }
     $("#auth").hidden = !needAuth;
     $("#app").hidden = needAuth;
     if (needAuth) {
-      $("#add").hidden = true; $("#modeBtn").hidden = true; $("#voiceBtn").hidden = true; $("#actionBar").hidden = true;
+      $("#add").hidden = true; $("#modeBtn").hidden = true; $("#prihodBtn").hidden = true; $("#voiceBtn").hidden = true; $("#actionBar").hidden = true;
       drawAuth();
       return;
     }
@@ -1472,6 +1518,7 @@ form { display: grid; gap: 16px; }
     $("#actA").disabled = $("#actB").disabled = state.sel.size === 0;
     $("#add").hidden = sel || state.tab === "trash" || state.mode === "auth";
     $("#modeBtn").hidden = $("#add").hidden || state.mode === "local";
+    $("#prihodBtn").hidden = $("#modeBtn").hidden;
     $("#voiceBtn").hidden = $("#add").hidden || !voiceAvailable();
   }
   function enterSelect(id) { state.selecting = true; state.sel = new Set(id ? [id] : []); applySelectUi(); }
@@ -1575,7 +1622,7 @@ form { display: grid; gap: 16px; }
     }
     if (s.type === "account") {
       var u = state.user || {};
-      return head("Профиль") + '<dl class="facts"><dt>Имя</dt><dd>' + esc(u.name || "") + "</dd><dt>Логин</dt><dd>" + esc(u.login || "") + '</dd></dl>' +
+      return head("Профиль") + '<dl class="facts"><dt>Имя</dt><dd>' + esc(u.name || "") + "</dd><dt>Логин</dt><dd>" + esc(u.login || "") + "</dd><dt>Роль</dt><dd>" + (state.isAdmin ? '<span class="role-tag">Управляющий</span>' : "Сотрудник") + '</dd></dl>' +
         '<p class="hint">Ваше имя видно всем в истории изменений рулонов. Версия приложения ' + APP_VERSION + '.</p><button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
     }
     return formHtml(s);
@@ -1849,21 +1896,23 @@ form { display: grid; gap: 16px; }
   }
 
   /* ---------- режим «Раскладка»: стеллаж выбран, рулоны сканируются подряд ---------- */
-  function openMode() {
+  function openMode(kind) {
     closeSheet(true); exitSelect();
-    var last = lsGet("sklad_mode_last"), lv = {};
+    var last = lsGet("sklad_mode_last"), lv = {}, pv = {};
     try { lv = JSON.parse(last || "{}") || {}; } catch (e) { lv = {}; }
-    state.mode2 = { step: "setup", rack: lv.rack || "", floor: lv.floor || "", fabric: "", color: "", log: [], count: 0, cam: true, queue: Promise.resolve(), recent: {} };
+    var prihod = kind === "prihod";
+    if (prihod) { try { pv = JSON.parse(lsGet("sklad_prihod_last") || "{}") || {}; } catch (e) { pv = {}; } }
+    state.mode2 = { step: "setup", prihod: prihod, rack: lv.rack || "", floor: lv.floor || "", fabric: pv.fabric || "", color: pv.color || "", series: "", log: [], count: 0, cam: true, queue: Promise.resolve(), recent: {} };
     drawMode(true);
   }
   function closeMode() {
     if (!state.mode2) return false;
     Scan.stop(); closePicker(true);
-    var n = state.mode2.count;
+    var M0 = state.mode2, n = M0.count;
     state.mode2 = null;
     var root = $("#modeRoot"), m = root.firstChild;
     if (m) { m.classList.add("out"); setTimeout(function () { if (!state.mode2) root.innerHTML = ""; }, 220); }
-    if (n) toast("Записано рулонов: " + n);
+    if (n) toast((M0.prihod ? "Принято рулонов: " : "Записано рулонов: ") + n);
     lastListHtml = null; render();
     return true;
   }
@@ -1871,6 +1920,19 @@ form { display: grid; gap: 16px; }
     var M = state.mode2, root = $("#modeRoot");
     if (!M) return;
     var h;
+    if (M.step === "setup" && M.prihod) {
+      h = '<div class="mode' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Приход"><div class="mode-in">' +
+        '<div class="sheet-head"><h2>Приход</h2><button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
+        '<p class="hint">Выберите ткань и цвет партии и стеллаж, куда кладёте. Потом сканируйте рулоны подряд: каждый новый номер сразу появится в базе с этой тканью, цветом и местом.</p>' +
+        '<form id="modeForm" novalidate autocomplete="off">' + presetFields(M) + '<div class="err" id="e-m-preset"></div>' +
+        '<div class="field"><label for="m-series">Серия <span class="opt">необязательно</span></label><input id="m-series" type="text" inputmode="numeric" class="mono" placeholder="первые цифры номера, например 2000012877" value="' + esc(M.series) + '"></div>' +
+        '<div class="two"><div class="field"><label for="m-rack">Стеллаж</label><input id="m-rack" type="text" class="mono" value="' + esc(M.rack) + '"><div class="err" id="e-m-rack"></div></div>' +
+        '<div class="field"><label for="m-floor">Этаж</label><input id="m-floor" type="text" inputmode="numeric" class="mono" placeholder="нет" value="' + esc(M.floor) + '"></div></div>' +
+        '<button type="submit" class="btn primary go">' + ICON_SCAN + "<span>Начать приход</span></button>" +
+        '<button type="button" class="btn go" data-act="scan-moderack">' + ICON_SCAN + "<span>Отсканировать штрихкод стеллажа</span></button></form></div></div>";
+      root.innerHTML = h;
+      return;
+    }
     if (M.step === "setup") {
       h = '<div class="mode' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Раскладка"><div class="mode-in">' +
         '<div class="sheet-head"><h2>Раскладка по стеллажу</h2><button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
@@ -1889,7 +1951,7 @@ form { display: grid; gap: 16px; }
     }
     h = '<div class="mode run' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Раскладка"><div class="mode-in">' +
       '<div class="mode-top">' + rackHtml({ rack: M.rack, floor: M.floor }) +
-      '<div class="mode-title"><b>Раскладка</b><span id="modeCount">' + countText(M) + '</span><button type="button" class="link-btn" data-act="mode-setup">Сменить стеллаж</button></div>' +
+      '<div class="mode-title"><b>' + (M.prihod ? "Приход" : "Раскладка") + "</b>" + (M.prihod ? '<span class="mode-preset">' + esc([M.fabric, M.color].filter(Boolean).join(" · ")) + "</span>" : "") + '<span id="modeCount">' + countText(M) + '</span><button type="button" class="link-btn" data-act="mode-setup">' + (M.prihod ? "Сменить ткань или стеллаж" : "Сменить стеллаж") + "</button></div>" +
       (voiceAvailable() ? '<button type="button" class="icon-btn cam-toggle" data-act="mode-voice" aria-label="Сказать номер">' + ICON_MIC + "</button>" : "") +
       '<button type="button" class="icon-btn cam-toggle' + (M.cam ? " on" : "") + '" data-act="mode-cam" aria-label="' + (M.cam ? "Выключить камеру" : "Включить камеру") + '">' + ICON_SCAN + "</button>" +
       '<button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
@@ -1927,6 +1989,11 @@ form { display: grid; gap: 16px; }
     M.rack = rack; M.floor = floor;
     M.fabric = joinFabric(val("#f-fabric"), val("#f-fabric2"));
     M.color = joinColor(val("#f-color"), val("#f-colornum"));
+    if (M.prihod) {
+      if (!M.fabric && !M.color) { var ep = $("#e-m-preset"); if (ep) ep.textContent = "Выберите ткань и цвет партии."; return; }
+      M.series = val("#m-series").replace(/\D/g, "");
+      lsSet("sklad_prihod_last", JSON.stringify({ fabric: M.fabric, color: M.color }));
+    }
     lsSet("sklad_mode_last", JSON.stringify({ rack: rack, floor: floor }));
     M.step = "run";
     drawMode(true);
@@ -1936,7 +2003,7 @@ form { display: grid; gap: 16px; }
     return M.log.slice(0, 80).map(function (e, i) {
       if (e.st === "rack") return '<li class="ml-rack' + (e.fresh ? " fresh" : "") + '">' + esc(e.text) + "</li>";
       var meta = [e.fabric, e.color].filter(Boolean).join(", ");
-      return '<li class="ml ' + e.st + (e.fresh ? " fresh" : "") + '"><span' + swatchStyle(e.color) + "></span>" +
+      return '<li class="ml ' + e.st + (e.warn ? " warn" : "") + (e.fresh ? " fresh" : "") + '"><span' + swatchStyle(e.color) + "></span>" +
         '<div class="ml-body"><b class="num">' + numHtml(e.id || e.code, "") + "</b>" + (meta ? '<span class="ml-meta">' + esc(meta) + "</span>" : "") +
         '<span class="ml-st">' + (e.st === "wait" ? "записываю…" : esc(e.text)) + "</span></div>" +
         (e.st === "ok" ? '<button type="button" class="ml-undo" data-undo="' + i + '">Отменить</button>' : "") +
@@ -2010,11 +2077,14 @@ form { display: grid; gap: 16px; }
     if (res.id) {
       var r = state.rolls.get(res.id);
       e.id = res.id; e.fabric = r.fabric; e.color = r.color; e.prev = { rack: r.rack, floor: r.floor || "", deleted: r.deleted };
-      if (!r.deleted && r.rack === M.rack && (r.floor || "") === M.floor) { e.st = "same"; e.text = "уже лежит здесь"; beep(true); drawLog(); return; }
+      if (M.prihod) { if (!r.fabric && M.fabric) d.fabric = M.fabric; if (!r.color && M.color) d.color = M.color; }
+      if (!r.deleted && r.rack === M.rack && (r.floor || "") === M.floor && !d.fabric && !d.color) { e.st = "same"; e.text = "уже лежит здесь"; beep(true); drawLog(); return; }
       if (r.deleted) d.deleted = false;
       return repo.updateMany([res.id], d).then(function () {
         e.st = "ok"; e.kind = r.deleted ? "restored" : "moved";
-        e.text = r.deleted ? "возвращён из удалённых" : (r.rack ? "перенесён: был " + place(r) : "место записано");
+        e.text = r.deleted ? "возвращён из удалённых" : (r.rack && (r.rack !== M.rack || (r.floor || "") !== M.floor) ? "перенесён: был " + place(r) : "место записано");
+        if (d.fabric || d.color) { e.fabric = d.fabric || r.fabric; e.color = d.color || r.color; e.text += ", ткань и цвет заполнены"; }
+        if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) e.text += " · не из серии " + M.series;
         if (state.mode2 === M) M.count++;
         beep(true); drawLog();
       }, function (err) { modeFail(e, err); });
@@ -2023,6 +2093,7 @@ form { display: grid; gap: 16px; }
     d.fabric = M.fabric; d.color = M.color;
     return repo.insert(e.code, d).then(function () {
       e.st = "ok"; e.kind = "new"; e.text = "новый рулон";
+      if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) { e.text = "новый рулон · не из серии " + M.series + ", проверьте"; e.warn = true; }
       if (state.mode2 === M) M.count++;
       beep(true); drawLog();
     }, function (err) {
@@ -2128,7 +2199,7 @@ form { display: grid; gap: 16px; }
     var a = activeOrdersFor(id).filter(function (x) { return x.it.state !== "done"; });
     if (!a.length) return "";
     var c = cutInfo(a[0].it, state.rolls.get(id));
-    return '<span class="otag">' + (c ? (c.whole ? "в заказе: весь" : c.cut ? "в заказе: ✂ " + esc(c.text) : "в заказе: " + esc(c.text)) : "в заказе") + "</span>";
+    return '<span class="otag">' + (c ? (c.whole ? "в заказе: весь" : c.cut ? "в заказе: ✂ " + esc(c.text) : "в заказе: " + esc(c.text)) + (c.unsure ? " ?" : "") : "в заказе") + "</span>";
   }
   function activeOrdersFor(id) { return (OR.byRoll && OR.byRoll.get(id)) || []; }
 
@@ -2149,6 +2220,132 @@ form { display: grid; gap: 16px; }
   /* выполненные заказы видны 5 часов, потом исчезают */
   var DONE_KEEP = 5 * 3600e3;
   function recentDone(o) { return o.status === "done" && Date.now() - Date.parse(o.done_at || o.changed_at || o.created_at) < DONE_KEEP; }
+  /* ---------- сводка управляющего ---------- */
+  var SUM = { open: false, period: "today", data: null, busy: false };
+  function sumRange(p) {
+    var d = new Date(); d.setHours(0, 0, 0, 0);
+    if (p === "yday") { var a = new Date(d); a.setDate(a.getDate() - 1); return { from: a, to: d }; }
+    if (p === "week") { var w = new Date(d); w.setDate(w.getDate() - 6); return { from: w, to: null }; }
+    return { from: d, to: null };
+  }
+  function openSum() {
+    if (!state.isAdmin) return;
+    SUM.open = true; closeSheet(true);
+    $("#sumRoot").innerHTML = '<div class="orders in" role="dialog" aria-label="Сводка"><div class="mode-in" id="sumIn"></div></div>';
+    sumLoad();
+  }
+  function closeSum() {
+    if (!SUM.open) return false;
+    SUM.open = false;
+    var root = $("#sumRoot"), m = root.firstChild;
+    if (m) { m.classList.add("out"); setTimeout(function () { if (!SUM.open) root.innerHTML = ""; }, 220); }
+    return true;
+  }
+  function sumLoad() {
+    var rg = sumRange(SUM.period), f = rg.from.toISOString(), t = rg.to ? rg.to.toISOString() : null, my = SUM.period;
+    SUM.data = null; SUM.err = null; drawSum();
+    var tq = function (col) { return col + "=gte." + encodeURIComponent(f) + (t ? "&" + col + "=lt." + encodeURIComponent(t) : ""); };
+    Promise.all([
+      apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(state,done_by_name,done_at,amount,unit,roll_id)&" + tq("created_at") + "&order=id"),
+      apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name&status=eq.done&" + tq("done_at") + "&order=id"),
+      apiAll("order_items?select=state,done_by_name,done_at,amount,unit,roll_id&state=eq.done&" + tq("done_at") + "&order=id"),
+      apiAll("roll_log?select=action,by_name,details,at&" + tq("at") + "&order=id")
+    ]).then(function (r) {
+      if (SUM.period !== my) return;
+      SUM.data = { created: r[0], doneOrders: r[1], doneItems: r[2], log: r[3] }; drawSum();
+    })["catch"](function (e) { if (SUM.period !== my) return; SUM.err = e; drawSum(); });
+  }
+  function sumStats(D) {
+    var types = {}, people = {}, open = 0, waits = [];
+    function P(n) { n = n || "Неизвестный"; return people[n] || (people[n] = { orders: 0, items: 0, cuts: 0, placed: 0, added: 0 }); }
+    D.created.forEach(function (o) {
+      var ty = orderType(o) || "other"; types[ty] = (types[ty] || 0) + 1;
+      if (o.status !== "done") open++;
+    });
+    D.doneOrders.forEach(function (o) {
+      P(o.done_by_name).orders++;
+      if (o.done_at && o.created_at) waits.push(Date.parse(o.done_at) - Date.parse(o.created_at));
+    });
+    D.doneItems.forEach(function (it) {
+      var p = P(it.done_by_name); p.items++;
+      var c = cutInfo(it, state.rolls.get(it.roll_id)); if (c && c.cut) p.cuts++;
+    });
+    D.log.forEach(function (l) {
+      if (l.action === "add") P(l.by_name).added++;
+      else if (l.action === "edit" && /место:/.test(l.details || "")) P(l.by_name).placed++;
+    });
+    delete people["Импорт из 1С"]; delete people["Возврат после отреза"];
+    var list = Object.keys(people).map(function (n) { return { name: n, p: people[n] }; })
+      .sort(function (a, b) { return (b.p.orders + b.p.items + b.p.placed + b.p.added) - (a.p.orders + a.p.items + a.p.placed + a.p.added); });
+    waits.sort(function (a, b) { return a - b; });
+    return { types: types, people: list, open: open, created: D.created.length, done: D.doneOrders.length, items: D.doneItems.length, wait: waits.length ? waits[waits.length >> 1] : null };
+  }
+  function durText(ms) {
+    var m = Math.round(ms / 60000);
+    if (m < 60) return m + " мин";
+    var h = Math.floor(m / 60); return h + " ч" + (m % 60 ? " " + (m % 60) + " мин" : "");
+  }
+  function drawSum() {
+    var box = $("#sumIn"); if (!box) return;
+    var per = [["today", "Сегодня"], ["yday", "Вчера"], ["week", "7 дней"]], ti = per.map(function (x) { return x[0]; }).indexOf(SUM.period);
+    var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="sum-close" aria-label="Назад">←</button><h2>Сводка</h2></div>' +
+      '<div class="tabs" style="--n:3;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
+      per.map(function (x) { return '<button class="tab" type="button" data-act="sum-per" data-id="' + x[0] + '" aria-selected="' + (x[0] === SUM.period) + '">' + x[1] + "</button>"; }).join("") + "</div><div style=\"height:12px\"></div>";
+    if (SUM.err) h += '<p class="banner err">Не удалось загрузить сводку. Проверьте интернет.</p>';
+    else if (!SUM.data) h += '<p class="oc-ocr"><i class="spin"></i>Считаю…</p>';
+    else {
+      var S = sumStats(SUM.data), c = { a: 0, n: 0, t: 0 };
+      state.rolls.forEach(function (r) { if (r.deleted) c.t++; else { c.a++; if (!r.rack) c.n++; } });
+      h += '<section class="sum-sec"><h3>Заказы</h3><div class="sum-big"><div><b>' + S.created + "</b><span>пришло</span></div><div><b>" + S.done + "</b><span>выполнено</span></div><div><b>" + S.open + "</b><span>ещё в работе</span></div></div>" +
+        '<div class="sum-types">' + ["acorn", "market", "move", "post", "other"].filter(function (k) { return S.types[k]; }).map(function (k) { return "<span>" + (k === "other" ? "Другие" : OTYPES[k].name) + "<b>" + S.types[k] + "</b></span>"; }).join("") + "</div>" +
+        (S.wait != null ? '<p class="sum-note">Обычно заказ собирают за ' + durText(S.wait) + " от прихода в группу.</p>" : "") + "</section>";
+      h += '<section class="sum-sec"><h3>Сотрудники</h3>' + (S.people.length ? '<table class="sum-tbl"><thead><tr><th>Кто</th><th>Заказов</th><th>Рулонов выдал</th><th>Разложил</th><th>Новых</th></tr></thead><tbody>' +
+        S.people.map(function (x) { return "<tr><td>" + esc(x.name) + "</td><td>" + x.p.orders + "</td><td>" + x.p.items + (x.p.cuts ? ' <small title="из них отрезов">✂' + x.p.cuts + "</small>" : "") + "</td><td>" + x.p.placed + "</td><td>" + x.p.added + "</td></tr>"; }).join("") +
+        "</tbody></table>" : '<p class="sum-note">За этот период никто ничего не отмечал.</p>') +
+        '<p class="sum-note">«Разложил» — сколько раз поставил рулон на стеллаж или перенёс. «Новых» — сколько рулонов завёл в базу.</p></section>';
+      h += '<section class="sum-sec"><h3>Склад сейчас</h3><div class="sum-big"><div><b>' + c.a + "</b><span>рулонов</span></div><div><b>" + c.n + "</b><span>без места</span></div><div><b>" + c.t + "</b><span>удалённых</span></div></div></section>";
+    }
+    box.innerHTML = h;
+  }
+
+  /* ---------- тип заказа: Почта / Acorn / Рынок / Перемещение ---------- */
+  var OTYPES = { acorn: { name: "Acorn", pri: 1 }, market: { name: "Рынок", pri: 1 }, move: { name: "Перемещение", pri: 1 }, post: { name: "Почта", pri: 0 } };
+  function orderType(o) {
+    if (o._typeFor === o.text + "|" + o.chat_title + "|" + o.doc_no) return o._type;
+    var title = fold(o.chat_title), all = title + " " + fold(o.text), t = "";
+    if (/acorn|акорн/.test(all)) t = "acorn";
+    else if (/перемещ|перемищ|переміщ|перемiщ/.test(all)) t = "move";
+    else if (/р[иы]нок|рынк|ринк/.test(title) || /(^|\s)(на\s+)?р[иы]нок|1608/.test(fold(o.text))) t = "market";
+    else if (/нова\s*пошт|нов(ая|ой|ую)\s*почт|укр\s*пошт|пошт|почт|(^|\s)нп(\s|$|\d)|видделен|виддил|отделен|склад\s*№?\s*\d/.test(all) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
+    o._typeFor = o.text + "|" + o.chat_title + "|" + o.doc_no; o._type = t;
+    return t;
+  }
+  /* клиент: строка-имя из текста («Калахан Ірина», «Иващенко»), иначе заказчик из документа */
+  var NOT_NAME = /^(нова|новая|пошта|почта|укрпошта|основной|склад|доп|рынок|ринок|отрез|рулон|заказ|замовлення|срочно|терміново|важно|важливо|оплата|наложка|накладений|акорн|acorn)$/i;
+  function orderClient(o) {
+    var lines = String(o.text || "").split(/\n/).map(function (l) { return l.trim(); }), best = "";
+    var authorWords = fold(o.author).split(/\s+/);
+    lines.forEach(function (l) {
+      if (!/^[A-ZА-ЯІЇЄҐЁ][a-zа-яіїєґё'’ʼ-]+(\s+[A-ZА-ЯІЇЄҐЁ][a-zа-яіїєґё'’ʼ.-]+){0,2}$/.test(l)) return;
+      var ws = l.split(/\s+/);
+      if (ws.some(function (w) { return NOT_NAME.test(w); })) return;
+      if (ws.length === 1 && authorWords.indexOf(fold(l)) !== -1) return;   // имя менеджера в начале сообщения
+      best = l;
+    });
+    if (best) return best.split(/\s+/)[0];
+    var d = String(o.doc_no || "").replace(/^№\s*\d+\s*,?\s*/, "").replace(/,?\s*тел\.?.*$/i, "").trim();
+    return d;
+  }
+  function typeBadge(o) { var t = orderType(o); return t ? '<span class="otype t-' + t + '">' + OTYPES[t].name + "</span>" : ""; }
+  /* метка рулона в заказе почты: «Иващенко №1», сверху вниз */
+  function itemLabel(o, it) {
+    if (orderType(o) !== "post") return "";
+    var its = o.order_items || [], i = its.indexOf(it);
+    if (i < 0) its.forEach(function (x, k) { if (x.id === it.id) i = k; });
+    if (its.length < 1 || i < 0) return "";
+    var c = orderClient(o);
+    return (c ? c + " " : "") + "№" + (i + 1);
+  }
   function orderList() {
     var list = [];
     OR.map.forEach(function (o) {
@@ -2156,7 +2353,9 @@ form { display: grid; gap: 16px; }
       if (OR.tab === "active" ? o.status === "done" : !recentDone(o)) return;
       list.push(o);
     });
-    list.sort(function (a, b) { return OR.tab === "active" ? Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.done_at || b.changed_at) - Date.parse(a.done_at || a.changed_at); });
+    list.sort(function (a, b) {
+      if (OR.tab === "active") { var pa = (OTYPES[orderType(a)] || {}).pri || 0, pb = (OTYPES[orderType(b)] || {}).pri || 0; if (pa !== pb) return pb - pa; }
+      return OR.tab === "active" ? Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.done_at || b.changed_at) - Date.parse(a.done_at || a.changed_at); });
     return list;
   }
   function drawOrders() {
@@ -2186,7 +2385,7 @@ form { display: grid; gap: 16px; }
   function orderCard(o) {
     var its = o.order_items || [], n = its.length, d = itemsDone(o), me = (state.user && state.user.name) || "";
     var h = '<article class="ocard st-' + o.status + '" id="oc-' + o.id + '">' +
-      '<div class="oc-head"><span class="oc-chat">' + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time></div>" +
+      '<div class="oc-head"><span class="oc-chat">' + typeBadge(o) + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time></div>" +
       '<div class="oc-who">' + esc(o.author || "Без имени") + (o.doc_no ? '<span class="oc-doc">' + esc(o.doc_no) + "</span>" : "") + "</div>";
     if (o.text) h += '<p class="oc-text">' + esc(o.text) + "</p>";
     if (o.photo_path) {
@@ -2217,17 +2416,28 @@ form { display: grid; gap: 16px; }
     return '<button type="button" class="btn sm" data-act="o-take" data-id="' + o.id + '">Беру</button><button type="button" class="btn primary sm" data-act="o-done" data-id="' + o.id + '">Готово</button>';
   }
   /* «✂ отрез 0,5 м» или «весь рулон 24,6 кг» */
+  /* количество против остатка в базе: больше, чем есть в рулоне, — значит потерялась запятая */
+  function checkQty(q, r) {
+    if (!q || !r || r.qty == null || !(r.qty > 0)) return;
+    var unit = q.unit || r.unit || "";
+    if (unit && r.unit && unit !== r.unit) return;
+    if (q.amount <= r.qty * 1.05 + 0.05) return;
+    if (!q.sep) {
+      for (var dv = 10; dv <= 100; dv *= 10) { var nv = Math.round(q.amount / dv * 1000) / 1000; if (nv <= r.qty * 1.05 + 0.05) { q.amount = nv; break; } }
+    }
+    q.sure = false;
+  }
   function cutInfo(it, r) {
     if (it.amount == null || !(+it.amount > 0)) return null;
     var a = +it.amount, unit = it.unit || (r && r.unit) || "";
     var whole = r && r.qty != null && unit !== "м" && (!it.unit || !r.unit || it.unit === r.unit) && Math.abs(a - r.qty) <= Math.max(0.2, r.qty * 0.02);
     // отрез: метры или меньше, чем есть в рулоне; если рулона нет в базе и это кг — просто «взять»
     var cut = !whole && (unit === "м" || (r && r.qty != null && a < r.qty));
-    return { whole: !!whole, cut: !!cut, text: String(a).replace(".", ",") + (unit ? " " + unit : "") };
+    return { whole: !!whole, cut: !!cut, unsure: it.amount_sure === false, text: String(a).replace(".", ",") + (unit ? " " + unit : "") };
   }
   function cutHtml(it, r, big) {
     var c = cutInfo(it, r); if (!c) return "";
-    return '<span class="cut' + (c.cut ? "" : " whole") + (big ? " big" : "") + '"><small>' + (c.whole ? "весь рулон" : c.cut ? "✂ отрез" : "взять") + "</small><b>" + esc(c.text) + "</b></span>";
+    return '<span class="cut' + (c.cut ? "" : " whole") + (c.unsure ? " unsure" : "") + (big ? " big" : "") + '"' + (c.unsure ? ' title="Количество прочитано неуверенно, проверьте по фото"' : "") + "><small>" + (c.unsure ? "проверьте фото" : c.whole ? "весь рулон" : c.cut ? "✂ отрез" : "взять") + "</small><b>" + esc(c.text) + (c.unsure ? " ?" : "") + "</b></span>";
   }
   function itemRow(o, it, me) {
     var r = state.rolls.get(it.roll_id), act;
@@ -2235,9 +2445,10 @@ form { display: grid; gap: 16px; }
     else if (it.state === "taken") act = '<span class="ost taken">' + (it.taken_by_name === me ? "Вы взяли" : esc(it.taken_by_name || "")) + '</span><button type="button" class="btn primary sm" data-act="oi-done" data-id="' + it.id + '">Готово</button>';
     else if (r && r.deleted) act = '<span class="ost">Уже выдан' + (r.deletedBy ? ": " + esc(r.deletedBy) : "") + '</span><button type="button" class="btn sm" data-act="oi-take" data-id="' + it.id + '">Всё равно беру</button>';
     else act = '<button type="button" class="btn sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
+    var lab = itemLabel(o, it);
     return '<li class="oi st-' + it.state + (r && r.deleted && it.state !== "done" ? " gone" : "") + '"><button type="button" class="oi-main" data-act="oi-open" data-id="' + esc(it.roll_id) + '">' +
       "<span" + swatchStyle(r && r.color) + "></span>" +
-      '<span class="oi-info"><b class="num">' + numHtml(it.roll_id, "") + "</b>" +
+      '<span class="oi-info">' + (lab ? '<span class="oi-lab">' + esc(lab) + "</span>" : "") + '<b class="num">' + numHtml(it.roll_id, "") + "</b>" +
       (r ? '<span class="oi-meta">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + (r.qty != null ? " · " + esc(qtyText(r)) : "") + "</span>" : '<span class="oi-meta warn">нет в базе</span>') +
       "</span>" + cutHtml(it, r) + (r ? rackHtml(r) : "") + "</button>" +
       '<div class="oi-act">' + act + ((it.source === "manual" || it.source === "photo") && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div></li>";
@@ -2252,7 +2463,8 @@ form { display: grid; gap: 16px; }
       if (it.state === "done") act = '<span class="ost done">✓ ' + esc(it.done_by_name || "") + "</span>";
       else if (it.state === "taken") act = '<span class="ost taken">' + (it.taken_by_name === me ? "Вы взяли" : esc(it.taken_by_name || "")) + '</span><button type="button" class="btn primary sm" data-act="oi-done" data-id="' + it.id + '">Готово</button>';
       else act = '<button type="button" class="btn primary sm" data-act="oi-take" data-id="' + it.id + '">Беру</button>';
-      return '<div class="io">' + cutHtml(it, state.rolls.get(id), true) + '<div class="io-t"><b>' + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
+      var lab = itemLabel(o, it);
+      return '<div class="io">' + (lab ? '<span class="oi-lab big">' + esc(lab) + "</span>" : "") + cutHtml(it, state.rolls.get(id), true) + '<div class="io-t"><b>' + typeBadge(o) + esc(o.chat_title || "Заказ") + "</b><span>" + esc(o.author || "") + ", " + dt(o.created_at) + (o.doc_no ? ", " + esc(o.doc_no) : "") + '</span></div><div class="oi-act">' + act + "</div></div>";
     }).join("") + "</div>";
   }
 
@@ -2260,11 +2472,12 @@ form { display: grid; gap: 16px; }
   function setItem(id, st) {
     if (!guard()) return;
     patchLocalItem(id, st);
-    var rid = null; OR.map.forEach(function (o) { (o.order_items || []).forEach(function (it) { if (it.id === id) rid = it.roll_id; }); });
+    var rid = null, item = null; OR.map.forEach(function (o) { (o.order_items || []).forEach(function (it) { if (it.id === id) { rid = it.roll_id; item = it; } }); });
     var wasDone = rid && state.rolls.get(rid) && state.rolls.get(rid).deleted;
+    var ci = item && cutInfo(item, state.rolls.get(rid)), isCut = ci && ci.cut;
     api("order_items?id=eq." + id, { method: "PATCH", body: { state: st }, prefer: "return=minimal" })
       .then(function () {
-        if (st === "done" && rid && state.rolls.has(rid)) toast("Рулон " + rid + " выдан и убран в «Удалённые»");
+        if (st === "done" && rid && state.rolls.has(rid)) toast(isCut ? "Отрез " + ci.text + " с рулона " + rid + " выдан, рулон остаётся на месте" : "Рулон " + rid + " выдан и убран в «Удалённые»");
         else if (st !== "done" && wasDone) toast("Рулон " + rid + " возвращён на склад");
         if (repo && repo.refresh) repo.refresh();
         return ordersLoad(false);
@@ -2412,6 +2625,8 @@ form { display: grid; gap: 16px; }
       var toks = String(lines[i].text || "").split(/\s+/).map(digitsOf).filter(Boolean);
       var best = toks.sort(function (a, b) { return b.length - a.length; })[0] || "";
       if (best.length === 13 && eanCheck(best)) { out.push({ id: best, top: lines[i].bbox.y0, bottom: lines[i].bbox.y1, sure: true }); continue; }
+      // 13 цифр, но контрольная не сходится: одна цифра прочитана неверно — номер уточняется по базе
+      if (best.length === 13 && /^2/.test(best)) { out.push({ id: best, top: lines[i].bbox.y0, bottom: lines[i].bbox.y1, sure: false, bad: true }); continue; }
       if (best.length === 12 && /^2/.test(best)) {
         var nx = lines[i + 1], nd = nx ? digitsOf(nx.text) : "";
         var gap = nx ? nx.bbox.y0 - lines[i].bbox.y1 : 1e9, lh = lines[i].bbox.y1 - lines[i].bbox.y0;
@@ -2431,11 +2646,14 @@ form { display: grid; gap: 16px; }
     var m = /(\d+(?:[.,]\d*)?)\s*(кг|kr|kg|м|m|шт)?/i.exec(t);
     if (!m) return null;
     var raw = m[1], u = (m[2] || "").toLowerCase(), unit = /^(к|k)/.test(u) ? "кг" : /^(м|m)/.test(u) ? "м" : u === "шт" ? "шт" : "";
-    var v;
+    var v, sep = /[.,]\d/.test(raw), sure = sep;
     if (/[.,]$/.test(raw)) { var d = raw.slice(0, -1); v = d.length > 1 ? parseFloat(d.slice(0, -1) + "." + d.slice(-1)) : parseFloat(d); }
+    else if (/^0\d+$/.test(raw)) v = parseFloat("0." + raw.slice(1));   // «0,3» без запятой читается как «03»
     else v = parseFloat(raw.replace(",", "."));
     if (!/[.,]/.test(raw) && unit !== "м" && unit !== "шт" && v >= 60) v = raw.length === 3 ? v / 10 : raw.length === 4 ? v / 100 : v;
-    return v > 0 ? { amount: Math.round(v * 1000) / 1000, unit: unit } : null;
+    // целое число без запятой: запятая могла потеряться (0,3 → 3, 1,5 → 15). Метры до 20 и вес до 30 обычно целые, но проверяются по итогу и базе
+    if (!sep && /^\d{1,2}$/.test(raw) && raw.charAt(0) !== "0") sure = (unit === "м" || unit === "шт") && v >= 1;
+    return v > 0 ? { amount: Math.round(v * 1000) / 1000, unit: unit, sep: sep, sure: sep || sure, raw: raw } : null;
   }
   /* полный разбор: words — слова всей страницы, colLines — строки колонки серий; known(id) — есть ли рулон в базе */
   function parseDocWords(words, colLines, known, qLines) {
@@ -2449,6 +2667,11 @@ form { display: grid; gap: 16px; }
         var full = d + eanCheckDigit(d);
         if (!found.some(function (f) { return f.id === full || f.id.slice(0, 12) === d; })) found.push({ id: full, top: w.bbox.y0, bottom: w.bbox.y1 + (w.bbox.y1 - w.bbox.y0), sure: false });
       }
+    });
+    found = found.filter(function (f) {
+      if (!f.bad) return true;
+      var m = (f.top + f.bottom) / 2, h = f.bottom - f.top;
+      return !found.some(function (g) { return g !== f && g.sure && Math.abs((g.top + g.bottom) / 2 - m) < h; });
     });
     var lh = col ? col.lh : 20, cx = col ? col.x0 : 1e9;
     // склад из шапки «Склад: …» на случай, если в строке не прочитался
@@ -2470,6 +2693,31 @@ form { display: grid; gap: 16px; }
       if (!f.sure && !(known && known(f.id))) { unsure.push(f.id); return; }
       if (ours.indexOf(f.id) === -1) ours.push(f.id);
     });
+    // итог «Разом» под таблицей: сумма количеств должна сойтись, иначе где-то потерялась запятая
+    if (qLines && qLines.length && found.length) {
+      var lastBottom = Math.max.apply(null, found.map(function (f) { return f.bottom; }));
+      var tl = qLines.filter(function (q) { return (q.bbox.y0 + q.bbox.y1) / 2 > lastBottom + lh * 0.5; }).map(function (q) { return parseQty(q.text); }).filter(Boolean)[0];
+      var ids = Object.keys(qty), sum = ids.reduce(function (a, k) { return a + qty[k].amount; }, 0);
+      if (tl && ids.length === found.length) {
+        var near = function (a, b) { return Math.abs(a - b) < 0.011; };
+        if (near(sum, tl.amount)) ids.forEach(function (k) { qty[k].sure = true; });
+        else {
+          // одна строка с потерянной запятой: делим её на 10 или 100 и смотрим, сойдётся ли
+          var fixed = false;
+          ids.some(function (k) {
+            if (qty[k].sep) return false;
+            return [10, 100].some(function (dv) {
+              var nv = Math.round(qty[k].amount / dv * 1000) / 1000;
+              if (near(sum - qty[k].amount + nv, tl.amount)) { qty[k].amount = nv; fixed = true; return true; }
+              return false;
+            });
+          });
+          if (fixed) ids.forEach(function (k) { qty[k].sure = true; });
+          else ids.forEach(function (k) { qty[k].sure = false; });
+          if (ids.length === 1 && !fixed && tl.sep && !qty[ids[0]].sep) { qty[ids[0]].amount = tl.amount; if (!qty[ids[0]].unit) qty[ids[0]].unit = tl.unit; }
+        }
+      }
+    }
     // сколько строк в таблице: строки со словом склада
     var rowsSeen = 0, lastY = -1e9;
     words.slice().sort(function (a, b) { return a.bbox.y0 - b.bbox.y0; }).forEach(function (w) {
@@ -2584,7 +2832,21 @@ form { display: grid; gap: 16px; }
       var text = res.text, doc = docFromText(text), split, notes = [];
       if (res.words.length && serialColumn(res.words)) {
         split = parseDocWords(res.words, res.lines, function (id) { return state.rolls.has(id); }, res.qlines || []);
-        if (split.unsure.length) notes.push("Проверьте по фото, номер прочитан неточно: " + split.unsure.join(", "));
+        // неточный номер: если в базе ровно один рулон, отличающийся одной цифрой, берём его
+      var fixedIds = [];
+      split.unsure = split.unsure.filter(function (u) {
+        if (u.length !== 13) return true;
+        var hit = [];
+        state.rolls.forEach(function (r, id) {
+          if (id.length !== 13 || split.ours.indexOf(id) !== -1) return;
+          var dd = 0; for (var i = 0; i < 13 && dd < 2; i++) if (id.charAt(i) !== u.charAt(i)) dd++;
+          if (dd === 1) hit.push(id);
+        });
+        if (hit.length !== 1) return true;
+        split.ours.push(hit[0]); if (split.qty && split.qty[u]) split.qty[hit[0]] = split.qty[u]; fixedIds.push(hit[0]); return false;
+      });
+      if (fixedIds.length) notes.push("Номер прочитан с ошибкой и найден по базе, сверьте с фото: " + fixedIds.join(", "));
+      if (split.unsure.length) notes.push("Проверьте по фото, номер прочитан неточно: " + split.unsure.join(", "));
         var got = split.ours.length + split.other.length;
         if (split.rows > got) notes.push("В документе строк: " + split.rows + ", прочитано: " + got + ". Недостающие добавьте вручную или сканером");
       } else split = serialsByWarehouse(text);
@@ -2592,9 +2854,12 @@ form { display: grid; gap: 16px; }
       if (split.other.length) notes.unshift("Не с нашего склада: " + split.other.map(function (x) { return x.id + " (" + x.wh + ")"; }).join(", "));
       var skipped = notes.join(". ");
       var qy = split.qty || {};
-      function itemsBody(withQty) { return nums.map(function (x) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (withQty && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; } return b; }); }
+      nums.forEach(function (x) { var rr = resolveRoll(x); if (qy[x]) checkQty(qy[x], state.rolls.get(rr.id || x)); });
+      if (nums.some(function (x) { return qy[x] && !qy[x].sure; })) notes.push("Проверьте по фото количество, отмеченное «?»");
+      skipped = notes.join(". ");
+      function itemsBody(withQty) { return nums.map(function (x) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (withQty && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; if (withQty === 2) b.amount_sure = qy[x].sure !== false; } return b; }); }
       function post(withQty) { return api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: itemsBody(withQty), prefer: "resolution=ignore-duplicates,return=minimal" }); }
-      var p = nums.length ? post(true)["catch"](function () { return post(false); }) : Promise.resolve();
+      var p = nums.length ? post(2)["catch"](function () { return post(1); })["catch"](function () { return post(0); }) : Promise.resolve();
       return p.then(function () {
         return api("orders?id=eq." + o.id, { method: "PATCH", body: { ocr_state: nums.length || skipped ? "done" : "fail", doc_no: doc, skipped: skipped }, prefer: "return=minimal" });
       });
@@ -3052,6 +3317,10 @@ form { display: grid; gap: 16px; }
       case "scan-close": closeScan(); return;
       case "torch": Scan.toggleTorch().then(function (on) { el.classList.toggle("on", on); }); return;
       case "mode-open": openMode(); return;
+      case "prihod-open": openMode("prihod"); return;
+      case "sum-open": openSum(); return;
+      case "sum-close": closeSum(); return;
+      case "sum-per": SUM.period = el.getAttribute("data-id"); sumLoad(); return;
       case "voice": voiceAdd(); return;
       case "voice-again": closeSheet(true); voiceAdd(); return;
       case "voice-pick": if (state.sheet && state.sheet.type === "voice") { state.sheet.pick = el.getAttribute("data-id"); drawSheet(true); } return;
@@ -3154,6 +3423,7 @@ form { display: grid; gap: 16px; }
   function backAction() {
     if (state.pick) { closePicker(); return true; }
     if (closeViewer()) return true;
+    if (closeSum()) return true;
     if (closeScan()) return true;
     if (state.mode2) { closeMode(); return true; }
     if (state.sheet) { closeSheet(); return true; }
