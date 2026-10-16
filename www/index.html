@@ -378,7 +378,17 @@ form { display: grid; gap: 16px; }
 }
 .dock-btn.prihod { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .mode-preset { display: block; font-weight: 650; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ml:has(.kg-row), .ml:has(.kg-done) { flex-wrap: wrap; }
+.ml:has(.kg-row), .ml:has(.kg-done), .ml:has(.kg-up) { flex-wrap: wrap; }
+.ml > .kg-up { order: 5; }
+.kg-row input::placeholder { font-size: 0.875rem; }
+.kg-panel { margin: 0 0 12px; padding: 12px 12px 4px; border-radius: 16px; background: var(--surface); border: 2px solid var(--accent); box-shadow: var(--lift); animation: shIn .25s ease both; }
+.kg-panel .kg-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.kg-panel .kg-top b { font-size: 1rem; }
+.kg-panel .kg-top .num { font-family: var(--f-mono); font-weight: 600; }
+.kg-panel .kg-row { margin: 0 0 10px; }
+.kg-panel .kg-row input { height: 54px; font-size: 1.375rem; }
+.kg-panel .kg-row .btn.sm { height: 54px; min-width: 60px; }
+.kg-up { flex-basis: 100%; margin: -4px 12px 10px 22px; font-size: 0.8125rem; font-weight: 650; color: var(--accent); }
 .kg-row { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin: 0 12px 12px 22px; }
 .ml > .kg-done { flex-basis: 100%; margin: -4px 12px 10px 22px; }
 .kg-row label { display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
@@ -806,7 +816,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.3";
+  var APP_VERSION = "3.4";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2059,8 +2069,10 @@ form { display: grid; gap: 16px; }
       '<form id="modeAdd" class="mode-add" novalidate autocomplete="off"><input id="m-code" type="text" inputmode="numeric" class="mono" placeholder="Номер рулона" aria-label="Номер рулона">' +
       '<button type="submit" class="btn primary">Записать</button>' +
       "</form>" +
+      (M.prihod ? '<div id="modeKg" class="kg-panel" hidden></div>' : "") +
       '<ul class="mode-log" id="modeLog">' + logHtml(M) + "</ul></div></div>";
     root.innerHTML = h;
+    if (M.prihod) drawLog();
     if (M.cam) resumeModeCam();
     else setTimeout(function () { var f = $("#m-code"); if (f) f.focus(); }, 300);
   }
@@ -2114,8 +2126,10 @@ form { display: grid; gap: 16px; }
   }
   /* ---------- вес при приходе: «их кг» с наклейки и «наши кг» по весам, у каждого рулона ---------- */
   function kgPending(e) { return e.id && (e.st === "ok" || e.st === "same") && !e.kgSaved; }
-  function kgRowHtml(e) {
+  function kgRowHtml(e, inPanel) {
     if (!e.id || (e.st !== "ok" && e.st !== "same")) return "";
+    // вес первого невзвешенного рулона вводится в большой панели над списком
+    if (!inPanel && kgPending(e) && state.mode2 && state.mode2.log.filter(kgPending)[0] === e) return '<p class="kg-up">↑ вес вводится выше</p>';
     if (e.kgSaved && !e.kgEdit) return '<button type="button" class="kg-done" data-kgedit="' + esc(e.code) + '">' + (e.kgL == null ? "без наклейки" : "их <b>" + kgFmt(e.kgL) + "</b>") + " · наши <b>" + kgFmt(e.kgR) + "</b> кг" +
       (e.kgL != null && e.kgR != null ? ' <span class="kgd' + (e.kgR < e.kgL - 0.001 ? " minus" : "") + '">' + kgDiff(e.kgL, e.kgR) + "</span>" : "") + ' <span class="kg-ed">изменить</span></button>';
     return '<div class="kg-row" data-code="' + esc(e.code) + '">' +
@@ -2129,7 +2143,7 @@ form { display: grid; gap: 16px; }
     var M = state.mode2; if (!M || !M.prihod) return;
     var e = M.log.filter(kgPending)[0];
     if (!e) { if (!M.cam) { var mc = $("#m-code"); if (mc) mc.focus(); } return; }
-    var inp = document.querySelector('#modeLog input[data-kg="' + (e.inL ? "r" : "l") + '"][data-code="' + e.code + '"]');
+    var inp = document.querySelector('.mode input[data-kg="' + (e.inL ? "r" : "l") + '"][data-code="' + e.code + '"]');
     if (inp && document.activeElement !== inp) { inp.focus({ preventScroll: false }); }
   }
   function kgSave(code) {
@@ -2145,12 +2159,18 @@ form { display: grid; gap: 16px; }
       beep(false); drawLog();
     });
   }
-  function kgRefocus(code, f) { var inp = document.querySelector('#modeLog input[data-kg="' + f + '"][data-code="' + code + '"]'); if (inp) inp.focus(); }
+  function kgRefocus(code, f) { var inp = document.querySelector('.mode input[data-kg="' + f + '"][data-code="' + code + '"]'); if (inp) inp.focus(); }
   function drawLog() {
     var M = state.mode2, el = $("#modeLog"); if (!M || !el) return;
     var ae = document.activeElement, keep = ae && ae.getAttribute && ae.getAttribute("data-kg") ? { code: ae.getAttribute("data-code"), f: ae.getAttribute("data-kg"), pos: ae.selectionStart } : null;
     el.innerHTML = logHtml(M);
-    if (keep) { var ni = document.querySelector('#modeLog input[data-kg="' + keep.f + '"][data-code="' + keep.code + '"]'); if (ni) { ni.focus({ preventScroll: true }); try { ni.setSelectionRange(keep.pos, keep.pos); } catch (x) {} } }
+    var kp = $("#modeKg");
+    if (kp) {
+      var pe = M.log.filter(kgPending)[0];
+      kp.hidden = !pe;
+      kp.innerHTML = pe ? '<div class="kg-top"><b>Вес рулона</b><span class="num">' + numHtml(pe.code, "") + "</span></div>" + kgRowHtml(pe, true) : "";
+    }
+    if (keep) { var ni = document.querySelector('.mode input[data-kg="' + keep.f + '"][data-code="' + keep.code + '"]'); if (ni) { ni.focus({ preventScroll: true }); try { ni.setSelectionRange(keep.pos, keep.pos); } catch (x) {} } }
     M.log.forEach(function (e) { e.fresh = false; });
     var c = $("#modeCount"); if (c) c.textContent = countText(M);
   }
