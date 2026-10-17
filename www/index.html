@@ -494,6 +494,26 @@ form { display: grid; gap: 16px; }
 #repRoot .orders { position: fixed; inset: 0; z-index: 17; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .o-top .rep-open { margin-left: auto; }
 .rep-from-orders { width: 100%; margin: 10px 0 0; }
+.rep-fix { margin: 0 0 14px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); }
+.rep-fix summary { padding: 14px 16px; font-weight: 700; cursor: pointer; }
+.rep-fix summary span { font-family: var(--f-mono); color: var(--muted); margin-left: 6px; }
+.rep-fix ul { list-style: none; margin: 0; padding: 0 10px 10px; display: grid; gap: 6px; }
+.fx { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--bg); }
+.fx.changed { box-shadow: inset 3px 0 0 #e8a10c; }
+.fx-main { flex: 1; min-width: 0; display: grid; grid-template-columns: auto 1fr; gap: 0 8px; align-items: baseline; }
+.fx-main .fx-who { grid-column: 1 / -1; font-size: 0.75rem; color: var(--muted); }
+.fx-main b { font-size: 1rem; }
+.fx-main > span:not(.fx-who):not(.fx-was):not(.fx-q) { grid-column: 1 / -1; font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-was { font-size: 0.8125rem; color: #b06f00; font-weight: 650; }
+.fx-q { grid-column: 1 / -1; font-family: var(--f-mono); font-size: 0.875rem; font-weight: 600; }
+.fx-form { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 6px; }
+.fx-form label { display: grid; gap: 2px; font-size: 0.75rem; font-weight: 650; color: var(--muted); }
+.fx-form input { height: 46px; padding: 0 10px; border-radius: 10px; border: 1.5px solid var(--accent); background: var(--surface); color: var(--fg); font-size: 1.0625rem; min-width: 0; }
+.fx-hint { grid-column: 1 / -1; margin: 0; font-size: 0.75rem; color: var(--muted); }
+.fx-err { grid-column: 1 / -1; color: var(--danger); font-size: 0.8125rem; font-weight: 600; }
+.fx-err:empty { display: none; }
+.fx-btns { grid-column: 1 / -1; display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.oi-fix { font-size: 0.75rem; font-weight: 650; color: #b06f00; }
 .rep-quick { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 2px 6px; }
 .rep-list { list-style: none; margin: 0; padding: 0 0 90px; display: grid; gap: 8px; }
 .rep-day { font-size: 0.8125rem; font-weight: 700; color: var(--muted); margin: 8px 2px 0; text-transform: uppercase; letter-spacing: .04em; }
@@ -816,7 +836,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.4";
+  var APP_VERSION = "3.5";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2520,7 +2540,7 @@ form { display: grid; gap: 16px; }
     var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - REP.days + 1);
     var my = REP.days;
     REP.orders = null; REP.err = null; drawRep();
-    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(id,roll_id,state,amount,unit,done_by_name)&created_at=gte." +
+    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(*)&created_at=gte." +
       encodeURIComponent(d0.toISOString()) + "&order=created_at.desc")
       .then(function (rows) {
         if (REP.days !== my) return;
@@ -2579,14 +2599,16 @@ form { display: grid; gap: 16px; }
   }
   function pointCode(o) { var m = /(?:^|[\s,.;:])(1\d{3})(?=[\s,.;:]|$)/m.exec(String(o.text || "") + " " + String(o.chat_title || "")); return m ? m[1] : ""; }
   function itemRowData(o, it) {
-    var r = state.rolls.get(it.roll_id) || {};
-    var c = cutInfo(it, r), kg = "", m = "";
+    var eff = it.fact_roll || it.roll_id, r = state.rolls.get(eff) || state.rolls.get(it.roll_id) || {};
+    var c = cutInfo(it, state.rolls.get(it.roll_id) || r), kg = "", m = "";
     var unit = it.unit || r.unit || "";
     if (c && c.cut && unit === "м") m = kgFmt(+it.amount);
     else if (c && c.cut) kg = kgFmt(+it.amount);
     else kg = r.kgReal != null ? kgFmt(r.kgReal) : (r.qty != null && (r.unit || "кг") === "кг" ? kgFmt(Math.round(r.qty * 100) / 100) : (it.amount != null && unit !== "м" ? kgFmt(+it.amount) : ""));
+    if (it.fact_kg != null) kg = kgFmt(+it.fact_kg);
     var name = [shortFabric(r.fabric), r.color || ""].filter(Boolean).join(" ") || "—";
-    return { code: shortId(it.roll_id), name: name, kg: kg, m: m };
+    if (it.fact_roll) name += " (замена " + shortId(it.roll_id) + ")";
+    return { code: shortId(eff), name: name, kg: kg, m: m };
   }
   function repOrders() {
     return (REP.orders || []).filter(function (o) {
@@ -2673,6 +2695,7 @@ form { display: grid; gap: 16px; }
   }
   function drawRep() {
     var box = $("#repIn"); if (!box) return;
+    var dt0 = box.querySelector(".rep-fix"); if (dt0) REP.fixOpen = dt0.open;
     var sc = box.parentNode ? box.parentNode.scrollTop : 0;
     var types = [["post", "Почта"], ["market", "Рынок"], ["move", "Перемещение"], ["acorn", "Acorn"]], ti = types.map(function (x) { return x[0]; }).indexOf(REP.type);
     var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="' + (REP.step === "sheet" ? "rep-back" : "rep-close") + '" aria-label="Назад">←</button><h2>' + (REP.step === "sheet" ? "Лист " + (types[ti] || [0, ""])[1].toLowerCase() : "Отчёты") + "</h2>" +
@@ -2687,10 +2710,67 @@ form { display: grid; gap: 16px; }
     } else {
       var list = repSelected(), n = list.reduce(function (a, o) { return a + (o.order_items || []).length; }, 0);
       h += '<p class="hint rep-hint">Заказов: ' + list.length + ", рулонов: " + n + ". Проверьте лист и поправьте, нажав на любую ячейку.</p>";
+      h += repFixHtml(list);
       h += '<div class="a4wrap" id="repPages">' + (REP.type === "market" || REP.type === "move" ? marketPages(list) : postPages(list)) + "</div>";
     }
     box.innerHTML = h;
     if (REP.step === "sheet") fitA4(); else if (box.parentNode) box.parentNode.scrollTop = sc;
+  }
+  /* правки перед отчётом: какой рулон взяли на самом деле и его вес */
+  function repFixHtml(list) {
+    var rows = [];
+    list.forEach(function (o) {
+      (o.order_items || []).slice().sort(itemOrder).forEach(function (it) {
+        var d = itemRowData(o, it), ed = REP.fixEdit === it.id, changed = it.fact_roll || it.fact_kg != null;
+        var row = '<li class="fx' + (changed ? " changed" : "") + '"><div class="fx-main"><span class="fx-who">' + esc(managerName(o) || o.author || "") + " " + esc(orderNo(o)) + "</span>" +
+          '<b class="mono">' + esc(d.code) + "</b>" + (it.fact_roll ? '<span class="fx-was">вместо ' + esc(shortId(it.roll_id)) + "</span>" : "") +
+          "<span>" + esc(d.name.replace(/ \(замена \d+\)$/, "")) + "</span>" +
+          '<span class="fx-q">' + (d.kg ? esc(d.kg) + " кг" : "") + (d.m ? " " + esc(d.m) + " м" : "") + (it.fact_kg != null ? " ✓" : "") + "</span></div>" +
+          '<button type="button" class="mini" data-act="rfix-edit" data-id="' + it.id + '" aria-label="Правка">✎</button>';
+        if (ed) row += '<form class="fx-form" data-id="' + it.id + '" novalidate autocomplete="off">' +
+          '<label><span>Взяли рулон</span><input id="fx-roll-' + it.id + '" type="text" inputmode="numeric" class="mono" placeholder="тот же: ' + esc(shortId(it.roll_id)) + '" value="' + esc(it.fact_roll ? shortId(it.fact_roll) : "") + '"></label>' +
+          '<label><span>Вес, кг</span><input id="fx-kg-' + it.id + '" type="text" inputmode="decimal" class="mono" placeholder="' + esc(d.kg || "—") + '" value="' + esc(it.fact_kg != null ? kgFmt(+it.fact_kg) : "") + '"></label>' +
+          '<p class="fx-hint">Номер можно вписать коротко, последними цифрами. Пусто — без изменений.</p><div class="fx-err" id="fx-err-' + it.id + '"></div>' +
+          '<div class="fx-btns"><button type="button" class="btn sm" data-act="rfix-cancel">Отмена</button>' + (changed ? '<button type="button" class="btn sm" data-act="rfix-clear" data-id="' + it.id + '">Убрать правку</button>' : "") + '<button type="submit" class="btn primary sm">Сохранить</button></div></form>';
+        rows.push(row + "</li>");
+      });
+    });
+    if (!rows.length) return "";
+    return '<details class="rep-fix"' + (REP.fixOpen ? " open" : "") + '><summary>Правки по рулонам: замена рулона, вес <span>' + rows.length + "</span></summary><ul>" + rows.join("") + "</ul></details>";
+  }
+  function rollFromTyped(t) {
+    var d = String(t || "").replace(/\s/g, "");
+    if (!d) return { id: "" };
+    if (!/^\d[\d-]*$/.test(d)) return { err: "Номер только цифрами." };
+    if (state.rolls.has(d)) return { id: d };
+    if (/^2\d{12}$/.test(d)) return { id: d, unknown: true };
+    var f = findSpoken(d);
+    if (f.list.length === 1) return { id: f.list[0] };
+    if (f.list.length > 1) return { err: "Таких рулонов несколько, впишите больше цифр." };
+    if (d.length >= 4 && d.length < 13) { var full = "2" + "0".repeat(12 - d.length) + d; if (state.rolls.has(full)) return { id: full }; }
+    return { err: "Рулон не найден. Впишите номер полностью (13 цифр)." };
+  }
+  function repFixSave(id, clear) {
+    if (!guard()) return;
+    var it = null;
+    (REP.orders || []).forEach(function (o) { (o.order_items || []).forEach(function (x) { if (x.id === id) it = x; }); });
+    if (!it) return;
+    var roll = "", kg = null;
+    if (!clear) {
+      var rr = rollFromTyped(val("#fx-roll-" + id)), kv = kgNum(val("#fx-kg-" + id)), er = $("#fx-err-" + id);
+      if (rr.err) { if (er) er.textContent = rr.err; return; }
+      if (isNaN(kv) || (kv !== null && (kv <= 0 || kv > 500))) { if (er) er.textContent = "Вес числом, например 1,2"; return; }
+      roll = rr.id; kg = kv;
+    }
+    api("rpc/item_fix", { method: "POST", body: { p_id: id, p_roll: roll || null, p_kg: kg } }).then(function () {
+      it.fact_roll = roll && roll !== it.roll_id ? roll : null; it.fact_kg = kg;
+      OR.map.forEach(function (o) { (o.order_items || []).forEach(function (x) { if (x.id === id) { x.fact_roll = it.fact_roll; x.fact_kg = it.fact_kg; } }); });
+      REP.fixEdit = null; drawRep(); toast(clear ? "Правка убрана" : "Правка сохранена, лист обновлён");
+      if (repo && repo.refresh) repo.refresh();
+    })["catch"](function (e) {
+      var m = (e && e.message) || "";
+      toast(e && e.status === 404 ? "Выполните update-16.sql в Supabase." : /управляющий/.test(m) ? "Править может только управляющий." : "Не удалось сохранить. Проверьте связь.", true);
+    });
   }
   function fitA4() {
     var w = $("#repPages"), box = $("#repIn"); if (!w || !box) return;
@@ -2885,6 +2965,7 @@ form { display: grid; gap: 16px; }
       "<span" + swatchStyle(r && r.color) + "></span>" +
       '<span class="oi-info">' + (lab ? '<span class="oi-lab">' + esc(lab) + "</span>" : "") + '<b class="num">' + numHtml(it.roll_id, "") + "</b>" +
       (r ? '<span class="oi-meta">' + esc([r.fabric, r.color].filter(Boolean).join(", ")) + (r.qty != null ? " · " + esc(qtyText(r)) : "") + "</span>" : '<span class="oi-meta warn">нет в базе</span>') +
+      (it.fact_roll || it.fact_kg != null ? '<span class="oi-fix">' + (it.fact_roll ? "взяли " + esc(shortId(it.fact_roll)) + " вместо " + esc(shortId(it.roll_id)) : "") + (it.fact_roll && it.fact_kg != null ? " · " : "") + (it.fact_kg != null ? "вес " + esc(kgFmt(+it.fact_kg)) + " кг" : "") + "</span>" : "") +
       "</span>" + cutHtml(it, r) + (r ? rackHtml(r) : "") + "</button>" +
       '<div class="oi-act">' + (state.isAdmin && it.state !== "done" ? '<button type="button" class="mini" data-act="oi-amt" data-id="' + it.id + '" aria-label="Изменить количество">✎</button>' : "") + act + ((it.source === "manual" || it.source === "photo") && it.state === "new" ? '<button type="button" class="mini" data-act="oi-del" data-id="' + it.id + '" aria-label="Убрать">✕</button>' : "") + "</div>" +
       (OR.amtEdit === it.id ? amtEditHtml(it, r) : "") + "</li>";
@@ -3900,6 +3981,9 @@ form { display: grid; gap: 16px; }
       case "amt-cancel": OR.amtEdit = null; OR.amtUnit = null; drawOrders(); return;
       case "rep-close": closeRep(); return;
       case "rep-type": REP.type = el.getAttribute("data-id"); autoSelect(); drawRep(); return;
+      case "rfix-edit": var fi = +el.getAttribute("data-id"); REP.fixEdit = REP.fixEdit === fi ? null : fi; REP.fixOpen = true; drawRep(); setTimeout(function () { var f = $("#fx-roll-" + fi); if (f) f.focus(); }, 50); return;
+      case "rfix-cancel": REP.fixEdit = null; drawRep(); return;
+      case "rfix-clear": repFixSave(+el.getAttribute("data-id"), true); return;
       case "rep-make": REP.step = "sheet"; drawRep(); var rr = $("#repRoot .orders"); if (rr) rr.scrollTop = 0; return;
       case "rep-back": REP.step = "pick"; drawRep(); return;
       case "rep-more": REP.days = 60; repLoad(); return;
@@ -3974,6 +4058,7 @@ form { display: grid; gap: 16px; }
     if (e.target.matches("#form")) saveForm();
     else if (e.target.matches(".o-addform")) { var oid = +e.target.getAttribute("data-id"); orderAddItem(oid, val("#oadd-" + oid)); }
     else if (e.target.matches(".oi-amt")) amtSave(+e.target.getAttribute("data-id"));
+    else if (e.target.matches(".fx-form")) repFixSave(+e.target.getAttribute("data-id"), false);
     else if (e.target.matches("#modeForm")) modeStart();
     else if (e.target.matches("#modeAdd")) modeAdd(val("#m-code"), false);
     else if (e.target.matches("#authForm")) submitAuth();
