@@ -836,7 +836,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.5";
+  var APP_VERSION = "3.6";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2540,8 +2540,8 @@ form { display: grid; gap: 16px; }
     var d0 = new Date(); d0.setHours(0, 0, 0, 0); d0.setDate(d0.getDate() - REP.days + 1);
     var my = REP.days;
     REP.orders = null; REP.err = null; drawRep();
-    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(*)&created_at=gte." +
-      encodeURIComponent(d0.toISOString()) + "&order=created_at.desc")
+    apiAll("orders?select=id,chat_title,text,doc_no,author,status,created_at,done_at,done_by_name,order_items(*)&or=(status.neq.done,created_at.gte." +
+      encodeURIComponent(d0.toISOString()) + ")&order=created_at.desc")
       .then(function (rows) {
         if (REP.days !== my) return;
         REP.orders = (rows || []).sort(function (a, b) { return Date.parse(b.created_at) - Date.parse(a.created_at); });
@@ -2553,7 +2553,9 @@ form { display: grid; gap: 16px; }
   function autoSelect() {
     var today = ymd(new Date());
     REP.sel = new Set();
-    repOrders().forEach(function (o) { if (o.status === "done" && o.done_at && ymd(new Date(o.done_at)) === today) REP.sel.add(o.id); });
+    // сразу отмечены текущие заказы (в работе); если их нет — выполненные сегодня
+    repOrders().forEach(function (o) { if (o.status !== "done") REP.sel.add(o.id); });
+    if (!REP.sel.size) repOrders().forEach(function (o) { if (o.status === "done" && o.done_at && ymd(new Date(o.done_at)) === today) REP.sel.add(o.id); });
   }
   /* короткие названия, как пишут от руки */
   var WL = "[а-яёіїєґa-z'’]*";
@@ -2674,13 +2676,15 @@ form { display: grid; gap: 16px; }
     }).join("");
   }
   function repPickHtml() {
-    var list = repOrders(), h = "", lastDay = "";
-    if (!list.length) return '<p class="hint rep-hint">За последние ' + REP.days + " дней заказов этого типа нет.</p>";
+    var all = repOrders(), h = "", lastDay = "";
+    if (!all.length) return '<p class="hint rep-hint">Заказов этого типа нет: ни текущих, ни выполненных за ' + REP.days + " дней.</p>";
+    var act = all.filter(function (o) { return o.status !== "done"; }), list = act.concat(all.filter(function (o) { return o.status === "done"; }));
     var nsel = list.filter(function (o) { return REP.sel.has(o.id); }).length;
-    h += '<div class="rep-quick"><button type="button" class="link-btn" data-act="rep-sel" data-id="today">Выполненные сегодня</button><button type="button" class="link-btn" data-act="rep-sel" data-id="done">Все выполненные</button><button type="button" class="link-btn" data-act="rep-sel" data-id="none">Снять всё</button></div>';
+    h += '<div class="rep-quick"><button type="button" class="link-btn" data-act="rep-sel" data-id="active">Все текущие</button><button type="button" class="link-btn" data-act="rep-sel" data-id="today">Выполненные сегодня</button><button type="button" class="link-btn" data-act="rep-sel" data-id="done">Все выполненные</button><button type="button" class="link-btn" data-act="rep-sel" data-id="none">Снять всё</button></div>';
     h += '<ul class="rep-list">' + list.map(function (o) {
-      var d = new Date(o.created_at), day = ymd(d), its = o.order_items || [];
-      var head = day !== lastDay ? '<li class="rep-day">' + (day === ymd(new Date()) ? "Сегодня" : dmy(day)) + "</li>" : "";
+      var d = new Date(o.created_at), its = o.order_items || [];
+      var day = o.status !== "done" ? "active" : ymd(new Date(o.done_at || o.created_at));
+      var head = day !== lastDay ? '<li class="rep-day">' + (day === "active" ? "Текущие заказы: " + act.length : "Выполнены " + (day === ymd(new Date()) ? "сегодня" : dmy(day))) + "</li>" : "";
       lastDay = day;
       var who = [managerName(o), orderNo(o)].filter(Boolean).join(" "), cl = REP.type === "market" || REP.type === "move" ? pointCode(o) : clientFull(o);
       var on = REP.sel.has(o.id);
@@ -2703,7 +2707,7 @@ form { display: grid; gap: 16px; }
     if (REP.step === "pick") {
       h += '<div class="tabs" style="--n:4;--ti:' + ti + '"><span class="ind" aria-hidden="true"></span>' +
         types.map(function (x) { return '<button class="tab" type="button" data-act="rep-type" data-id="' + x[0] + '" aria-selected="' + (x[0] === REP.type) + '">' + x[1] + "</button>"; }).join("") + "</div>";
-      h += '<p class="hint rep-hint">Отметьте заказы для листа. Показаны заказы за ' + REP.days + ' дней' + (REP.days < 60 ? ', <button type="button" class="link-btn inline" data-act="rep-more">показать за 60</button>' : "") + ".</p>";
+      h += '<p class="hint rep-hint">Отметьте заказы для листа: все текущие и выполненные за ' + REP.days + ' дней' + (REP.days < 60 ? ', <button type="button" class="link-btn inline" data-act="rep-more">показать за 60</button>' : "") + ".</p>";
       if (REP.err) h += '<p class="banner err">Не удалось загрузить заказы. Проверьте интернет.</p>';
       else if (!REP.orders) h += '<p class="oc-ocr"><i class="spin"></i>Собираю заказы…</p>';
       else h += repPickHtml();
@@ -2880,7 +2884,7 @@ form { display: grid; gap: 16px; }
       '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
       '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
       '<button class="tab" type="button" data-act="o-tab" data-id="done" aria-selected="' + (OR.tab === "done") + '">Выполнены<span class="n">' + nd + "</span></button></div>" +
-      (state.isAdmin && OR.tab === "done" ? '<button type="button" class="btn primary rep-from-orders" data-act="rep-open">Отчёт на А4</button>' : "");
+      (state.isAdmin ? '<button type="button" class="btn primary rep-from-orders" data-act="rep-open">Отчёт на А4</button>' : "");
     if (chats.size > 1) {
       h += '<div class="o-chats"><button type="button" class="ochip' + (OR.chat === "all" ? " on" : "") + '" data-act="o-chat" data-id="all">Все группы</button>';
       chats.forEach(function (t, id) { h += '<button type="button" class="ochip' + (OR.chat === id ? " on" : "") + '" data-act="o-chat" data-id="' + esc(id) + '">' + esc(t) + "</button>"; });
@@ -3990,7 +3994,8 @@ form { display: grid; gap: 16px; }
       case "rep-sel":
         var k = el.getAttribute("data-id"), today = ymd(new Date());
         if (k === "none") REP.sel = new Set();
-        else if (k === "today") autoSelect();
+        else if (k === "active") repOrders().forEach(function (o) { if (o.status !== "done") REP.sel.add(o.id); });
+        else if (k === "today") { REP.sel = new Set(); repOrders().forEach(function (o) { if (o.status === "done" && o.done_at && ymd(new Date(o.done_at)) === today) REP.sel.add(o.id); }); }
         else repOrders().forEach(function (o) { if (o.status === "done") REP.sel.add(o.id); });
         drawRep(); return;
       case "rep-pdf": repPdf(); return;
