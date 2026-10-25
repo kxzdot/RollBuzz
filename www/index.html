@@ -107,6 +107,9 @@ button { cursor: pointer; }
 .tab[aria-selected="true"] { color: var(--fg); font-weight: 650; }
 .tab .n { display: block; font-family: var(--f-mono); font-size: 0.75rem; font-weight: 500; opacity: 0.75; }
 
+.updbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 0; padding: 10px 12px 10px 16px; border-radius: 14px; background: var(--accent-soft, #e6e9ff); color: var(--fg); font-size: 0.9375rem; }
+.updbar[hidden] { display: none; }
+.updbar .spin { flex: none; }
 .banner { margin-block: 4px 0; padding: 12px 14px; border-radius: 14px; font-size: 0.875rem; background: var(--surface); color: var(--muted); border: 1px dashed var(--line); }
 .banner.err { color: var(--danger); border-color: var(--danger); background: transparent; font-weight: 600; }
 
@@ -802,6 +805,7 @@ form { display: grid; gap: 16px; }
     </div>
   </header>
 
+  <div id="updBar" class="updbar" hidden></div>
   <div id="banner"></div>
   <div class="count-row">
     <button class="ftog" id="nbToggle" type="button" data-act="nb-toggle" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="9.5" y="7" width="5" height="10" rx="2.5" fill="currentColor"/><rect x="16.5" y="7" width="5" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Соседи</span></button>
@@ -836,7 +840,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.6";
+  var APP_VERSION = "3.7";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1202,6 +1206,56 @@ form { display: grid; gap: 16px; }
   }
   function onDataError() { state.loaded = true; state.mode = "error"; render(); }
   function startRepo() { repo.subscribe(onData, onDataError); loadLists(); ordersStart(); loadRole(); }
+
+  /* ---------- автообновление: version.json в публичной папке хранилища «app» (кладёт сборка на GitHub) ---------- */
+  var UPD = { info: null, busy: false, checkedAt: 0 };
+  function updPlugin() { var C = window.Capacitor; return C && C.Plugins && C.Plugins.CapacitorUpdater ? C.Plugins.CapacitorUpdater : null; }
+  function verCmp(a, b) {
+    var x = String(a || "0").split("."), y = String(b || "0").split(".");
+    for (var i = 0; i < Math.max(x.length, y.length); i++) { var d = (parseInt(x[i], 10) || 0) - (parseInt(y[i], 10) || 0); if (d) return d; }
+    return 0;
+  }
+  function updCheck(manual) {
+    if (!configured() || UPD.busy) return Promise.resolve(null);
+    UPD.checkedAt = Date.now();
+    return fetch(CFG.url.replace(/\/+$/, "") + "/storage/v1/object/public/app/version.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("upd " + r.status); return r.json(); })
+      .then(function (j) {
+        UPD.info = j;
+        if (!j || !j.version || verCmp(j.version, APP_VERSION) <= 0) { if (manual) toast("У вас последняя версия " + APP_VERSION); drawUpd(); return null; }
+        var P = updPlugin();
+        if (P && j.web) {
+          // новый экран приложения скачивается и ставится сам, без переустановки
+          UPD.busy = true; drawUpd();
+          toast("Обновляю приложение до версии " + j.version + "…");
+          return P.download({ url: j.web, version: j.version + "-" + (j.code || 0) }).then(function (b) {
+            return P.set(b && b.id ? { id: b.id } : b);
+          })["catch"](function () { UPD.busy = false; drawUpd(); });
+        }
+        drawUpd();
+        return j;
+      })["catch"](function () { if (manual) toast("Не удалось проверить обновления. Проверьте интернет.", true); });
+  }
+  function updApk() {
+    var j = UPD.info, u = j && j.apk ? j.apk : (configured() ? CFG.url.replace(/\/+$/, "") + "/storage/v1/object/public/app/sklad-latest.apk" : "");
+    if (!u) return;
+    toast("Скачивается APK. Откройте его и нажмите «Обновить» — удалять старое приложение не нужно.");
+    window.location.href = u;
+  }
+  /* полоска «Доступна версия …» под шапкой, если обновиться само не может (старая сборка без модуля обновлений) */
+  function drawUpd() {
+    var el = $("#updBar"); if (!el) return;
+    var j = UPD.info, need = j && j.version && verCmp(j.version, APP_VERSION) > 0;
+    el.hidden = !need;
+    if (need) el.innerHTML = UPD.busy ? '<i class="spin"></i><span>Устанавливаю версию ' + esc(j.version) + "…</span>" :
+      "<span>Вышла версия <b>" + esc(j.version) + '</b></span><button type="button" class="btn primary sm" data-act="upd-apk">Обновить</button>';
+  }
+  (function () {
+    var P = updPlugin();
+    if (P && P.notifyAppReady) { try { P.notifyAppReady(); } catch (e) {} }   // эта версия запустилась нормально: откат не нужен
+    setTimeout(function () { updCheck(false); }, 4000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden && Date.now() - UPD.checkedAt > 3 * 3600e3) updCheck(false); });
+  })();
   /* роль: управляющий (profiles.is_admin) видит сводку и загрузку из 1С */
   function loadRole() {
     state.isAdmin = false;
@@ -1747,7 +1801,9 @@ form { display: grid; gap: 16px; }
     if (s.type === "account") {
       var u = state.user || {};
       return head("Профиль") + '<dl class="facts"><dt>Имя</dt><dd>' + esc(u.name || "") + "</dd><dt>Логин</dt><dd>" + esc(u.login || "") + "</dd><dt>Роль</dt><dd>" + (state.isAdmin ? '<span class="role-tag">Управляющий</span>' : "Сотрудник") + '</dd></dl>' +
-        '<p class="hint">Ваше имя видно всем в истории изменений рулонов. Версия приложения ' + APP_VERSION + '.</p><button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
+        '<p class="hint">Ваше имя видно всем в истории изменений рулонов. Версия приложения ' + APP_VERSION + (updPlugin() ? ", обновляется сама" : "") + '.</p>' +
+        '<div class="actions"><button class="btn" type="button" data-act="upd-check">Проверить обновления</button></div>' +
+        '<button class="btn danger" type="button" data-act="logout">Выйти из аккаунта</button>';
     }
     return formHtml(s);
   }
@@ -3978,6 +4034,8 @@ form { display: grid; gap: 16px; }
       case "mode-open": openMode(); return;
       case "prihod-open": openMode("prihod"); return;
       case "sum-open": openSum(); return;
+      case "upd-check": updCheck(true); return;
+      case "upd-apk": updApk(); return;
       case "rep-open": openRep(); return;
       case "o-del": orderDelete(+el.getAttribute("data-id")); return;
       case "oi-amt": var ai = +el.getAttribute("data-id"); OR.amtEdit = OR.amtEdit === ai ? null : ai; OR.amtUnit = null; drawOrders(); setTimeout(function () { var f = $("#amt-" + ai); if (f) { f.focus(); try { f.select(); } catch (x) {} } }, 50); return;
