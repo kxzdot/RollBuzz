@@ -340,6 +340,22 @@ form { display: grid; gap: 16px; }
 .cam-frame i { position: absolute; left: 6%; right: 6%; top: 50%; height: 2px; border-radius: 2px; background: var(--tag); box-shadow: 0 0 12px var(--tag); }
 .cam.hit .cam-frame { background-color: rgba(111, 211, 160, 0.25); }
 .cam-torch { position: absolute; right: 10px; bottom: 10px; width: 44px; height: 44px; border-radius: 12px; border: 0; background: rgba(255, 255, 255, 0.86); color: #1b2130; }
+.cam-ocr { position: absolute; left: 10px; bottom: 10px; height: 44px; padding: 0 12px; border-radius: 12px; border: 0; background: rgba(255, 255, 255, 0.9); color: #1b2130; display: inline-flex; align-items: center; gap: 8px; font: inherit; }
+.cam-ocr b { font-family: var(--f-mono); font-size: 1rem; letter-spacing: .04em; }
+.cam-ocr span { font-size: 0.8125rem; font-weight: 600; }
+.cam-ocr.busy { background: var(--tag); }
+.ocr-pick { position: absolute; left: 10px; right: 10px; top: 10px; display: grid; gap: 6px; padding: 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.95); color: #1b2130; }
+.ocr-pick[hidden] { display: none; }
+.ocr-pick button { height: 44px; border-radius: 10px; border: 1.5px solid #c9cdd6; background: #fff; font-family: var(--f-mono); font-size: 1.0625rem; color: #1b2130; }
+#scanRoot .scanner { grid-template-columns: minmax(0, 1fr); }
+.scan-foot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
+.scan-foot .scan-hint { font-size: 0.875rem; }
+.scan-manual .btn { flex: none; }
+.scan-manual input { width: 0; }
+.rackscan .cam-ocr, .rackscan .scan-manual { display: none; }
+.scan-manual { display: flex; gap: 8px; }
+.scan-manual input { flex: 1; min-width: 0; height: 50px; padding: 0 14px; border-radius: 12px; border: 0; background: rgba(255, 255, 255, 0.95); color: #1b2130; font-size: 1.125rem; }
+.scan-manual .btn { height: 50px; }
 .cam-torch svg { width: 24px; height: 24px; display: block; margin: auto; }
 .cam-torch.on { background: var(--tag); }
 .cam-msg { position: absolute; inset: auto 12px 12px 12px; margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.92); color: #1b2130; font-size: 0.875rem; }
@@ -840,7 +856,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.7";
+  var APP_VERSION = "3.8";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2020,7 +2036,8 @@ form { display: grid; gap: 16px; }
   function camBox(id) {
     return '<div class="cam" id="' + id + '"><video muted playsinline></video><div class="cam-frame" aria-hidden="true"><i></i></div>' +
       '<button type="button" class="cam-torch" data-act="torch" hidden aria-label="Фонарик">' + ICON_TORCH + "</button>" +
-      '<p class="cam-msg" hidden></p></div>';
+      '<button type="button" class="cam-ocr" data-act="cam-ocr" aria-label="Прочитать номер цифрами"><b>123</b><span>нет штрихкода</span></button>' +
+      '<p class="cam-msg" hidden></p><div class="ocr-pick" hidden></div></div>';
   }
   var ICON_SCAN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.5 8.5v7M10 8.5v7M12.5 8.5v7M15.5 8.5v7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
   var ICON_TORCH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8l-1.5 5v12a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1V8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 12v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -2039,9 +2056,72 @@ form { display: grid; gap: 16px; }
   function openScan(target) {
     scanTarget = target;
     var root = $("#scanRoot");
-    root.innerHTML = '<div class="scanner"><div class="scan-top"><b>' + (target === "search" ? "Найти рулон" : "Номер рулона") + '</b><button class="x" type="button" data-act="scan-close" aria-label="Закрыть">✕</button></div>' +
-      camBox("scanCam") + '<p class="scan-hint">Наведите камеру на штрихкод рулона</p></div>';
+    root.innerHTML = '<div class="scanner' + (target === "rackfield" || target === "modeRack" ? " rackscan" : "") + '"><div class="scan-top"><b>' + (target === "search" ? "Найти рулон" : "Номер рулона") + '</b><button class="x" type="button" data-act="scan-close" aria-label="Закрыть">✕</button></div>' +
+      camBox("scanCam") + '<div class="scan-foot"><p class="scan-hint">Наведите камеру на штрихкод. Нет штрихкода — нажмите «123» на камере, приложение прочитает напечатанный номер. Или впишите его:</p>' +
+      '<form class="scan-manual" novalidate autocomplete="off"><input id="scanManual" type="text" inputmode="numeric" class="mono" placeholder="Номер рулона" aria-label="Номер рулона вручную"><button type="submit" class="btn primary">Готово</button></form></div></div>';
     startCam($("#scanCam"), function (code) { beep(true); closeScan(); scanDone(target, code); });
+  }
+  /* ---------- нет штрихкода: прочитать напечатанный номер цифрами с кадра камеры ---------- */
+  var ocrDigitW = null;
+  function digitWorker() {
+    if (!ocrDigitW) ocrDigitW = loadOcr().then(function (T) { return T.createWorker("eng"); }).then(function (w) {
+      return Promise.resolve(w.setParameters ? w.setParameters({ tessedit_char_whitelist: "0123456789", tessedit_pageseg_mode: "6" }) : null).then(function () { return w; });
+    })["catch"](function (e) { ocrDigitW = null; throw e; });
+    return ocrDigitW;
+  }
+  function frameCanvas(v) {
+    var vw = v.videoWidth, vh = v.videoHeight; if (!vw || !vh) return null;
+    // рамка в середине кадра; увеличиваем и делаем контрастным серым — так цифры читаются надёжнее
+    var sx = Math.round(vw * 0.06), sw = vw - 2 * sx, sh = Math.round(vh * 0.5), sy = Math.round((vh - sh) / 2);
+    var k = Math.min(3, Math.max(1, 1600 / sw)), c = document.createElement("canvas");
+    c.width = Math.round(sw * k); c.height = Math.round(sh * k);
+    var g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    var id = g.getImageData(0, 0, c.width, c.height), px = id.data, i, l, mn = 255, mx = 0;
+    for (i = 0; i < px.length; i += 4) { l = (px[i] * 3 + px[i + 1] * 6 + px[i + 2]) / 10; px[i] = l; if (l < mn) mn = l; if (l > mx) mx = l; }
+    var rng = Math.max(1, mx - mn);
+    for (i = 0; i < px.length; i += 4) { l = (px[i] - mn) * 255 / rng; px[i] = px[i + 1] = px[i + 2] = l; px[i + 3] = 255; }
+    g.putImageData(id, 0, 0);
+    return c;
+  }
+  /* из текста — номера рулонов: 13 цифр с верной контрольной, или конец номера, который есть в базе у одного рулона */
+  function rollsFromDigits(text) {
+    var out = [];
+    function add(id) { if (out.indexOf(id) === -1) out.push(id); }
+    String(text || "").split(/\n/).forEach(function (line) {
+      var toks = line.split(/\s+/).map(function (t) { return t.replace(/\D/g, ""); }).filter(Boolean), joined = toks.join("");
+      [joined].concat(toks).forEach(function (d) {
+        var m = /2\d{12}/.exec(d); if (m && eanCheck(m[0])) { add(m[0]); return; }
+        if (d.length >= 5 && d.length <= 13) { var f = findSpoken(d); if (f.list.length === 1) add(f.list[0]); }
+      });
+    });
+    return out;
+  }
+  function camOcr(btn) {
+    var box = btn.closest(".cam"), v = box && box.querySelector("video"), pick = box && box.querySelector(".ocr-pick");
+    if (!v || btn.classList.contains("busy")) return;
+    var c = frameCanvas(v);
+    if (!c) {   // камера ещё включается: подождать немного
+      var tries = +(btn.getAttribute("data-try") || 0);
+      if (tries < 8) { btn.setAttribute("data-try", tries + 1); setTimeout(function () { camOcr(btn); }, 300); return; }
+      btn.removeAttribute("data-try"); toast("Камера не включилась. Впишите номер вручную.", true); return;
+    }
+    btn.removeAttribute("data-try");
+    btn.classList.add("busy"); btn.querySelector("span").textContent = "читаю…";
+    function done() { btn.classList.remove("busy"); btn.querySelector("span").textContent = "нет штрихкода"; }
+    digitWorker().then(function (w) { return w.recognize(c); }).then(function (r) {
+      done();
+      var ids = rollsFromDigits((r && r.data && r.data.text) || "");
+      if (!ids.length) { beep(false); toast("Не разобрал номер. Поднесите ближе к цифрам или впишите номер вручную.", true); return; }
+      if (ids.length === 1) { ocrUse(ids[0]); return; }
+      pick.hidden = false;
+      pick.innerHTML = "<b>Какой номер?</b>" + ids.slice(0, 5).map(function (id) { return '<button type="button" data-ocr-id="' + esc(id) + '">' + numHtml(id, "") + "</button>"; }).join("");
+    })["catch"](function () { done(); toast("Распознавание цифр не загрузилось. Проверьте интернет или впишите номер вручную.", true); });
+  }
+  function ocrUse(id) {
+    beep(true);
+    Array.prototype.forEach.call(document.querySelectorAll(".ocr-pick"), function (p) { p.hidden = true; p.innerHTML = ""; });
+    if (scanTarget) { var t = scanTarget; closeScan(); scanDone(t, id); return; }
+    if (state.mode2) modeAdd(id, false);
   }
   function closeScan() {
     if (!scanTarget && !$("#scanRoot").firstChild) return false;
@@ -2066,6 +2146,7 @@ form { display: grid; gap: 16px; }
     if (rp) { toast("Это штрихкод стеллажа, а нужен номер рулона.", true); return; }
     if (target === "search") {
       var r = resolveRoll(code);
+      if (!r.id && !r.many && /^\d{4,12}$/.test(code)) { var fs0 = findSpoken(code); if (fs0.list.length === 1) r = { id: fs0.list[0] }; }   // вписали конец номера
       var q = r.id || code;
       state.q = q; $("#q").value = q; state.tab = r.id && state.rolls.get(r.id) && state.rolls.get(r.id).deleted ? "trash" : "active"; lastListHtml = null; render();
       if (r.id) openSheet({ type: "detail", id: r.id });
@@ -2687,7 +2768,7 @@ form { display: grid; gap: 16px; }
       its.forEach(function (it, i) { var d = itemRowData(o, it); rows.push("<tr>" + cellE(left[i] || "", "mgr") + cellE(d.code, "code") + cellE(d.name) + cellE(d.kg, "num") + cellE(d.m, "num") + cellE("") + cellE("") + cellE("") + "</tr>"); });
       if (!its.length) rows.push("<tr>" + cellE(left[0], "mgr") + cellE("") + cellE((o.text || "").split("\n")[0]) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
       var cl = clientFull(o), dl = deliveryOf(o);
-      rows.push("<tr class=\"cl\">" + cellE(its.length < 2 ? left[1] || "" : "", "mgr") + cellE("") + cellE("V• " + cl + (dl ? " (" + dl + ")" : "")) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
+      rows.push("<tr class=\"cl\">" + cellE(its.length < 2 ? left[1] || "" : "", "mgr") + cellE("") + cellE(cl + (dl ? " (" + dl + ")" : "")) + cellE("") + cellE("") + cellE("") + cellE("") + cellE("") + "</tr>");
       rows.push('<tr class="gap"><td colspan="8"></td></tr>');
     });
     var PER = 30, pages = [], date = dmy(REP.date), fio = (state.user && state.user.name) || "";
@@ -4000,6 +4081,7 @@ form { display: grid; gap: 16px; }
     var vi = t.closest(".v-img"); if (vi) { vi.classList.toggle("zoom"); return; }
     var ro = t.closest("[data-rep-o]");
     if (ro) { var oid2 = +ro.getAttribute("data-rep-o"); if (REP.sel.has(oid2)) REP.sel["delete"](oid2); else REP.sel.add(oid2); drawRep(); return; }
+    var oid0 = t.closest("[data-ocr-id]"); if (oid0) { ocrUse(oid0.getAttribute("data-ocr-id")); return; }
     var ks = t.closest("[data-kgsave]"); if (ks) { kgSave(ks.getAttribute("data-kgsave")); return; }
     var ke = t.closest("[data-kgedit]"); if (ke) { var ee = kgEntry(ke.getAttribute("data-kgedit")); if (ee) { ee.kgEdit = true; ee.kgSaved = false; ee.inL = ee.kgL == null ? "" : kgFmt(ee.kgL); ee.inR = ee.kgR == null ? "" : kgFmt(ee.kgR); drawLog(); kgRefocus(ee.code, "l"); } return; }
     var ud = t.closest("[data-undo]"); if (ud) { modeUndo(+ud.getAttribute("data-undo")); return; }
@@ -4030,6 +4112,7 @@ form { display: grid; gap: 16px; }
       case "scan-search": openScan("search"); return;
       case "scan-roll": openScan("roll"); return;
       case "scan-close": closeScan(); return;
+      case "cam-ocr": camOcr(el); return;
       case "torch": Scan.toggleTorch().then(function (on) { el.classList.toggle("on", on); }); return;
       case "mode-open": openMode(); return;
       case "prihod-open": openMode("prihod"); return;
@@ -4121,6 +4204,7 @@ form { display: grid; gap: 16px; }
     if (e.target.matches("#form")) saveForm();
     else if (e.target.matches(".o-addform")) { var oid = +e.target.getAttribute("data-id"); orderAddItem(oid, val("#oadd-" + oid)); }
     else if (e.target.matches(".oi-amt")) amtSave(+e.target.getAttribute("data-id"));
+    else if (e.target.matches(".scan-manual")) { var mv = val("#scanManual").replace(/\s/g, ""); if (!mv) return; if (!/^\d[\d-]*$/.test(mv)) { toast("Номер только цифрами.", true); return; } var tg = scanTarget; closeScan(); scanDone(tg, mv); }
     else if (e.target.matches(".fx-form")) repFixSave(+e.target.getAttribute("data-id"), false);
     else if (e.target.matches("#modeForm")) modeStart();
     else if (e.target.matches("#modeAdd")) modeAdd(val("#m-code"), false);
