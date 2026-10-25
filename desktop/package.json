@@ -1,0 +1,27 @@
+{
+  "name": "sklad-tkani-desktop",
+  "version": "1.0.0",
+  "description": "Склад тканей",
+  "author": "Sklad",
+  "main": "main.js",
+  "private": true,
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.sklad.tkani.desktop",
+    "productName": "SkladTkaney",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "icon.ico", "app/**"],
+    "win": { "target": "nsis", "icon": "icon.ico" },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Склад тканей",
+      "artifactName": "sklad-setup.${ext}"
+    }
+  }
+}
