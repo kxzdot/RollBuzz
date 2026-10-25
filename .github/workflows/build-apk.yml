@@ -28,6 +28,11 @@ jobs:
         continue-on-error: true
         run: npm install @capacitor-community/speech-recognition@^7.0.0 --no-audit --no-fund
 
+      - name: Автообновление (необязательно)
+        # модуль, который ставит новую версию экрана приложения без переустановки APK
+        continue-on-error: true
+        run: npm install @capgo/capacitor-updater@^7 --no-audit --no-fund
+
       - name: Создание Android-проекта
         run: |
           if [ ! -d android ]; then npx cap add android; fi
@@ -61,3 +66,25 @@ jobs:
         with:
           name: sklad-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Публикация обновления для телефонов
+        # нужны секреты репозитория SUPABASE_URL и SUPABASE_SECRET_KEY (см. ОБНОВЛЕНИЯ.md); без них шаг пропускается
+        env:
+          SB_URL: ${{ secrets.SUPABASE_URL }}
+          SB_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          if [ -z "$SB_URL" ] || [ -z "$SB_KEY" ]; then echo "Секреты не заданы: автообновление не публикуется"; exit 0; fi
+          SB_URL="${SB_URL%/}"
+          VER=$(grep -o 'APP_VERSION = "[^"]*"' www/index.html | head -1 | cut -d'"' -f2)
+          N=${{ github.run_number }}
+          (cd www && zip -qr ../web.zip .)
+          cp android/app/build/outputs/apk/debug/app-debug.apk sklad.apk
+          if [[ "$SB_KEY" == sb_* ]]; then AUTH=(-H "apikey: $SB_KEY"); else AUTH=(-H "apikey: $SB_KEY" -H "Authorization: Bearer $SB_KEY"); fi
+          up() { curl -sS --fail-with-body -X POST "$SB_URL/storage/v1/object/app/$2" "${AUTH[@]}" -H "x-upsert: true" -H "cache-control: $4" -H "Content-Type: $3" --data-binary "@$1"; echo; }
+          up sklad.apk "sklad-$N.apk" application/vnd.android.package-archive 31536000
+          up web.zip "web-$N.zip" application/zip 31536000
+          up sklad.apk "sklad-latest.apk" application/vnd.android.package-archive 60
+          PUB="$SB_URL/storage/v1/object/public/app"
+          printf '{"version":"%s","code":%s,"apk":"%s/sklad-%s.apk","web":"%s/web-%s.zip","at":"%s"}' "$VER" "$N" "$PUB" "$N" "$PUB" "$N" "$(date -u +%FT%TZ)" > version.json
+          cat version.json
+          up version.json version.json application/json 30
