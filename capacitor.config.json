@@ -4,5 +4,11 @@
   "webDir": "www",
   "android": {
     "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "resetWhenUpdate": false
+    }
   }
 }
