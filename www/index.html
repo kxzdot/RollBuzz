@@ -856,7 +856,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "3.8";
+  var APP_VERSION = "4.0";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1252,7 +1252,9 @@ form { display: grid; gap: 16px; }
         return j;
       })["catch"](function () { if (manual) toast("Не удалось проверить обновления. Проверьте интернет.", true); });
   }
+  function isNative() { var C = window.Capacitor; return !!(C && (C.isNativePlatform ? C.isNativePlatform() : C.Plugins)); }
   function updApk() {
+    if (!isNative()) { location.reload(); return; }   // версия для компьютера: при перезапуске загружается последняя
     var j = UPD.info, u = j && j.apk ? j.apk : (configured() ? CFG.url.replace(/\/+$/, "") + "/storage/v1/object/public/app/sklad-latest.apk" : "");
     if (!u) return;
     toast("Скачивается APK. Откройте его и нажмите «Обновить» — удалять старое приложение не нужно.");
@@ -2964,17 +2966,30 @@ form { display: grid; gap: 16px; }
   var ACORN_AUTHORS = /(^|\s)(андрей|андрий|andrey|andrii|andriy|andrew)(\s|$)/;
   function orderType(o) {
     if (o._typeFor === o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author) return o._type;
-    var title = fold(o.chat_title), all = title + " " + fold(o.text), t = "";
+    var title = fold(o.chat_title), txt = fold(o.text), all = title + " " + txt, t = "";
     if (/acorn|акорн/.test(all) || ACORN_AUTHORS.test(fold(o.author))) t = "acorn";
-    else if (/р[иы]нок|рынк|ринк/.test(title) || /(^|\s)(на\s+)?р[иы]нок|1608/.test(fold(o.text))) t = "market";
-    else if (/перемещ|перемищ|переміщ|перемiщ/.test(all)) t = "move";
-    else if (/нова\s*пошт|нов(ая|ой|ую)\s*почт|укр\s*пошт|пошт|почт|(^|\s)нп(\s|$|\d)|видделен|виддил|отделен|склад\s*№?\s*\d/.test(all) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
+    else if (/перемещ|перемищ|переміщ|перемiщ/.test(txt)) t = "move";
+    // признаки почты сильнее слова «рынок»: Нова/Укр пошта, поштомат, отделение, адрес, получатель, телефон, ЄДРПОУ
+    else if (isPostText(txt)) t = "post";
+    else if (/р[иы]нок|рынк|ринк/.test(title) || /(^|\s)на\s+р[иы]нок|(^|[^\d])1608([^\d]|$)/.test(txt)) t = "market";
+    else if (/перемещ|перемищ/.test(title)) t = "move";
+    else if (/пошт|почт/.test(title) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
     o._typeFor = o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author; o._type = t;
     return t;
   }
+  var POST_RE = new RegExp([
+    "нова\\s*пошт", "нов(ая|ой|ую)\\s*почт", "укр\\s*пошт", "укрпочт", "поштомат", "почтомат", "пошта", "почта",
+    "виддилен", "виддил", "отделен", "(^|\\s)(отд|вид|видд)\\.?\\s*№?\\s*\\d", "(^|[\\s,.(])нп(\\s|\\d|,|\\.|$)", "ттн",
+    "отримувач", "получател", "едрпоу", "(^|\\s)вул\\.", "(^|\\s)ул\\.", "вулиц", "улиц", "проспект", "адрес", "дани для видправки", "данные для отправки",
+    "(^|[^\\d])(\\+?38[\\s-]?)?\\(?0\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}(?!\\d)",
+    "meest", "мист\\s*експрес", "делив", "самовив", "самовыв"
+  ].join("|"));
+  function isPostText(t) { return POST_RE.test(t); }
   /* клиент: строка-имя из текста («Калахан Ірина», «Иващенко»), иначе заказчик из документа */
   var NOT_NAME = /^(нова|новая|пошта|почта|укрпошта|основной|склад|доп|рынок|ринок|отрез|рулон|заказ|замовлення|срочно|терміново|важно|важливо|оплата|наложка|накладений|акорн|acorn)$/i;
   function orderClient(o) {
+    var rc = /(отримувач|одержувач|получатель)\s*[:\-–]?\s*([A-ZА-ЯІЇЄҐЁ][a-zа-яіїєґё'’ʼ-]+)/i.exec(String(o.text || ""));
+    if (rc) return rc[2];
     var lines = String(o.text || "").split(/\n/).map(function (l) { return l.trim(); }), best = "";
     var authorWords = fold(o.author).split(/\s+/);
     lines.forEach(function (l) {
