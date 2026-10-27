@@ -204,6 +204,7 @@ button.shade:active { transform: scale(0.98); }
 
 .btn { min-height: 54px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 650; padding: 0 14px; }
 .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.o-foreign{display:block;width:100%;margin:14px 0 6px;background:transparent;border:1px dashed var(--line,#ccc);color:var(--muted,#777);font-size:14px}
 .btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 55%, transparent); background: transparent; }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .btn[disabled] { opacity: 0.4; cursor: not-allowed; }
@@ -856,7 +857,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.0";
+  var APP_VERSION = "4.1";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -3014,10 +3015,15 @@ form { display: grid; gap: 16px; }
     var c = orderClient(o);
     return (c ? c + " " : "") + "№" + (i + 1);
   }
-  function orderList() {
+  /* заказ только с доп. склада / рынка: рулонов нашего склада нет, а чужие найдены — в списке не показываем */
+  function isForeign(o) {
+    return !(o.order_items || []).length && /Не с нашего склада/.test(o.skipped || "") && o.ocr_state !== "pending";
+  }
+  function orderList(withForeign) {
     var list = [];
     OR.map.forEach(function (o) {
       if (OR.chat !== "all" && String(o.chat_id) !== OR.chat) return;
+      if (!withForeign && !OR.showForeign && isForeign(o)) return;
       if (OR.tab === "active" ? o.status === "done" : !recentDone(o)) return;
       list.push(o);
     });
@@ -3028,10 +3034,11 @@ form { display: grid; gap: 16px; }
   }
   function drawOrders() {
     var box = $("#ordersIn"); if (!box) return;
-    if (DRAG.on) { DRAG.redraw = true; return; }
+    if (DRAG.on && Date.now() - (DRAG.at || 0) < 8000) { DRAG.redraw = true; return; }
+    if (DRAG.on) dragEnd(true);   // перетаскивание «зависло» (палец ушёл с экрана без события) — сбросить
     var sc = box.parentNode.scrollTop;
     var chats = new Map(), na = 0, nd = 0;
-    OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (o.status !== "done") na++; else if (recentDone(o)) nd++; });
+    OR.map.forEach(function (o) { chats.set(String(o.chat_id), o.chat_title || "Группа"); if (isForeign(o) && !OR.showForeign) return; if (o.status !== "done") na++; else if (recentDone(o)) nd++; });
     var h = '<div class="o-top"><button class="icon-btn" type="button" data-act="orders-close" aria-label="Назад">←</button><h2>Заказы</h2></div>' +
       '<div class="tabs" style="--n:2;--ti:' + (OR.tab === "active" ? 0 : 1) + '"><span class="ind" aria-hidden="true"></span>' +
       '<button class="tab" type="button" data-act="o-tab" data-id="active" aria-selected="' + (OR.tab === "active") + '">В работе<span class="n">' + na + "</span></button>" +
@@ -3042,11 +3049,13 @@ form { display: grid; gap: 16px; }
       chats.forEach(function (t, id) { h += '<button type="button" class="ochip' + (OR.chat === id ? " on" : "") + '" data-act="o-chat" data-id="' + esc(id) + '">' + esc(t) + "</button>"; });
       h += "</div>";
     }
-    var list = orderList();
+    var list = orderList(), nf = 0;
+    orderList(true).forEach(function (o) { if (isForeign(o)) nf++; });
     if (!OR.loaded) h += '<p class="empty">Загрузка заказов…</p>';
     else if (!list.length) h += '<p class="empty"><strong>' + (OR.tab === "active" ? "Заказов в работе нет" : "Выполненных пока нет") + "</strong>" +
       (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "Здесь видны заказы, выполненные за последние 5 часов.") + "</p>";
     else h += (OR.tab === "done" ? '<p class="hint">Выполненные за последние 5 часов. Заказ отмечается выполненным кнопками или реакцией на сообщение в Telegram.</p>' : "") + '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
+    if (OR.loaded && nf) h += '<button type="button" class="btn ghost o-foreign" data-act="o-foreign">' + (OR.showForeign ? "Скрыть заказы доп. склада" : "Скрыто заказов доп. склада: " + nf + " · показать") + "</button>";
     box.innerHTML = h;
     box.parentNode.scrollTop = sc;
     list.slice(0, 40).forEach(function (o) { if (o.photo_path) loadThumb(o); });
@@ -3171,7 +3180,7 @@ form { display: grid; gap: 16px; }
   var DRAG = { on: false, timer: null, li: null, redraw: false, justEnded: 0 };
   function dragStart(li, y) {
     var ul = li.parentNode, items = Array.prototype.slice.call(ul.children).filter(function (x) { return x.classList.contains("oi"); });
-    DRAG.on = true; DRAG.li = li; DRAG.ul = ul; DRAG.items = items; DRAG.from = items.indexOf(li); DRAG.to = DRAG.from; DRAG.y0 = y;
+    DRAG.on = true; DRAG.at = Date.now(); DRAG.li = li; DRAG.ul = ul; DRAG.items = items; DRAG.from = items.indexOf(li); DRAG.to = DRAG.from; DRAG.y0 = y;
     DRAG.rects = items.map(function (x) { var r = x.getBoundingClientRect(); return { top: r.top, h: r.height }; });
     DRAG.gap = items.length > 1 ? DRAG.rects[1].top - DRAG.rects[0].top - DRAG.rects[0].h : 8;
     li.classList.add("dragging"); ul.classList.add("sorting");
@@ -3196,6 +3205,7 @@ form { display: grid; gap: 16px; }
   }
   function dragEnd(cancel) {
     if (!DRAG.on) return;
+    if (!DRAG.li || !DRAG.li.isConnected) { DRAG.on = false; DRAG.redraw = false; drawOrders(); return; }
     var oid = +DRAG.li.getAttribute("data-order"), from = DRAG.from, to = DRAG.to;
     DRAG.items.forEach(function (x) { x.style.transform = ""; });
     DRAG.li.classList.remove("dragging"); DRAG.ul.classList.remove("sorting");
@@ -3214,6 +3224,7 @@ form { display: grid; gap: 16px; }
     } else if (DRAG.redraw) { DRAG.redraw = false; drawOrders(); }
   }
   document.addEventListener("pointerdown", function (e) {
+    if (DRAG.on) dragEnd(true);   // новое касание, а старое перетаскивание не закончилось — сбросить
     var li = e.target.closest && e.target.closest("#ordersRoot li.oi.movable");
     if (!li || !state.isAdmin || e.target.closest(".oi-act")) return;
     var y = e.clientY, x = e.clientX;
@@ -3223,11 +3234,12 @@ form { display: grid; gap: 16px; }
   });
   document.addEventListener("pointermove", function (e) {
     if (DRAG.pending && (Math.abs(e.clientY - DRAG.py) > 8 || Math.abs(e.clientX - DRAG.px) > 8)) { clearTimeout(DRAG.timer); DRAG.pending = null; }
-    if (DRAG.on) { e.preventDefault(); dragMove(e.clientY); }
+    if (DRAG.on) { e.preventDefault(); DRAG.at = Date.now(); dragMove(e.clientY); }
   });
   document.addEventListener("touchmove", function (e) { if (DRAG.on) e.preventDefault(); }, { passive: false });
   document.addEventListener("pointerup", function () { clearTimeout(DRAG.timer); DRAG.pending = null; if (DRAG.on) dragEnd(false); });
   document.addEventListener("pointercancel", function () { clearTimeout(DRAG.timer); DRAG.pending = null; if (DRAG.on) dragEnd(false); });
+  document.addEventListener("visibilitychange", function () { if (document.hidden && DRAG.on) dragEnd(true); });
   document.addEventListener("click", function (e) { if (Date.now() - DRAG.justEnded < 400 && e.target.closest && e.target.closest("#ordersRoot li.oi")) { e.stopPropagation(); e.preventDefault(); } }, true);
   document.addEventListener("contextmenu", function (e) { if (e.target.closest && e.target.closest("#ordersRoot li.oi.movable")) e.preventDefault(); });
 
@@ -3240,14 +3252,19 @@ form { display: grid; gap: 16px; }
       return;
     }
     OR.delArm = null; clearTimeout(OR.delTimer);
+    OR.deleting = OR.deleting || {}; if (OR.deleting[id]) return; OR.deleting[id] = 1;
     var card = $("#oc-" + id); if (card) card.classList.add("removing");
     api("rpc/order_delete", { method: "POST", body: { p_id: id } }).then(function (msg) {
-      OR.map["delete"](id); ordersChanged();
+      delete OR.deleting[id];
+      OR.map["delete"](id); var c2 = $("#oc-" + id); if (c2) c2.remove(); ordersChanged();
       toast(typeof msg === "string" ? msg : "Заказ удалён");
       if (repo && repo.refresh) repo.refresh();
     })["catch"](function (e) {
-      if (card) card.classList.remove("removing");
-      toast(e && e.status === 404 ? "Выполните update-14.sql в Supabase, чтобы удалять заказы." : /управляющий/.test((e && e.message) || "") ? "Удалять заказы может только управляющий." : "Не удалось удалить заказ. Проверьте связь.", true);
+      delete OR.deleting[id];
+      var c2 = $("#oc-" + id); if (c2) c2.classList.remove("removing");
+      var em = (e && (e.message || e.msg || e.details)) || "";
+      toast(e && e.status === 404 ? "Выполните update-14.sql в Supabase, чтобы удалять заказы." : /управляющий/.test(em) ? "Удалять заказы может только управляющий." : e && (e.status === 401 || /jwt/i.test(em)) ? "Сессия устарела: закройте и откройте приложение." : "Не удалось удалить заказ" + (em ? ": " + String(em).slice(0, 120) : ". Проверьте связь."), true);
+      if (e && e.status) ordersLoad(true);
     });
   }
 
@@ -3359,19 +3376,23 @@ form { display: grid; gap: 16px; }
     return out;
   }
   /* склад в строке документа: берём только Основной склад */
-  var OUR_WH = /основн/i, OTHER_WH = /(р[иы]н[оу]к|1608|доп\.?\s*склад|ндс|nds|перевал|одес|офі?с|офис)/i;
+  var OUR_WH = /([оo0][сc]н[оo0]вн|[оo0][сc]н[оo0]в[оo0]й|сн[оo0]вн[оo0])/i,
+      OTHER_WH = /(р[иы]н[оу]к|1608|д[оo0][пnлр][\.,]?\s*[сc]к|додатк|дополнит|ндс|nds|перевал|одес|офі?с|офис)/i;
   function whOf(s) { if (OUR_WH.test(s)) return "our"; var m = OTHER_WH.exec(s); return m ? whName(m[0]) : ""; }
   function whName(m) {
     m = m.toLowerCase();
     if (/р[иы]н|1608/.test(m)) return "Рынок общий";
-    if (/доп/.test(m)) return /одес/.test(m) ? "Доп склад Одесса" : "Доп склад";
+    if (/д[оo0][пnлр]|додатк|дополн/.test(m)) return /одес/.test(m) ? "Доп склад Одесса" : "Доп склад";
     if (/ндс|nds/.test(m)) return "Склад НДС";
     if (/перевал/.test(m)) return "Перевалка";
     if (/одес/.test(m)) return "Доп склад Одесса";
     return "Офис";
   }
+  /* склад всего документа: если «Основной» нигде не прочитан, а другой склад есть — документ не наш */
+  var DOC_OTHER = /(д[оo0][пnлр][\.,]?\s*[сc]к|додатк[а-яіїє]*\s*[сc]к|дополнит[а-я]*\s*[сc]к|[сc]клад\s*(ндс|nds)|(ндс|nds)\s*[сc]клад|перевал)/i;
+  function docWh(text) { var t = String(text || ""); if (OUR_WH.test(t)) return ""; var m = DOC_OTHER.exec(t); return m ? whName(m[0]) : ""; }
   function serialsByWarehouse(text) {
-    var lines = String(text).split(/\r?\n/), def = "", found = [], seen = {};
+    var lines = String(text).split(/\r?\n/), def = "", found = [], seen = {}, dw = docWh(text);
     lines.forEach(function (ln, i) {
       if (!def && /склад\s*[:：]/i.test(ln)) def = whOf(ln);
       serialsFromText(ln).forEach(function (x) { if (!seen[x]) { seen[x] = 1; found.push({ id: x, line: i }); } });
@@ -3381,7 +3402,7 @@ form { display: grid; gap: 16px; }
     found.forEach(function (f) {
       var w = whOf(lines[f.line]);
       for (var j = f.line + 1; !w && j < lines.length && !has[j]; j++) w = whOf(lines[j]);
-      w = w || def;
+      w = w || def || dw;
       if (!w || w === "our") ours.push(f.id); else other.push({ id: f.id, wh: w });
     });
     return { ours: ours, other: other };
@@ -3461,6 +3482,7 @@ form { display: grid; gap: 16px; }
     var def = "";
     var headerText = words.filter(function (w) { return !col || w.bbox.y1 < col.y0; }).map(function (w) { return w.text; }).join(" ");
     var hm = /склад\s*[:：]\s*([^\n]{0,40})/i.exec(headerText); if (hm) def = whOf(hm[1]);
+    var dw = docWh(words.map(function (w) { return w.text; }).join(" "));
     var ours = [], other = [], unsure = [], qty = {};
     found.forEach(function (f) {
       // количество: строка колонки «Кількість» на той же высоте
@@ -3471,7 +3493,7 @@ form { display: grid; gap: 16px; }
       }
       var mid = (f.top + f.bottom) / 2, half = Math.max((f.bottom - f.top) / 2, lh * 0.6) + lh * 0.4;
       var rowText = words.filter(function (w) { var wm = (w.bbox.y0 + w.bbox.y1) / 2; return w.bbox.x1 < cx - 5 && Math.abs(wm - mid) <= half; }).map(function (w) { return w.text; }).join(" ");
-      var wh = whOf(rowText) || def;
+      var wh = whOf(rowText) || def || dw;
       if (wh && wh !== "our") { other.push({ id: f.id, wh: wh }); return; }
       if (!f.sure && !(known && known(f.id))) { unsure.push(f.id); return; }
       if (ours.indexOf(f.id) === -1) ours.push(f.id);
@@ -3505,7 +3527,7 @@ form { display: grid; gap: 16px; }
     // сколько строк в таблице: строки со словом склада
     var rowsSeen = 0, lastY = -1e9;
     words.slice().sort(function (a, b) { return a.bbox.y0 - b.bbox.y0; }).forEach(function (w) {
-      if (/(основн|р[иы]н[оу]к|1608|доп|ндс|перевал|одес)/i.test(w.text) && w.bbox.x1 < cx && (!col || w.bbox.y0 >= col.y0 - lh * 2) && w.bbox.y0 > lastY + lh * 0.8) { rowsSeen++; lastY = w.bbox.y0; }
+      if ((OUR_WH.test(w.text) || OTHER_WH.test(w.text) || /доп/i.test(w.text)) && !/^склад/i.test(w.text) && w.bbox.x1 < cx && (!col || w.bbox.y0 >= col.y0 - lh * 2) && w.bbox.y0 > lastY + lh * 0.8) { rowsSeen++; lastY = w.bbox.y0; }
     });
     var pos = {}; found.forEach(function (f) { if (!(f.id in pos)) pos[f.id] = f.top; });
     return { ours: ours, other: other, unsure: unsure, rows: rowsSeen, found: found.length, qty: qty, pos: pos };
@@ -4166,6 +4188,7 @@ form { display: grid; gap: 16px; }
       case "scan-moderack": openScan("modeRack"); return;
       case "orders-open": openOrders(); return;
       case "orders-close": closeOrders(); return;
+      case "o-foreign": OR.showForeign = !OR.showForeign; drawOrders(); return;
       case "o-tab": OR.tab = el.getAttribute("data-id"); drawOrders(); var oi = $("#ordersRoot .orders"); if (oi) oi.scrollTop = 0; return;
       case "o-chat": OR.chat = el.getAttribute("data-id"); drawOrders(); return;
       case "oi-take": setItem(+el.getAttribute("data-id"), "taken"); return;
