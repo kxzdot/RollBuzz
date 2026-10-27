@@ -607,8 +607,8 @@ form { display: grid; gap: 16px; }
 .o-chats { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
 .ochip { flex: none; height: 36px; padding: 0 14px; border-radius: 99px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 600; font-size: 0.875rem; white-space: nowrap; }
 .ochip.on { background: var(--fg); border-color: var(--fg); color: var(--bg); }
-.o-list { display: grid; gap: 12px; }
-.ocard { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; box-shadow: var(--lift); position: relative; overflow: hidden; }
+.o-list { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.ocard { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 14px; display: grid; gap: 10px; box-shadow: var(--lift); position: relative; overflow: hidden; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .ocard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
 .ocard.st-taken::before { background: var(--tag); }
 .ocard.st-done::before { background: var(--ok); }
@@ -630,7 +630,7 @@ form { display: grid; gap: 16px; }
 .oc-items.sorting .oi { transition: transform .18s ease; }
 .oc-items.sorting .oi.dragging { transition: none; position: relative; z-index: 5; box-shadow: 0 12px 30px rgba(0,0,0,.28); border-color: var(--accent); }
 .oc-items.sorting { touch-action: none; }
-.oc-chat { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-chat { font-weight: 600; min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .otype { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; background: var(--surface-2); color: var(--fg); }
 .otype.t-acorn, .otype.t-market, .otype.t-move { background: #e8590c; color: #fff; }
 .otype.t-post { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); }
@@ -857,7 +857,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.1";
+  var APP_VERSION = "4.2";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
