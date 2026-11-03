@@ -903,7 +903,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.7";
+  var APP_VERSION = "4.8";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -3822,8 +3822,8 @@ form { display: grid; gap: 16px; }
   }
 
   /* картинка → холст: увеличить, в серое, убрать линии таблицы (они мешают читать цифры) */
-  function prepCanvas(im) {
-    var k = Math.min(3, Math.max(1, 2400 / im.naturalWidth)), c = document.createElement("canvas");
+  function prepCanvas(im, target) {
+    var k = Math.min(3, Math.max(1, (target || 2400) / im.naturalWidth)), c = document.createElement("canvas");
     var w = c.width = Math.round(im.naturalWidth * k), h = c.height = Math.round(im.naturalHeight * k);
     var g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingQuality = "high"; g.drawImage(im, 0, 0, w, h);
     var id = g.getImageData(0, 0, w, h), px = id.data, n = w * h, lum = new Uint8Array(n), dark = new Uint8Array(n), out = new Uint8ClampedArray(n), i, x, y, s0;
@@ -3867,17 +3867,42 @@ form { display: grid; gap: 16px; }
     if (w) who = w[1].replace(/\s+/g, " ").trim();
     return [no, who].filter(Boolean).join(", ");
   }
+  /* один распознаватель на все фото: язык грузится один раз, а не для каждого заказа; через 2 минуты простоя закрывается */
+  var OCRW = { p: null, timer: null };
+  function ocrWorker(T) {
+    clearTimeout(OCRW.timer);
+    if (!OCRW.p) OCRW.p = Promise.resolve(T.createWorker("ukr+eng"))["catch"](function (e) { OCRW.p = null; throw e; });
+    return OCRW.p;
+  }
+  function ocrIdle(broken) {
+    clearTimeout(OCRW.timer);
+    var close = function () { var p = OCRW.p; OCRW.p = null; if (p) p.then(function (w) { try { w.terminate(); } catch (e) {} }, function () {}); };
+    if (broken) close(); else OCRW.timer = setTimeout(close, 120000);
+  }
+  /* быстрая проверка склада: страница читается один раз в исходном размере. «Основной» нигде нет, а есть
+     «1608 / Рынок общий», «Доп склад», «НДС», «Перевалка» — заказ не наш, тяжёлое чтение не нужно */
+  var QUICK_OTHER = /(1608|р[иы]нок\s*общ|ринок\s*загальн|д[оo0][пnлр][\.,]?\s*[сc]к|додатк[а-яіїє]*\s*[сc]к|дополнит[а-я]*\s*[сc]к|[сc]клад\s*(ндс|nds)|(ндс|nds)\s*[сc]клад|перевал)/i;
+  function quickOther(text) {
+    var t = String(text || "");
+    if (OUR_WH.test(t)) return "";
+    var m = QUICK_OTHER.exec(t);
+    return m ? whName(m[0]) : "";
+  }
   function ocrImage(blob) {
     return loadOcr().then(function (T) {
       var url = URL.createObjectURL(blob);
       return new Promise(function (ok, bad) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = bad; im.src = url; }).then(function (im) {
         URL.revokeObjectURL(url);
-        var c = prepCanvas(im);
-        return T.createWorker("ukr+eng").then(function (w) {
-          var res = { text: "", words: [], lines: [] };
+        return ocrWorker(T).then(function (w) {
+          var res = { text: "", words: [], lines: [] }, c;
           function setp(p) { return Promise.resolve(w.setParameters ? w.setParameters(p) : null); }
+          // проход 0 (быстрый): склад документа
+          return setp({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1", tessedit_char_whitelist: "" }).then(function () { return w.recognize(prepCanvas(im, Math.min(im.naturalWidth, 1400))); }).then(function (r0) {
+            var t0 = (r0 && r0.data && r0.data.text) || "", other = quickOther(t0);
+            if (other) return { quick: true, text: t0, other: other, words: [], lines: [] };
+            c = prepCanvas(im);
           // проход 1: вся страница — слова с координатами (склад в строке, номер заказа)
-          return setp({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1" }).then(function () { return w.recognize(c); }).then(function (r) {
+          return setp({ tessedit_pageseg_mode: "6", preserve_interword_spaces: "1", tessedit_char_whitelist: "" }).then(function () { return w.recognize(c); }).then(function (r) {
             res.text = (r && r.data && r.data.text) || ""; res.words = ocrWords((r && r.data) || {});
             var col = serialColumn(res.words);
             if (!col) return res;
@@ -3897,7 +3922,8 @@ form { display: grid; gap: 16px; }
                 return res;
               });
             });
-          }).then(function (r) { w.terminate(); return r; }, function (e) { w.terminate(); throw e; });
+          });
+          }).then(function (r) { ocrIdle(false); return r; }, function (e) { ocrIdle(true); throw e; });
         });
       });
     });
@@ -3924,6 +3950,9 @@ form { display: grid; gap: 16px; }
       if (!rows || !rows.length) throw { skip: true };
       return photoBlob(o.photo_path);
     }).then(ocrImage).then(function (res) {
+      if (res.quick) {   // быстрая проверка: документ не с Основного склада — сразу в скрытые
+        return api("orders?id=eq." + o.id, { method: "PATCH", body: { ocr_state: "done", doc_no: docFromText(res.text), skipped: "Не с нашего склада: весь документ (" + res.other + ")" }, prefer: "return=minimal" });
+      }
       var text = res.text, doc = docFromText(text), split, notes = [];
       if (res.words.length && serialColumn(res.words)) {
         split = parseDocWords(res.words, res.lines, function (id) { return state.rolls.has(id); }, res.qlines || []);
