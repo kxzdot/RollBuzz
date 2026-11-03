@@ -511,6 +511,7 @@ form { display: grid; gap: 16px; }
 .obtn { position: relative; width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--surface); color: var(--fg); box-shadow: var(--lift); flex: none; }
 .obtn svg { width: 24px; height: 24px; display: block; margin: auto; }
 .obtn .badge { position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 20px; text-align: center; font-family: var(--f-mono); }
+#prihRoot .orders { position: fixed; inset: 0; z-index: 27; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 #repRoot .orders { position: fixed; inset: 0; z-index: 17; background: var(--bg); overflow-y: auto; overscroll-behavior: contain; }
 .o-top .rep-open { margin-left: auto; }
 .rep-from-orders { width: 100%; margin: 10px 0 0; }
@@ -565,6 +566,39 @@ form { display: grid; gap: 16px; }
 .a4 td.code { font-family: "Courier New", monospace; font-size: 13px; }
 .a4 td.num { text-align: right; }
 .a4 td.mgr { font-style: italic; }
+.a4 td.nm { white-space: normal; font-size: 11.5px; line-height: 1.12; }
+.a4.land, .a4stage .a4.land { width: 1123px; height: 794px; padding: 24px 26px 20px; }
+.a4.land table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.a4.land td { border: 1.3px solid #222; padding: 2px 5px; height: auto; vertical-align: middle; white-space: normal; font-weight: 400; }
+.a4.land .h1 td, .a4.land .h2 td { height: 28px; } .a4.land .h3 td { height: 34px; }
+.a4.land .lbl { font-size: 11px; } .a4.land .cap { font-size: 13px; } .a4.land .ctr { text-align: center; }
+.a4.land .box { vertical-align: top; padding: 6px 8px; font-size: 15px; }
+.a4.land .box .ln { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; white-space: nowrap; }
+.a4.land .box .ln b { flex: 1; font-weight: 400; border-bottom: 1px solid #222; padding: 0 6px; font-size: 16px; min-height: 18px; }
+.a4.land .box small { font-size: 10px; }
+.a4.land .zak { border-top: 0; border-right: 0; font-size: 15px; vertical-align: bottom; padding-bottom: 3px; }
+.a4.land .zak b { font-weight: 400; display: inline-block; min-width: 70px; border-bottom: 1px solid #222; }
+.a4.land .big { font-size: 14px; text-align: center; }
+.a4.land .vh { padding: 0; } .a4.land .vh div { height: 17px; font-size: 10.5px; padding: 0 3px; display: flex; align-items: center; } .a4.land .vh div + div { border-top: 1px solid #222; }
+.a4.land tr.r td { height: 63px; }
+.a4.land td.n { text-align: center; font-size: 14px; }
+.a4.land td.bc { font-family: "Courier New", monospace; font-size: 14px; letter-spacing: .06em; text-align: center; white-space: nowrap; padding: 4px 2px 2px; }
+.bcode { display: flex; justify-content: center; height: 40px; margin: 0 auto; }
+.bcode i { display: block; height: 100%; flex: none; }
+.bcode i.k { background: #000; }
+.bcode-n { margin-top: 2px; line-height: 1; }
+.a4.land td.nm { font-size: 14px; line-height: 1.2; }
+.a4.land td.hw { padding: 0; } .a4.land td.hw div { height: 31px; display: flex; align-items: center; justify-content: center; font-size: 15px; } .a4.land td.hw div + div { border-top: 1px solid #222; }
+.a4.land [contenteditable]:focus { outline: 2px solid #2f3fb5; background: #eef0ff; }
+.a4 td.ctr { text-align: center; }
+.a4 tr.itog td { font-weight: 700; border-top: 2px solid #222; }
+.a4 .hd th.big.prih { width: 34%; font-size: 16px; }
+.a4 .hd th.fio { width: 13%; font-size: 12px; }
+.prih-sheet { display: grid; gap: 8px; margin: 4px 0 14px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); }
+.prih-sheet p { margin: 0; font-size: 0.9375rem; }
+.prih-sheet .row2 { display: flex; gap: 8px; flex-wrap: wrap; }
+.prih-sheet .btn { flex: 1 1 auto; }
+.prih-sheet .btn.armed { background: var(--danger); color: #fff; border-color: var(--danger); }
 .a4 tr.cl td { font-style: italic; }
 .a4 tr.gap td { height: 8px; border-left-color: #222; border-right-color: #222; }
 .a4 td[contenteditable]:focus { outline: 2px solid #2f3fb5; background: #eef0ff; }
@@ -848,6 +882,7 @@ form { display: grid; gap: 16px; }
 <div id="sumRoot"></div>
 <div id="repRoot"></div>
 <div id="modeRoot"></div>
+<div id="prihRoot"></div>
 <div id="pickRoot"></div>
 <div id="scanRoot"></div>
 <div id="toastRoot" role="status" aria-live="polite"></div>
@@ -857,7 +892,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.2";
+  var APP_VERSION = "4.5";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2161,6 +2196,136 @@ form { display: grid; gap: 16px; }
     }
   }
 
+  /* ---------- лист прихода на А4: рулоны, принятые в «Приходе» за день ---------- */
+  var PS = { open: false, busy: false, newArm: false };
+  function prihSheet() {
+    var v = null; try { v = JSON.parse(lsGet("sklad_prihod_sheet") || "null"); } catch (e) { v = null; }
+    if (!v || !v.d || !Array.isArray(v.ids)) v = { d: ymd(new Date()), ids: [] };
+    return v;
+  }
+  function prihSheetSet(v) { lsSet("sklad_prihod_sheet", JSON.stringify(v)); prihCnt(); }
+  // порядок в листе — как сканировали (повторно записанный после сбоя рулон встаёт на своё место)
+  function prihSheetAdd(id, at) {
+    if (!id) return;
+    var v = prihSheet(), today = ymd(new Date());
+    if (v.d !== today) v = { d: today, ids: [] };   // новый день — новый лист
+    v.t = v.t || {}; v.s = v.s || {};
+    if (v.ids.indexOf(id) !== -1) return;
+    v.ids.push(id); v.t[id] = at || Date.now();
+    if (state.mode2 && state.mode2.series) v.s[id] = state.mode2.series;
+    v.ids.sort(function (a, b) { return (v.t[a] || 0) - (v.t[b] || 0); });
+    prihSheetSet(v);
+  }
+  function prihSheetDel(id) { var v = prihSheet(), i = v.ids.indexOf(id); if (i !== -1) { v.ids.splice(i, 1); if (v.t) delete v.t[id]; if (v.s) delete v.s[id]; prihSheetSet(v); } }
+  function prihCnt() { var c = $("#prihCnt"); if (c) c.textContent = String(prihSheet().ids.length); }
+  function prihSheetBox() {
+    var v = prihSheet(); if (!v.ids.length) return "";
+    var today = v.d === ymd(new Date());
+    return '<div class="prih-sheet"><p>Лист прихода' + (today ? " за сегодня" : " за " + dmy(v.d)) + ": <b>" + v.ids.length + "</b> рул." + (today ? " Новые рулоны допишутся в него." : " Новые рулоны начнут новый лист.") + "</p>" +
+      '<div class="row2"><button type="button" class="btn sm" data-act="prih-print">Лист на печать (А4)</button>' +
+      '<button type="button" class="btn sm' + (PS.newArm ? " armed" : "") + '" data-act="prih-new">' + (PS.newArm ? "Точно начать заново?" : "Начать новый лист") + "</button></div></div>";
+  }
+  function prihNew() {
+    if (!PS.newArm) { PS.newArm = true; drawMode(); setTimeout(function () { if (PS.newArm) { PS.newArm = false; if (state.mode2) drawMode(); } }, 4000); return; }
+    PS.newArm = false; prihSheetSet({ d: ymd(new Date()), ids: [] }); toast("Начат новый лист прихода"); drawMode();
+  }
+  function prihRows() {
+    var v = prihSheet();
+    return v.ids.map(function (id) {
+      var r = state.rolls.get(id) || {};
+      return { code: id, kg: r.kgLabel != null ? kgFmt(r.kgLabel) : "", kgR: r.kgReal != null ? kgFmt(r.kgReal) : "", fabric: r.fabric || "", color: r.color || "", series: (v.s && v.s[id]) || "" };
+    });
+  }
+  /* ---------- штрихкод для печати: EAN-13 как у наклеек 1С, остальное Code-128 ----------
+     полоски — блоки целой ширины (2 px на модуль), чтобы в PDF и на бумаге были чёткими и читались сканером */
+  var EAN_L = ["0001101", "0011001", "0010011", "0111101", "0100011", "0110001", "0101111", "0111011", "0110111", "0001011"];
+  var EAN_G = ["0100111", "0110011", "0011011", "0100001", "0011101", "0111001", "0000101", "0010001", "0001001", "0010111"];
+  var EAN_R = ["1110010", "1100110", "1101100", "1000010", "1011100", "1001110", "1010000", "1000100", "1001000", "1110100"];
+  var EAN_P = ["LLLLLL", "LLGLGG", "LLGGLG", "LLGGGL", "LGLLGG", "LGGLLG", "LGGGLL", "LGLGLG", "LGLGGL", "LGGLGL"];
+  var C128 = ("212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 " +
+    "221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 " +
+    "231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 " +
+    "314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 " +
+    "111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 " +
+    "114131 311141 411131 211412 211214 211232 2331112").split(" ");
+  function eanBits(c) {
+    var d = c.split("").map(Number), b = "101";
+    for (var i = 0; i < 6; i++) b += (EAN_P[d[0]].charAt(i) === "L" ? EAN_L : EAN_G)[d[i + 1]];
+    b += "01010";
+    for (i = 0; i < 6; i++) b += EAN_R[d[i + 7]];
+    return b + "101";
+  }
+  function c128Bits(txt) {
+    var vals = [104], sum = 104, b = "";
+    for (var i = 0; i < txt.length; i++) { var v = txt.charCodeAt(i) - 32; if (v < 0 || v > 94) v = 0; vals.push(v); sum += v * (i + 1); }
+    vals.push(sum % 103); vals.push(106);
+    vals.forEach(function (v) { var w = C128[v]; for (var k = 0; k < w.length; k++) b += (k % 2 ? "0" : "1").repeat(+w.charAt(k)); });
+    return b;
+  }
+  function barcodeHtml(code) {
+    code = String(code || ""); if (!code) return "";
+    var ean = /^\d{13}$/.test(code) && eanCheck(code), bits = ean ? eanBits(code) : c128Bits(code), qm = ean ? 11 : 10;
+    var M = (bits.length + qm * 2) * 2 <= 250 ? 2 : 1;   // в колонку ~250 px: длинный Code-128 печатается тоньше, но целиком
+    var quiet = qm * M, h = '<div class="bcode" style="padding:0 ' + quiet + "px;width:" + (bits.length * M + quiet * 2) + 'px">';
+    for (var i = 0; i < bits.length;) { var j = i; while (j < bits.length && bits.charAt(j) === bits.charAt(i)) j++; h += '<i class="' + (bits.charAt(i) === "1" ? "k" : "") + '" style="width:' + ((j - i) * M) + 'px"></i>'; i = j; }
+    return h + '</div><div class="bcode-n">' + esc(ean ? code.charAt(0) + " " + code.slice(1, 7) + " " + code.slice(7) : code) + "</div>";
+  }
+
+  /* лист прихода — копия бумажного бланка склада, А4 по ширине, 10 рулонов на лист.
+     ждем = их вес (наклейка), факт = наш вес; ткань и цвет — только в первой строке группы одинаковых рулонов */
+  function prihPagesHtml() {
+    var v = prihSheet(), list = prihRows(), PER = 10, pages = [];
+    for (var i = 0; i < Math.max(list.length, 1); i += PER) pages.push(list.slice(i, i + PER));
+    function ed(t) { return '<div contenteditable="true">' + esc(t == null ? "" : t) + "</div>"; }
+    function half(t) { return '<td class="hw">' + ed(t) + ed("") + "</td>"; }
+    return pages.map(function (pr, pi) {
+      var body = "", prev = null;
+      for (var k = 0; k < PER; k++) {
+        var x = pr[k], show = x && (!prev || k === 0 || x.fabric !== prev.fabric || x.color !== prev.color || x.series !== prev.series);
+        body += '<tr class="r">' + cellE(k + 1, "n") + '<td class="bc">' + (x ? barcodeHtml(x.code) : "") + "</td>" + half(x ? x.kg : "") + half(x ? x.kgR : "") + cellE("") +
+          cellE(show ? x.fabric : "", "nm") + cellE(show ? x.color : "", "nm") + cellE("") + cellE("") + "</tr>";
+        if (x) prev = x;
+      }
+      return '<div class="a4 land prih"><table>' +
+        '<colgroup><col style="width:3%"><col style="width:24%"><col style="width:5.6%"><col style="width:5.6%"><col style="width:5.6%"><col style="width:18%"><col style="width:13%"><col style="width:7.5%"><col></colgroup>' +
+        '<tr class="h1"><td colspan="2" rowspan="2" class="box"><div class="ln">ДАТА:<b contenteditable="true">' + esc(dmy(v.d)) + '</b></div><div class="ln">ФИО <small>заполнял</small><b contenteditable="true"></b></div></td>' +
+        '<td colspan="4" class="zak">заказ №<b contenteditable="true">&nbsp;</b> от <b contenteditable="true">&nbsp;</b></td><td class="lbl">склад:</td><td></td><td class="big">ЛИСТ</td></tr>' +
+        '<tr class="h2"><td class="cap">ждем</td><td class="cap">факт</td><td></td><td></td><td class="cap">ОСНОВНОЙ</td><td class="cap" style="font-weight:700">Карго</td>' + cellE(pi + 1, "big") + "</tr>" +
+        '<tr class="h3"><td class="lbl ctr">№</td><td class="lbl ctr">ШТРИХ-КОД</td><td class="vh"><div>ВЕС, кг</div><div>метры</div></td><td class="vh"><div>ВЕС, кг</div><div>метры</div></td>' +
+        '<td class="lbl">ширина рулона</td><td class="lbl">НАЗВАНИЕ ткани</td><td class="lbl">факт цвет</td><td></td><td class="lbl">образец цвета и ткани</td></tr>' +
+        body + "</table></div>";
+    }).join("");
+  }
+  function openPrihSheet() {
+    PS.open = true;
+    $("#prihRoot").innerHTML = '<div class="orders in" role="dialog" aria-label="Лист прихода"><div class="mode-in rep-in" id="prihIn"></div></div>';
+    drawPrihSheet();
+  }
+  function drawPrihSheet() {
+    var box = $("#prihIn"); if (!box) return;
+    var n = prihSheet().ids.length;
+    box.innerHTML = '<div class="o-top"><button class="icon-btn" type="button" data-act="prih-close" aria-label="Назад">←</button><h2>Лист прихода</h2>' +
+      '<button type="button" class="btn primary sm rep-open" data-act="prih-pdf" id="prihPdf"' + (PS.busy || !n ? " disabled" : "") + ">" + (PS.busy ? "Готовлю PDF…" : "PDF для печати") + "</button></div>" +
+      '<p class="hint rep-hint">' + (n ? "Рулонов: " + n + ", листов: " + Math.ceil(n / 10) + ". «ждем» — их вес с наклейки, «факт» — наш. Любую клетку можно поправить нажатием." : "В листе пока нет рулонов: отсканируйте их в «Приходе».") + "</p>" +
+      '<div class="a4wrap" id="prihPages">' + prihPagesHtml() + "</div>";
+    fitA4("#prihPages", "#prihIn");
+  }
+  function closePrihSheet() {
+    if (!PS.open) return false;
+    PS.open = false;
+    var root = $("#prihRoot"), m = root.firstChild;
+    if (m) { m.classList.add("out"); setTimeout(function () { if (!PS.open) root.innerHTML = ""; }, 220); }
+    return true;
+  }
+  function prihPdf() {
+    var pages = document.querySelectorAll("#prihPages .a4"); if (!pages.length || PS.busy) return;
+    PS.busy = true; var b = $("#prihPdf"); if (b) { b.disabled = true; b.textContent = "Готовлю PDF…"; }
+    var d = prihSheet().d;
+    pagesToPdf(pages, "prihod-" + d + ".pdf", "reports/prihod/" + d + "-" + Date.now() + ".pdf", function (msg, err) {
+      PS.busy = false; var b2 = $("#prihPdf"); if (b2) { b2.disabled = false; b2.textContent = "PDF для печати"; } if (msg) toast(msg, err);
+    });
+  }
+
   /* ---------- режим «Раскладка»: стеллаж выбран, рулоны сканируются подряд ---------- */
   function openMode(kind) {
     closeSheet(true); exitSelect();
@@ -2192,7 +2357,7 @@ form { display: grid; gap: 16px; }
     if (M.step === "setup" && M.prihod) {
       h = '<div class="mode' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Приход"><div class="mode-in">' +
         '<div class="sheet-head"><h2>Приход</h2><button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
-        '<p class="hint">Выберите ткань и цвет партии и стеллаж, куда кладёте. Потом сканируйте рулоны подряд: каждый новый номер сразу появится в базе с этой тканью, цветом и местом.</p>' +
+        '<p class="hint">Выберите ткань и цвет партии и стеллаж, куда кладёте. Потом сканируйте рулоны подряд: каждый новый номер сразу появится в базе с этой тканью, цветом и местом.</p>' + prihSheetBox() +
         '<form id="modeForm" novalidate autocomplete="off">' + presetFields(M) + '<div class="err" id="e-m-preset"></div>' +
         '<div class="field"><label for="m-series">Серия <span class="opt">необязательно</span></label><input id="m-series" type="text" inputmode="numeric" class="mono" placeholder="первые цифры номера, например 2000012877" value="' + esc(M.series) + '"></div>' +
         '<div class="two"><div class="field"><label for="m-rack">Стеллаж <span class="opt">необязательно</span></label><input id="m-rack" type="text" class="mono" placeholder="пока не знаю" value="' + esc(M.rack) + '"><div class="err" id="e-m-rack"></div></div>' +
@@ -2221,7 +2386,8 @@ form { display: grid; gap: 16px; }
     }
     h = '<div class="mode run' + (enter ? " in" : "") + '" role="dialog" aria-modal="true" aria-label="Раскладка"><div class="mode-in">' +
       '<div class="mode-top">' + rackHtml({ rack: M.rack, floor: M.floor }) +
-      '<div class="mode-title"><b>' + (M.prihod ? "Приход" : "Раскладка") + "</b>" + (M.prihod ? '<span class="mode-preset">' + esc([M.fabric, M.color].filter(Boolean).join(" · ")) + "</span>" : "") + '<span id="modeCount">' + countText(M) + '</span><button type="button" class="link-btn" data-act="mode-setup">' + (M.prihod ? "Сменить ткань или стеллаж" : "Сменить стеллаж") + "</button></div>" +
+      '<div class="mode-title"><b>' + (M.prihod ? "Приход" : "Раскладка") + "</b>" + (M.prihod ? '<span class="mode-preset">' + esc([M.fabric, M.color].filter(Boolean).join(" · ")) + "</span>" : "") + '<span id="modeCount">' + countText(M) + '</span><button type="button" class="link-btn" data-act="mode-setup">' + (M.prihod ? "Сменить ткань или стеллаж" : "Сменить стеллаж") + "</button>" +
+        (M.prihod ? '<button type="button" class="link-btn" data-act="prih-print">Лист на печать (<span id="prihCnt">' + prihSheet().ids.length + "</span>)</button>" : "") + "</div>" +
       (voiceAvailable() ? '<button type="button" class="icon-btn cam-toggle" data-act="mode-voice" aria-label="Сказать номер">' + ICON_MIC + "</button>" : "") +
       '<button type="button" class="icon-btn cam-toggle' + (M.cam ? " on" : "") + '" data-act="mode-cam" aria-label="' + (M.cam ? "Выключить камеру" : "Включить камеру") + '">' + ICON_SCAN + "</button>" +
       '<button class="x" type="button" data-act="mode-close" aria-label="Закрыть">✕</button></div>' +
@@ -2301,7 +2467,8 @@ form { display: grid; gap: 16px; }
   function kgEntry(code) { var M = state.mode2; if (!M) return null; for (var i = 0; i < M.log.length; i++) if (M.log[i].code === code && M.log[i].id) return M.log[i]; return null; }
   function kgFocusFirst() {
     var M = state.mode2; if (!M || !M.prihod) return;
-    var e = M.log.filter(kgPending)[0];
+    var e = M.log.filter(kgPending)[0], mc0 = $("#m-code");
+    if (mc0 && document.activeElement === mc0 && mc0.value) return;   // человек набирает номер — не мешаем
     if (!e) { if (!M.cam) { var mc = $("#m-code"); if (mc) mc.focus(); } return; }
     var inp = document.querySelector('.mode input[data-kg="' + (e.inL ? "r" : "l") + '"][data-code="' + e.code + '"]');
     if (inp && document.activeElement !== inp) { inp.focus({ preventScroll: false }); }
@@ -2341,7 +2508,7 @@ form { display: grid; gap: 16px; }
     var rp = rackFromCode(code);
     if (rp) { modeSwitchRack(rp, fromCam); return; }
     var now = Date.now();
-    if (M.recent[code] && now - M.recent[code] < 4000) return;   // сканер видит тот же код повторно
+    if (fromCam && M.recent[code] && now - M.recent[code] < 4000) return;   // сканер видит тот же код повторно
     if (fromCam && M.log[0] && M.log[0].code === code && M.log[0].st !== "err") return;   // тот же рулон всё ещё перед камерой
     if (fromCam) {   // этот рулон уже записан в этой раскладке: поднимаем его наверх, а не пишем второй раз
       for (var j = 0; j < M.log.length; j++) {
@@ -2354,11 +2521,11 @@ form { display: grid; gap: 16px; }
     M.recent[code] = now;
     // приход: у предыдущих рулонов вес уже вписан полностью — сохраняем сами
     if (M.prihod) M.log.forEach(function (x) { if (kgPending(x) && !x.kgBusy && String(x.inR || "").trim()) kgSave(x.code); });
-    var e = { code: code, id: null, st: "wait", text: "", fresh: true };
+    var e = { code: code, id: null, st: "wait", text: "", fresh: true, at: now };
     M.log.unshift(e); drawLog();
     if (!/^\d[\d-]{0,29}$/.test(code)) { e.st = "err"; e.text = "Это не номер рулона: в номере только цифры."; beep(false); drawLog(); return; }
     if (!fromCam) { var f = $("#m-code"); if (f) f.value = ""; }
-    M.queue = M.queue.then(function () { return modeProcess(e); });
+    modeEnqueue(M, e);
   }
   function modeSwitchRack(rp, fromCam) {
     var M = state.mode2; if (!M) return;
@@ -2400,12 +2567,14 @@ form { display: grid; gap: 16px; }
       if (M.prihod) { if (!r.fabric && M.fabric) d.fabric = M.fabric; if (!r.color && M.color) d.color = M.color; }
       if (!r.deleted && (!M.rack || (r.rack === M.rack && (r.floor || "") === M.floor)) && !d.fabric && !d.color) {
         e.st = "same"; e.text = M.rack ? "уже лежит здесь" : (r.rack ? "уже в базе, лежит: " + place(r) : "уже в базе");
+        if (M.prihod) prihSheetAdd(e.id, e.at);
         if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.kgSaved = true; e.kgL = r.kgLabel; e.kgR = r.kgReal; } setTimeout(kgFocusFirst, 50); }
         beep(true); drawLog(); return;
       }
       if (r.deleted) d.deleted = false;
       return repo.updateMany([res.id], d).then(function () {
         e.st = "ok"; e.kind = r.deleted ? "restored" : "moved";
+        if (M.prihod) prihSheetAdd(e.id, e.at);
         if (M.prihod) { if (r.kgLabel != null || r.kgReal != null) { e.inL = r.kgLabel == null ? "" : kgFmt(r.kgLabel); e.inR = r.kgReal == null ? "" : kgFmt(r.kgReal); } setTimeout(kgFocusFirst, 50); }
         e.text = r.deleted ? "возвращён из удалённых" : !M.rack ? "уже в базе" : (r.rack && (r.rack !== M.rack || (r.floor || "") !== M.floor) ? "перенесён: был " + place(r) : "место записано");
         if (d.fabric || d.color) { e.fabric = d.fabric || r.fabric; e.color = d.color || r.color; e.text += ", ткань и цвет заполнены"; }
@@ -2418,7 +2587,7 @@ form { display: grid; gap: 16px; }
     d.fabric = M.fabric; d.color = M.color; if (!("rack" in d)) { d.rack = ""; d.floor = ""; }
     return repo.insert(e.code, d).then(function () {
       e.st = "ok"; e.kind = "new"; e.text = M.rack ? "новый рулон" : "новый рулон, без места";
-      if (M.prihod) setTimeout(kgFocusFirst, 50);
+      if (M.prihod) { prihSheetAdd(e.id, e.at); setTimeout(kgFocusFirst, 50); }
       if (M.prihod && M.series && e.code.indexOf(M.series) !== 0) { e.text = "новый рулон · не из серии " + M.series + ", проверьте"; e.warn = true; }
       if (state.mode2 === M) M.count++;
       beep(true); drawLog();
@@ -2445,13 +2614,29 @@ form { display: grid; gap: 16px; }
       : repo.updateMany([e.id], e.kind === "restored" ? { rack: e.prev.rack, floor: e.prev.floor, deleted: true } : { rack: e.prev.rack, floor: e.prev.floor });
     p.then(function () {
       e.st = "undone"; e.text = e.kind === "new" ? "добавление отменено" : "отменено, место прежнее"; M.count = Math.max(0, M.count - 1);
+      if (M.prihod) prihSheetDel(e.id);
       delete M.recent[e.code]; drawLog();
     }, function () { e.st = "ok"; drawLog(); toast("Не удалось отменить. Проверьте связь.", true); });
+  }
+  /* запись по очереди; зависший запрос (пропала связь) не держит очередь: через 25 с — ошибка и «Повторить» */
+  function modeEnqueue(M, e) {
+    M.queue = M.queue.then(function () {
+      var to;
+      return Promise.race([
+        Promise.resolve().then(function () { return modeProcess(e); }),
+        new Promise(function (res, rej) { to = setTimeout(function () { rej({ timeout: true }); }, 25000); })
+      ]).then(function () { clearTimeout(to); }, function (err) { clearTimeout(to); throw err; });
+    })["catch"](function (err) {
+      if (e.st === "wait") {
+        if (err && err.timeout) { e.st = "err"; e.retry = true; e.text = "Сервер не ответил. Проверьте связь и нажмите «Повторить»."; beep(false); drawLog(); }
+        else modeFail(e, err);
+      }
+    });
   }
   function modeRetry(i) {
     var M = state.mode2, e = M && M.log[i]; if (!e || e.st !== "err") return;
     e.st = "wait"; e.retry = false; drawLog();
-    M.queue = M.queue.then(function () { return modeProcess(e); });
+    modeEnqueue(M, e);
   }
 
   /* ---------- заказы из Telegram ---------- */
@@ -2916,26 +3101,31 @@ form { display: grid; gap: 16px; }
       toast(e && e.status === 404 ? "Выполните update-16.sql в Supabase." : /управляющий/.test(m) ? "Править может только управляющий." : "Не удалось сохранить. Проверьте связь.", true);
     });
   }
-  function fitA4() {
-    var w = $("#repPages"), box = $("#repIn"); if (!w || !box) return;
+  function fitA4(pagesSel, boxSel) {
+    var w = $(pagesSel || "#repPages"), box = $(boxSel || "#repIn"); if (!w || !box) return;
     var cs = getComputedStyle(box), inner = box.clientWidth - parseFloat(cs.paddingLeft || 0) - parseFloat(cs.paddingRight || 0);
-    var k = Math.min(1, (inner || 360) / 794);
-    Array.prototype.forEach.call(w.querySelectorAll(".a4"), function (p) { p.style.zoom = k; });
+    Array.prototype.forEach.call(w.querySelectorAll(".a4"), function (p) { p.style.zoom = Math.min(1, (inner || 360) / (p.classList.contains("land") ? 1123 : 794)); });
   }
   function repPdf() {
     var pages = document.querySelectorAll("#repPages .a4"); if (!pages.length || REP.busy) return;
     REP.busy = true; var btn = $("#repPdf"); if (btn) { btn.disabled = true; btn.textContent = "Готовлю PDF…"; }
-    var name = "otchet-" + REP.type + "-" + REP.date + ".pdf";
+    pagesToPdf(pages, "otchet-" + REP.type + "-" + REP.date + ".pdf", "reports/" + REP.date + "-" + REP.type + "-" + Date.now() + ".pdf", function (msg, err) {
+      REP.busy = false; var b = $("#repPdf"); if (b) { b.disabled = false; b.textContent = "PDF для печати"; } if (msg) toast(msg, err);
+    });
+  }
+  function pagesToPdf(pages, name, path, finish) {
     var stage = document.createElement("div"); stage.className = "a4stage";
     Array.prototype.forEach.call(pages, function (p) { var c = p.cloneNode(true); c.style.zoom = 1; c.removeAttribute("style"); stage.appendChild(c); });
     document.body.appendChild(stage);
-    function done(msg, err) { REP.busy = false; if (stage.parentNode) stage.parentNode.removeChild(stage); var b = $("#repPdf"); if (b) { b.disabled = false; b.textContent = "PDF для печати"; } if (msg) toast(msg, err); }
+    function done(msg, err) { if (stage.parentNode) stage.parentNode.removeChild(stage); finish(msg, err); }
     Promise.all([loadLib(H2C_LIB, function () { return !!window.html2canvas; }), loadLib(JSPDF_LIB, function () { return !!(window.jspdf && window.jspdf.jsPDF); })]).then(function () {
-      var pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" }), seq = Promise.resolve();
+      var land = stage.firstChild && stage.firstChild.classList.contains("land");
+      var pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: land ? "landscape" : "portrait" }), seq = Promise.resolve();
       Array.prototype.forEach.call(stage.children, function (p, i) {
-        seq = seq.then(function () { return window.html2canvas(p, { scale: 2, backgroundColor: "#ffffff", logging: false }); }).then(function (cv) {
-          if (i) pdf.addPage();
-          pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
+        seq = seq.then(function () { return window.html2canvas(p, { scale: land ? 3 : 2, backgroundColor: "#ffffff", logging: false }); }).then(function (cv) {
+          if (i) pdf.addPage("a4", land ? "landscape" : "portrait");
+          if (land) pdf.addImage(cv.toDataURL("image/png"), "PNG", 0, 0, 297, 210);
+          else pdf.addImage(cv.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, 210, 297);
         });
       });
       return seq.then(function () { return pdf; });
@@ -2943,7 +3133,7 @@ form { display: grid; gap: 16px; }
       var native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       if (!native || !repo || repo.kind !== "shared") { pdf.save(name); done("PDF сохранён: " + name); return; }
       // в приложении файл нельзя скачать напрямую: кладём в хранилище и открываем в браузере, там «Печать» или «Поделиться»
-      var blob = pdf.output("blob"), path = "reports/" + REP.date + "-" + REP.type + "-" + Date.now() + ".pdf", base = CFG.url.replace(/\/+$/, "") + "/storage/v1/object/";
+      var blob = pdf.output("blob"), base = CFG.url.replace(/\/+$/, "") + "/storage/v1/object/";
       return ensureToken().then(function (t) {
         var hd = { apikey: CFG.key, Authorization: "Bearer " + t };
         return fetch(base + "orders/" + path, { method: "POST", headers: Object.assign({ "Content-Type": "application/pdf", "x-upsert": "true" }, hd), body: blob }).then(function (r) {
@@ -2957,7 +3147,7 @@ form { display: grid; gap: 16px; }
       });
     })["catch"](function (e) {
       var m = String(e && e.message || "");
-      done(/upload 4|sign 4/.test(m) ? "Нет прав сохранить PDF: выполните update-13.sql в Supabase." : /lib/.test(m) ? "Не загрузились модули для PDF. Проверьте интернет." : "Не получилось сделать PDF. Попробуйте ещё раз.", true);
+      done(/upload 4|sign 4/.test(m) ? "Нет прав сохранить PDF: выполните " + (/prihod/.test(path) ? "update-20.sql" : "update-13.sql") + " в Supabase." : /lib/.test(m) ? "Не загрузились модули для PDF. Проверьте интернет." : "Не получилось сделать PDF. Попробуйте ещё раз.", true);
     });
   }
 
@@ -4177,6 +4367,10 @@ form { display: grid; gap: 16px; }
         else repOrders().forEach(function (o) { if (o.status === "done") REP.sel.add(o.id); });
         drawRep(); return;
       case "rep-pdf": repPdf(); return;
+      case "prih-print": openPrihSheet(); return;
+      case "prih-close": closePrihSheet(); return;
+      case "prih-pdf": prihPdf(); return;
+      case "prih-new": prihNew(); return;
       case "sum-close": closeSum(); return;
       case "sum-per": SUM.period = el.getAttribute("data-id"); sumLoad(); return;
       case "voice": voiceAdd(); return;
@@ -4245,8 +4439,19 @@ form { display: grid; gap: 16px; }
     else if (e.target.matches(".scan-manual")) { var mv = val("#scanManual").replace(/\s/g, ""); if (!mv) return; if (!/^\d[\d-]*$/.test(mv)) { toast("Номер только цифрами.", true); return; } var tg = scanTarget; closeScan(); scanDone(tg, mv); }
     else if (e.target.matches(".fx-form")) repFixSave(+e.target.getAttribute("data-id"), false);
     else if (e.target.matches("#modeForm")) modeStart();
-    else if (e.target.matches("#modeAdd")) modeAdd(val("#m-code"), false);
+    else if (e.target.matches("#modeAdd")) { if (Date.now() - MD_TAP < 800) return; modeAdd(val("#m-code"), false); }
     else if (e.target.matches("#authForm")) submitAuth();
+  });
+  var MD_TAP = 0;
+  /* «Записать» в раскладке/приходе срабатывает сразу при касании: на Android клавиатура закрывается,
+     кнопка уезжает, и обычное нажатие (click) теряется */
+  document.addEventListener("pointerdown", function (e) {
+    var b = e.target.closest && e.target.closest("#modeAdd button[type=submit]");
+    if (!b || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.preventDefault();
+    var v = val("#m-code"); if (!v) return;
+    MD_TAP = Date.now(); modeAdd(v, false);
+    var M = state.mode2; if (M && !M.cam) setTimeout(function () { var f = $("#m-code"); if (f) f.focus(); }, 30);
   });
   /* долгое нажатие на рулон включает выбор */
   document.addEventListener("pointerdown", function (e) {
@@ -4285,6 +4490,7 @@ form { display: grid; gap: 16px; }
 
   /* кнопка «назад» на Android */
   function backAction() {
+    if (closePrihSheet()) return true;
     if (state.pick) { closePicker(); return true; }
     if (closeViewer()) return true;
     if (REP.open && REP.step === "sheet") { REP.step = "pick"; drawRep(); return true; }
