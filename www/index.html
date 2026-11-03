@@ -672,6 +672,12 @@ form { display: grid; gap: 16px; }
 .oi-lab { justify-self: start; font-size: 0.8125rem; font-weight: 700; padding: 1px 8px; border-radius: 6px; background: var(--fg); color: var(--bg); margin-bottom: 2px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oc-who { font-weight: 650; font-size: 1.0625rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .oc-doc { font-weight: 500; font-size: 0.875rem; color: var(--muted); }
+.oc-notes { margin: -4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; padding: 8px 12px; border-radius: 12px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.oflag { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; }
+.oflag.urgent { background: var(--danger); color: #fff; }
+.oflag.tmr { background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
+.otype.t-truck { background: #b8120c; color: #fff; }
+.otype.t-pickup, .otype.t-delivery { background: color-mix(in srgb, var(--ok) 18%, var(--surface)); color: var(--fg); }
 .oc-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
 .oc-photo { padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); min-height: 80px; display: block; width: 100%; }
 .oc-photo img { display: block; width: 100%; max-height: 220px; object-fit: cover; object-position: top left; }
@@ -892,7 +898,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.5";
+  var APP_VERSION = "4.6";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -2704,7 +2710,7 @@ form { display: grid; gap: 16px; }
     var b = $("#ordersBtn");
     if (b) {
       b.hidden = OR.missing || !repo || repo.kind !== "shared";
-      var n = 0; OR.map.forEach(function (o) { if (o.status !== "done") n++; });
+      var n = 0; OR.map.forEach(function (o) { if (o.status !== "done" && !isForeign(o)) n++; });
       var badge = b.querySelector(".badge"); badge.textContent = n > 99 ? "99+" : String(n); badge.hidden = !n;
     }
     if (OR.open) drawOrders();
@@ -2940,7 +2946,8 @@ form { display: grid; gap: 16px; }
   function repOrders() {
     return (REP.orders || []).filter(function (o) {
       var t = orderType(o) || "post";
-      return REP.type === "post" ? t === "post" || t === "" : t === REP.type;
+      if (isForeign(o)) return false;
+      return REP.type === "post" ? t === "post" || t === "" || t === "truck" || t === "pickup" || t === "delivery" : t === REP.type;
     });
   }
   function repSelected() {
@@ -3152,28 +3159,78 @@ form { display: grid; gap: 16px; }
   }
 
   /* ---------- тип заказа: Почта / Acorn / Рынок / Перемещение ---------- */
-  var OTYPES = { acorn: { name: "Acorn", pri: 1 }, market: { name: "Рынок", pri: 1 }, move: { name: "Перемещение", pri: 1 }, post: { name: "Почта", pri: 0 } };
+  // ранг: меньше — выше в списке. Фура и всё срочное — всегда сверху
+  var OTYPES = { truck: { name: "Фура", rank: 0 }, acorn: { name: "Acorn", rank: 1 }, market: { name: "Рынок", rank: 1 }, move: { name: "Перемещение", rank: 1 },
+    pickup: { name: "Самовывоз", rank: 2 }, delivery: { name: "Деливери", rank: 3 }, post: { name: "Почта", rank: 4 } };
   // заказы от этих людей всегда Acorn (имя автора сообщения в Telegram)
   var ACORN_AUTHORS = /(^|\s)(андрей|андрий|andrey|andrii|andriy|andrew)(\s|$)/;
+  function orderAll(o) { return String(o.text || "") + (o.notes ? "\n" + o.notes : ""); }
+  /* группы: «Заказы ткани Acorn» — Acorn, «Перемещение товара на Рынок» — перемещение,
+     «Заказы, исполнения рынок» — общая группа заказов: тип по тексту (слово «рынок» в названии ничего не значит) */
+  function chatKind(title) {
+    var t = fold(title);
+    if (/acorn|акорн/.test(t)) return "acorn";
+    if (/перемещ|перемищ|переміщ/.test(t)) return "move";
+    if (/(^|\s)(р[иы]нок)$/.test(t.trim()) && !/заказ|замовл/.test(t)) return "market";
+    return "";
+  }
   function orderType(o) {
-    if (o._typeFor === o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author) return o._type;
-    var title = fold(o.chat_title), txt = fold(o.text), all = title + " " + txt, t = "";
-    if (/acorn|акорн/.test(all) || ACORN_AUTHORS.test(fold(o.author))) t = "acorn";
-    else if (/перемещ|перемищ|переміщ|перемiщ/.test(txt)) t = "move";
+    var key = o.text + "|" + o.notes + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author;
+    if (o._typeFor === key) return o._type;
+    var kind = chatKind(o.chat_title), txt = fold(orderAll(o)), t = "";
+    if (/(^|[^a-zа-я])фур(а|у|и|ой|ою|е)?([^a-zа-я]|$)/.test(txt)) t = "truck";
+    else if (kind === "acorn" || /acorn|акорн/.test(txt) || ACORN_AUTHORS.test(fold(o.author))) t = "acorn";
+    else if (kind === "move" || /перемещ|перемищ|переміщ|перемiщ/.test(txt)) t = "move";
+    else if (/делив|delivery/.test(txt)) t = "delivery";
+    else if (/самовив|самовыв|(^|\s)(забере|заберет|забирает|забира)/.test(txt)) t = "pickup";
     // признаки почты сильнее слова «рынок»: Нова/Укр пошта, поштомат, отделение, адрес, получатель, телефон, ЄДРПОУ
     else if (isPostText(txt)) t = "post";
-    else if (/р[иы]нок|рынк|ринк/.test(title) || /(^|\s)на\s+р[иы]нок|(^|[^\d])1608([^\d]|$)/.test(txt)) t = "market";
-    else if (/перемещ|перемищ/.test(title)) t = "move";
-    else if (/пошт|почт/.test(title) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
-    o._typeFor = o.text + "|" + o.chat_title + "|" + o.doc_no + "|" + o.author; o._type = t;
+    else if (kind === "market" || /(^|\s)на\s+р[иы]нок|(^|[^\d])1608([^\d]|$)/.test(txt)) t = "market";
+    else if (/пошт|почт/.test(fold(o.chat_title)) || /замовн|заказчик/.test(fold(o.doc_no)) || orderClient(o)) t = "post";
+    o._typeFor = key; o._type = t;
     return t;
+  }
+  /* пометки: «срочно», «до 12:00», «на завтра» */
+  function orderFlags(o) {
+    var key = o.text + "|" + o.notes + "|" + o.created_at;
+    if (o._flagsFor === key) return o._flags;
+    var txt = fold(orderAll(o)), f = { urgent: false, by: null, byText: "", tomorrow: false };
+    if (/срочн|сроч(но|ный)|терминов|негайно|asap|горит|горить|в первую очередь|в першу черг/.test(txt)) f.urgent = true;
+    var m = /(^|[^a-zа-я])(до|к)\s*(\d{1,2})(?:[:.\-](\d{2}))?\s*(годин|час|ч(?![а-я])|ранку|утра|дня)?/.exec(txt), hh = m ? +m[3] : -1;
+    if (m && hh >= 7 && hh <= 21 && (m[4] || m[5] || /(сьогодн|сегодн|сделать|зробити|собрать|зибрати|отгруз|видвантаж)/.test(txt))) { f.by = hh * 60 + (m[4] ? +m[4] : 0); f.byText = "до " + hh + ":" + (m[4] || "00"); }
+    else if (/до\s*(обеда|обиду)/.test(txt)) { f.by = 13 * 60; f.byText = "до обеда"; }
+    else if (/до\s*вечера|до\s*вечора/.test(txt)) { f.by = 18 * 60; f.byText = "до вечера"; }
+    // «на завтра»: в тексте или после отметки «ЗАКАЗЫ НА ЗАВТРА» в этой группе в тот же день. Назавтра заказ уже сегодняшний
+    var created = new Date(o.created_at), day = ymd(created), tmr = /(^|[^a-zа-я])(на\s*)?завтра/.test(txt) || afterTomorrowBanner(o, day);
+    if (tmr) { var d2 = new Date(created); d2.setDate(d2.getDate() + 1); f.tomorrow = ymd(new Date()) < ymd(d2); }
+    o._flagsFor = key; o._flags = f;
+    return f;
+  }
+  function isBanner(o) { return /^Не заказ: на завтра/.test(o.skipped || ""); }
+  function afterTomorrowBanner(o, day) {
+    if (isBanner(o)) return false;
+    var t = Date.parse(o.created_at), hit = false;
+    OR.map.forEach(function (b) { if (!hit && isBanner(b) && String(b.chat_id) === String(o.chat_id) && ymd(new Date(b.created_at)) === day && Date.parse(b.created_at) <= t) hit = true; });
+    return hit;
+  }
+  /* место в очереди: фура и срочное — сверху (раньше срок — выше), потом Рынок/Acorn/перемещение, самовывоз, деливери, почта; «на завтра» — в конец */
+  function orderRank(o) {
+    var t = orderType(o), f = orderFlags(o), r = t === "truck" || f.urgent || f.by != null ? 0 : (OTYPES[t] ? OTYPES[t].rank : 4);
+    return (f.tomorrow ? 10 : 0) + r;
+  }
+  function flagsBadge(o) {
+    var f = orderFlags(o), h = "";
+    if (f.urgent) h += '<span class="oflag urgent">Срочно</span>';
+    if (f.byText) h += '<span class="oflag urgent">' + esc(f.byText) + "</span>";
+    if (f.tomorrow) h += '<span class="oflag tmr">На завтра</span>';
+    return h;
   }
   var POST_RE = new RegExp([
     "нова\\s*пошт", "нов(ая|ой|ую)\\s*почт", "укр\\s*пошт", "укрпочт", "поштомат", "почтомат", "пошта", "почта",
     "виддилен", "виддил", "отделен", "(^|\\s)(отд|вид|видд)\\.?\\s*№?\\s*\\d", "(^|[\\s,.(])нп(\\s|\\d|,|\\.|$)", "ттн",
     "отримувач", "получател", "едрпоу", "(^|\\s)вул\\.", "(^|\\s)ул\\.", "вулиц", "улиц", "проспект", "адрес", "дани для видправки", "данные для отправки",
     "(^|[^\\d])(\\+?38[\\s-]?)?\\(?0\\d{2}\\)?[\\s-]?\\d{3}[\\s-]?\\d{2}[\\s-]?\\d{2}(?!\\d)",
-    "meest", "мист\\s*експрес", "делив", "самовив", "самовыв"
+    "meest", "мист\\s*експрес"
   ].join("|"));
   function isPostText(t) { return POST_RE.test(t); }
   /* клиент: строка-имя из текста («Калахан Ірина», «Иващенко»), иначе заказчик из документа */
@@ -3198,7 +3255,7 @@ form { display: grid; gap: 16px; }
   /* метка рулона в заказе почты: «Иващенко №1», сверху вниз */
   function isCutItem(it) { var c = cutInfo(it, state.rolls.get(it.roll_id)); return !!(c && c.cut); }
   function itemLabel(o, it) {
-    if (orderType(o) !== "post" || isCutItem(it)) return "";   // отрезы не нумеруются
+    var ot = orderType(o); if ((ot !== "post" && ot !== "delivery") || isCutItem(it)) return "";   // отрезы не нумеруются
     var its = (o.order_items || []).slice().sort(itemOrder).filter(function (x) { return !isCutItem(x); }), i = -1;
     its.forEach(function (x, k) { if (x.id === it.id) i = k; });
     if (i < 0) return "";
@@ -3207,6 +3264,7 @@ form { display: grid; gap: 16px; }
   }
   /* заказ только с доп. склада / рынка: рулонов нашего склада нет, а чужие найдены — в списке не показываем */
   function isForeign(o) {
+    if (/^Не заказ/.test(o.skipped || "")) return true;   // «ЗАКАЗЫ НА ЗАВТРА», фото без документа
     return !(o.order_items || []).length && /Не с нашего склада/.test(o.skipped || "") && o.ocr_state !== "pending";
   }
   function orderList(withForeign) {
@@ -3218,7 +3276,10 @@ form { display: grid; gap: 16px; }
       list.push(o);
     });
     list.sort(function (a, b) {
-      if (OR.tab === "active") { var pa = (OTYPES[orderType(a)] || {}).pri || 0, pb = (OTYPES[orderType(b)] || {}).pri || 0; if (pa !== pb) return pb - pa; }
+      if (OR.tab === "active") {
+        var ra = orderRank(a), rb = orderRank(b); if (ra !== rb) return ra - rb;
+        var ba = orderFlags(a).by, bb = orderFlags(b).by; if (ba != null || bb != null) { if (ba == null) return 1; if (bb == null) return -1; if (ba !== bb) return ba - bb; }
+      }
       return OR.tab === "active" ? Date.parse(b.created_at) - Date.parse(a.created_at) : Date.parse(b.done_at || b.changed_at) - Date.parse(a.done_at || a.changed_at); });
     return list;
   }
@@ -3245,7 +3306,7 @@ form { display: grid; gap: 16px; }
     else if (!list.length) h += '<p class="empty"><strong>' + (OR.tab === "active" ? "Заказов в работе нет" : "Выполненных пока нет") + "</strong>" +
       (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "Здесь видны заказы, выполненные за последние 5 часов.") + "</p>";
     else h += (OR.tab === "done" ? '<p class="hint">Выполненные за последние 5 часов. Заказ отмечается выполненным кнопками или реакцией на сообщение в Telegram.</p>' : "") + '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
-    if (OR.loaded && nf) h += '<button type="button" class="btn ghost o-foreign" data-act="o-foreign">' + (OR.showForeign ? "Скрыть заказы доп. склада" : "Скрыто заказов доп. склада: " + nf + " · показать") + "</button>";
+    if (OR.loaded && nf) h += '<button type="button" class="btn ghost o-foreign" data-act="o-foreign">' + (OR.showForeign ? "Скрыть лишнее" : "Скрыто (доп. склад, рынок, не заказы): " + nf + " · показать") + "</button>";
     box.innerHTML = h;
     box.parentNode.scrollTop = sc;
     list.slice(0, 40).forEach(function (o) { if (o.photo_path) loadThumb(o); });
@@ -3254,10 +3315,11 @@ form { display: grid; gap: 16px; }
   function orderCard(o) {
     var its = o.order_items || [], n = its.length, d = itemsDone(o), me = (state.user && state.user.name) || "";
     var h = '<article class="ocard st-' + o.status + '" id="oc-' + o.id + '">' +
-      '<div class="oc-head"><span class="oc-chat">' + typeBadge(o) + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time>" +
+      '<div class="oc-head"><span class="oc-chat">' + typeBadge(o) + flagsBadge(o) + esc(o.chat_title || "Группа") + '</span><time>' + dt(o.created_at) + "</time>" +
       (state.isAdmin ? '<button type="button" class="oc-del' + (OR.delArm === o.id ? " armed" : "") + '" data-act="o-del" data-id="' + o.id + '" aria-label="Удалить заказ">' + (OR.delArm === o.id ? "Удалить?" : "✕") + "</button>" : "") + "</div>" +
       '<div class="oc-who">' + esc(o.author || "Без имени") + (o.doc_no ? '<span class="oc-doc">' + esc(o.doc_no) + "</span>" : "") + "</div>";
     if (o.text) h += '<p class="oc-text">' + esc(o.text) + "</p>";
+    if (o.notes) h += '<p class="oc-notes">' + esc(o.notes) + "</p>";
     if (o.photo_path) {
       h += '<button type="button" class="oc-photo" data-act="o-photo" data-id="' + o.id + '"><img alt="Фото документа" id="ph-' + o.id + '"' + (OR.photos[o.photo_path] && OR.photos[o.photo_path].url ? ' src="' + OR.photos[o.photo_path].url + '"' : "") + "></button>";
       if (o.ocr_state === "pending" || o.ocr_state === "work") h += '<p class="oc-ocr"><i class="spin"></i>Читаю номера с фото…</p>';
@@ -3854,10 +3916,13 @@ form { display: grid; gap: 16px; }
       if (split.pos) nums.sort(function (a, b) { return (split.pos[a] == null ? 1e9 : split.pos[a]) - (split.pos[b] == null ? 1e9 : split.pos[b]); });
       if (split.other.length) notes.unshift("Не с нашего склада: " + split.other.map(function (x) { return x.id + " (" + x.wh + ")"; }).join(", "));
       var skipped = notes.join(". ");
+      // ни одного номера и нет признаков документа 1С — это не заказ (картинка «ЗАКАЗЫ НА ЗАВТРА», фото не по делу)
+      var docLike = /(замовлен|заказ\s*кли|склад|сер[іи]я|кількість|количеств|товари|разом|видаткова)/i.test(text);
       var qy = split.qty || {};
       nums.forEach(function (x) { var rr = resolveRoll(x); if (qy[x]) checkQty(qy[x], state.rolls.get(rr.id || x)); });
       if (nums.some(function (x) { return qy[x] && !qy[x].sure; })) notes.push("Проверьте по фото количество, отмеченное «?»");
       skipped = notes.join(". ");
+      if (!split.ours.length && !split.other.length && !(split.unsure || []).length && !docLike) skipped = /завтра/i.test(text) ? "Не заказ: на завтра" : "Не заказ: на фото нет документа";
       function itemsBody(lv) { return nums.map(function (x, i) { var rr = resolveRoll(x), b = { order_id: o.id, roll_id: rr.id || x, source: "photo" }; if (lv >= 3) b.pos = i + 1; if (lv >= 1 && qy[x]) { b.amount = qy[x].amount; b.unit = qy[x].unit; if (lv >= 2) b.amount_sure = qy[x].sure !== false; } return b; }); }
       function post(lv) { return api("order_items?on_conflict=order_id,roll_id", { method: "POST", body: itemsBody(lv), prefer: "resolution=ignore-duplicates,return=minimal" }); }
       var p = nums.length ? post(3)["catch"](function () { return post(2); })["catch"](function () { return post(1); })["catch"](function () { return post(0); }) : Promise.resolve();
