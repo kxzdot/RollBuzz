@@ -1,6 +1,6 @@
 {
   "name": "sklad-tkani",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "private": true,
   "description": "Склад тканей: поиск рулонов по номеру и их расположение",
   "dependencies": {
