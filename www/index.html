@@ -230,6 +230,11 @@ button.shade:active { transform: scale(0.98); }
 /* карточка рулона: отрез ткани сверху */
 .cloth { position: relative; margin: -4px -4px 0; height: 116px; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 10%, transparent); transform-origin: left center; }
 .cloth::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), transparent 40%, rgba(0, 0, 0, 0.18)); }
+.cloth.photo { height: 210px; cursor: zoom-in; }
+.cloth.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cloth.photo .site-tag { position: absolute; left: 12px; top: 46px; z-index: 1; font-size: 0.75rem; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: rgba(0, 0, 0, 0.55); color: #fff; }
+.site-link { display: flex; justify-content: flex-end; margin: 6px 2px -4px; }
+.v-img.site img { max-height: 70vh; object-fit: contain; }
 .cloth .x { position: absolute; top: 10px; right: 10px; z-index: 1; background: rgba(255, 255, 255, 0.82); color: #1b2130; }
 .cloth .cname-big { position: absolute; left: 12px; top: 12px; z-index: 1; font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.86); color: #1b2130; max-width: calc(100% - 28px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .label { position: relative; margin: -34px 12px 0; z-index: 2; background: var(--surface); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); display: grid; gap: 2px; }
@@ -905,7 +910,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.9.1";
+  var APP_VERSION = "5.0";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -1857,6 +1862,120 @@ form { display: grid; gap: 16px; }
     if (r.note) h += '<dt>Примечание</dt><dd class="note">' + esc(r.note) + "</dd>";
     return h + "</dl>";
   }
+  /* ---------- фото ткани с сайта alexandrd.ua: по названию ткани и номеру оттенка ---------- */
+  var SITE = { base: "https://alexandrd.ua", list: null, idx: null, keys: null, p: null, cache: new Map() };
+  // слова в названиях: на сайте по-украински, в 1С часто по-русски («полоска» — «смужка», «шерсть» — «вовна»)
+  var SITE_WORDS = [["полос", "смуж"], ["шерст", "вовн"], ["клеточк", "клитинк"], ["клетк", "клитин"], ["клетч", "клитин"], ["узелк", "вузлик"], ["узелок", "вузлик"],
+    ["елочк", "ялинк"], ["цветочн", "квитков"], ["цвет", "квит"], ["бабочк", "метелик"], ["плащевк", "плащивк"], ["вышивк", "вишивк"], ["мрамор", "мармур"],
+    ["гусин", "гусяч"], ["коттон", "котон"], ["желуд", "жолуд"], ["веточк", "гилочк"], ["полянк", "галявин"], ["полян", "галявин"], ["березк", "беризк"],
+    ["радиоволн", "радиохвил"], ["волн", "хвил"], ["пион", "пивони"], ["букв", "литер"], ["абстарц", "абстракц"], ["звезд", "зирк"], ["лист", "лист"],
+    ["однотонн", "однотон"], ["двухсторон", "двосторон"], ["хлопок", "бавовн"], ["хлопк", "бавовн"], ["рубашечн", "сорочков"], ["пальтов", "пальтов"],
+    ["плотн", "щильн"], ["тонк", "тонк"], ["широк", "широк"], ["мелк", "дрибн"], ["цветн", "кольоров"], ["полированн", "полирован"], ["вареная", "варен"],
+    ["кожа", "шкир"], ["искусствен", "штучн"], ["мех", "хутр"], ["песец", "писец"], ["енот", "єнот"], ["норк", "норк"], ["кролик", "кролик"],
+    ["сетк", "ситк"], ["парашют", "парашут"], ["жатк", "жатк"], ["накатк", "накатк"], ["реснич", "вий"], ["черточк", "рисочк"], ["строчк", "строчк"]];
+  var SITE_EXACT = { "лен": "льон", "розы": "троянди", "роза": "троянда", "под": "пид", "с": "", "з": "", "и": "", "для": "", "до": "", "в": "", "на": "" };
+  var COLOR_WORDS = [["черн", "чорн"], ["красн", "червон"], ["желт", "жовт"], ["бел", "бил"], ["сер", "сир"], ["розов", "рожев"], ["голуб", "блакит"],
+    ["оранж", "помаранч"], ["бордо", "бордов"], ["сирен", "бузк"], ["серебр", "срибл"], ["светл", "свитл"], ["бледн", "блид"], ["молочн", "молоч"], ["молок", "молоч"], ["салат", "салат"]];
+  var COLOR_MOD = ["темн", "свитл", "блид", "нижн", "яскр", "насич", "глиб", "пудр"];
+  function colorMain(t) { return COLOR_MOD.indexOf(t) === -1; }
+  function siteTok(w, dict, len) {
+    if (!w) return "";
+    if (SITE_EXACT.hasOwnProperty(w) && dict === SITE_WORDS) return SITE_EXACT[w];
+    if (/\d/.test(w)) return w;
+    for (var i = 0; i < dict.length; i++) if (w.indexOf(dict[i][0]) === 0) { w = dict[i][1] + w.slice(dict[i][0].length); break; }
+    return w.slice(0, len);
+  }
+  function siteNorm(s) {
+    return fold(String(s || "").replace(/\b[A-Z]{2,5}(-[A-Z0-9]{2,8}){1,3}\b/g, " ").replace(/№\s*[\d\/.,-]*.*$/, "").replace(/[()"«»'’ʼ.,]/g, " ")).replace(/\s+/g, " ").trim();
+  }
+  function siteToks(name) { var out = []; siteNorm(name).split(/[\s\-]+/).forEach(function (w) { var t = siteTok(w, SITE_WORDS, 5); if (t && out.indexOf(t) === -1) out.push(t); }); return out; }
+  function colorToks(c) { var out = []; fold(c).replace(/\[[^\]]*\]/g, " ").split(/[\s\-+\/,()]+/).forEach(function (w) { if (w.length < 3 || /^\d/.test(w)) return; var t = siteTok(w, COLOR_WORDS, 4); if (out.indexOf(t) === -1) out.push(t); }); return out; }
+  // номер оттенка: «22», «7/1012» → «7», «К2», «K-3», «№B1» (латиница или кириллица) → «к2», «к3», «в1»
+  function shadeNorm(n) {
+    var m = /^([a-zа-яіїє]{0,2})-?(\d+)/i.exec(String(n || "").trim()); if (!m) return "";
+    var L = { a: "а", b: "в", c: "с", e: "е", k: "к", m: "м", h: "н", o: "о", p: "р", t: "т", x: "х", "і": "и" };
+    return m[1].toLowerCase().split("").map(function (ch) { return L[ch] || ch; }).join("") + String(+m[2]);
+  }
+  function shadeKey(color) { return shadeNorm(splitColor(color).num); }
+  function coreToks(name) { return siteToks(String(name || "").replace(/\([^)]*\)/g, " ")); }
+  function loadSitePhotos() {
+    if (SITE.p) return SITE.p;
+    SITE.p = fetch("site-photos.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("no photos"); return r.json(); }).then(function (j) { siteIndex(j.items || []); return SITE.list; });
+    SITE.p["catch"](function () { setTimeout(function () { SITE.p = null; }, 60000); });
+    return SITE.p;
+  }
+  function siteIndex(items) {
+    SITE.list = items; SITE.groups = new Map(); SITE.cache.clear();
+    items.forEach(function (it) {
+      var t = siteToks(it[0]), k = t.join(" "), g = SITE.groups.get(k);
+      if (!g) SITE.groups.set(k, g = { t: t, core: coreToks(it[0]), items: [] });
+      g.items.push(it);
+    });
+    SITE.idx = SITE.groups;
+  }
+  /* товар сайта для рулона: та же ткань (с учётом русских и украинских слов) и тот же № оттенка, а без номера — тот же цвет по названию */
+  function sitePhoto(r) {
+    if (!SITE.groups || !r || !r.fabric) return null;
+    var ck = r.fabric + "|" + r.color;
+    if (SITE.cache.has(ck)) return SITE.cache.get(ck);
+    // ткань сайта: то же название (русские/украинские слова считаются одинаковыми); числа в названии (16/1, 30/2, 100%) — строго те же.
+    // «Похожая» ткань — та же без скобок («(30/70/9 DIAGONEL FLEECE)» и «(PEACH EFFECT)»): с неё берём фото только при точном № оттенка
+    var ft = siteToks(r.fabric), fc = coreToks(r.fabric), full = [], near = [];
+    function nums(a) { return a.filter(function (w) { return /\d/.test(w); }).sort().join(" "); }
+    function dice(a, b) { if (!a.length || !b.length) return 0; var c = 0; a.forEach(function (w) { if (b.indexOf(w) !== -1) c++; }); return 2 * c / (a.length + b.length); }
+    SITE.groups.forEach(function (g) {
+      if (g.t[0] !== ft[0]) return;
+      if (nums(ft) === nums(g.t)) { var sc = dice(ft, g.t); if (sc >= 0.9) { full.push({ g: g, sc: sc }); return; } }
+      var cd = nums(fc) === nums(g.core) ? dice(fc, g.core) : 0, fd = dice(ft, g.t);
+      if (fc.length >= 2 && (cd >= 0.9 || fd >= 0.75)) near.push({ g: g, sc: Math.max(cd, fd + 0.1), core: cd >= 0.9 });
+    });
+    full.sort(function (a, b) { return b.sc - a.sc; }); near.sort(function (a, b) { return b.sc - a.sc; });
+    var sh = shadeKey(r.color), cbase = fold(splitColor(r.color).base), ff = fold(r.fabric);
+    if (cbase.indexOf(ff) === 0) cbase = cbase.slice(ff.length);   // «Габардин полоска шони 2+1 синий» → «синий»
+    var ct = colorToks(cbase), hit = null;
+    function byShade(cands) { var h = null; if (sh) cands.forEach(function (c) { if (!h && shadeNorm(c[1]) === sh && (!ct.length || !c[2] || colorToks(c[2]).some(function (x) { return ct.indexOf(x) !== -1; }))) h = c; }); return h; }
+    function byColor(cands) {
+      if (!ct.length) return null;
+      var top = 0, tops = [];
+      cands.forEach(function (c) {
+        if (sh && c[1] && shadeNorm(c[1]) !== sh) return;   // у товара другой номер — не он, даже если цвет назван похоже
+        var cc = colorToks(c[2]); if (!cc.length) return;
+        var n = 0, main = 0, ma = ct.filter(colorMain), mb = cc.filter(colorMain);
+        ct.forEach(function (x) { if (cc.indexOf(x) !== -1) { n++; if (colorMain(x)) main++; } });
+        if (n / Math.max(ct.length, cc.length) < 0.5) return;   // «світло-сірий меланж» ≠ «світло-зелений»
+        if (ma.length && mb.length && !main) return;              // «темно-синій» ≠ «темно-сірий»: совпасть должен сам цвет, не «темно»
+        var sc2 = n * 10 - Math.abs(cc.length - ct.length);
+        if (n && sc2 > top) { top = sc2; tops = [c]; } else if (n && sc2 === top) tops.push(c);
+      });
+      return tops.length === 1 ? tops[0] : null;
+    }
+    for (var gi = 0; gi < full.length && !hit; gi++) {
+      var cands = full[gi].g.items;
+      hit = byShade(cands) || byColor(cands);
+      if (!hit && !sh && !ct.length && cands.length === 1) hit = cands[0];
+    }
+    // похожая ткань: только точный № с тем же цветом, или (если на сайте у неё нет номеров) точно тот же цвет
+    for (var ni = 0; ni < near.length && !hit; ni++) {
+      var nc = near[ni].g.items;
+      hit = byShade(nc) || (near[ni].core && ct.length && nc.every(function (c) { return !c[1]; }) ? byColor(nc) : null);
+    }
+    var res = hit ? { img: SITE.base + "/content/images/" + hit[4], url: SITE.base + hit[3], title: hit[0] + (hit[1] ? " №" + hit[1] : "") + (hit[2] ? " " + hit[2] : "") } : null;
+    SITE.cache.set(ck, res);
+    return res;
+  }
+  function clothHtml(r) {
+    var ph = sitePhoto(r), hx = colorHex(r.color);
+    if (ph) return '<div class="cloth photo" data-act="site-photo"><img src="' + esc(ph.img) + '" alt="' + esc(ph.title) + '" loading="lazy" referrerpolicy="no-referrer"><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button>' +
+      (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + '<span class="site-tag">фото с сайта</span></div>';
+    return '<div class="cloth weave fresh' + (hx ? "" : " blank") + '"' + (hx ? ' style="--c:' + hx + '"' : "") + '><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button>' +
+      (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + "</div>";
+  }
+  function openSitePhoto() {
+    var s = state.sheet, r = s && state.rolls.get(s.id), ph = sitePhoto(r); if (!ph) return;
+    $("#scanRoot").innerHTML = '<div class="viewer"><div class="scan-top"><b>' + esc(ph.title) + '</b><button class="x" type="button" data-act="viewer-close" aria-label="Закрыть">✕</button></div>' +
+      '<div class="v-img site"><img alt="' + esc(ph.title) + '" src="' + esc(ph.img) + '" referrerpolicy="no-referrer"></div>' +
+      '<p class="scan-hint"><a class="btn" href="' + esc(ph.url) + '" target="_blank" rel="noopener">Открыть на сайте</a></p></div>';
+  }
   function sheetHtml(s) {
     if (s.type === "filter") return filterSheetHtml(s);
     if (s.type === "detail") {
@@ -1866,9 +1985,10 @@ form { display: grid; gap: 16px; }
       var by = r.deleted
         ? '<div class="byline">Удалил: <b>' + esc(r.deletedBy || "неизвестно") + "</b> · " + ago(r.deletedAt) + "</div>"
         : (r.updatedBy ? '<div class="byline">Изменил: <b>' + esc(r.updatedBy) + "</b> · " + ago(r.updatedAt) + "</div>" : "");
-      var hx = colorHex(r.color);
-      return '<div class="cloth weave fresh' + (hx ? "" : " blank") + '"' + (hx ? ' style="--c:' + hx + '"' : "") + '><button class="x" type="button" data-act="close" aria-label="Закрыть">✕</button>' +
-        (r.color ? '<span class="cname-big">' + esc(r.color) + "</span>" : "") + "</div>" +
+      if (!SITE.idx) loadSitePhotos().then(function () {   // список фото догрузился — обновить шапку открытой карточки
+        var cs = state.sheet; if (cs && cs.type === "detail" && cs.id === s.id) { var el = document.querySelector("#sheetBody .cloth"), rr = state.rolls.get(s.id); if (el && rr && sitePhoto(rr)) el.outerHTML = clothHtml(rr); }
+      })["catch"](function () {});
+      return clothHtml(r) +
         '<div class="label"><small>Рулон</small><div class="big-num">' + numHtml(s.id, "") + "</div></div>" +
         '<div class="where">' + rackHtml(r, true, true) + '<dl class="facts"><dt>Место</dt><dd>' + (r.rack ? esc(place(r)) : '<span class="muted">не указано, нажмите «Изменить»</span>') + "</dd><dt>Ткань</dt><dd>" + esc(r.fabric || "—") + "</dd><dt>Цвет</dt><dd>" + (r.color ? colorHtml(r.color) : "—") + "</dd></dl></div>" +
         inOrdersHtml(s.id) + c1Html(r) + nbHtml(s.id) +
@@ -4587,6 +4707,7 @@ form { display: grid; gap: 16px; }
       case "o-photo": openPhoto(+el.getAttribute("data-id")); return;
       case "o-reocr": reOcr(+el.getAttribute("data-id")); return;
       case "viewer-close": closeViewer(); return;
+      case "site-photo": openSitePhoto(); return;
       case "oi-open": var rid2 = el.getAttribute("data-id"); if (state.rolls.has(rid2)) openSheet({ type: "detail", id: rid2 }); else toast("Рулона " + rid2 + " нет в базе.", true); return;
       case "flt-open": exitSelect(); openSheet({ type: "filter", cq: "" }); return;
       case "flt-reset": state.flt = fltEmpty(); if (state.sheet) state.sheet.cq = ""; fltChanged(true); return;
