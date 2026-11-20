@@ -680,6 +680,8 @@ form { display: grid; gap: 16px; }
 .oc-notes { margin: -4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9375rem; padding: 8px 12px; border-radius: 12px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .oflag { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; vertical-align: 1px; }
 .oflag.urgent { background: var(--danger); color: #fff; }
+.oflag.old { background: color-mix(in srgb, #e8590c 16%, var(--surface)); color: var(--fg); border: 1px solid color-mix(in srgb, #e8590c 45%, transparent); }
+.o-stale { display: block; width: 100%; margin: 18px 0 6px; background: transparent; border: 1px dashed color-mix(in srgb, #e8590c 55%, transparent); color: var(--fg); font-size: 14px; }
 .oflag.tmr { background: var(--surface-2); color: var(--fg); border: 1px solid var(--line); }
 .otype.t-truck { background: #b8120c; color: #fff; }
 .otype.t-pickup, .otype.t-delivery { background: color-mix(in srgb, var(--ok) 18%, var(--surface)); color: var(--fg); }
@@ -903,7 +905,7 @@ form { display: grid; gap: 16px; }
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var APP_VERSION = "4.8";
+  var APP_VERSION = "4.9.1";
   var CFG = window.SKLAD_CONFIG || {};
   function cfgProblem() {
     if (typeof window.SKLAD_CONFIG === "undefined") return "Файл config.js не загрузился или в нём ошибка (проверьте кавычки и запятые).";
@@ -920,7 +922,7 @@ form { display: grid; gap: 16px; }
     rolls: new Map(), q: "", tab: "active", sheet: null, online: navigator.onLine,
     mode: "auth", loaded: false, user: null, authTab: "login", authNote: "",
     busy: false, selecting: false, sel: new Set(), seen: new Set(),
-    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null, nb: false, flt: { color: "", num: "", fabric: "", rack: "", floor: "" }
+    lists: { colors: [], fabrics: [] }, listHex: {}, pick: null, nb: false, flt: { color: "", num: "", fabric: "", kind: "", rack: "", floor: "" }
   };
   var repo = null, session = null, refreshing = null;
   var toastTimer = null, lpTimer = null, lpFired = false, lastListHtml = null;
@@ -1412,11 +1414,13 @@ form { display: grid; gap: 16px; }
     var c = fabTypeCache.get(f); if (c != null) return c;
     c = splitFabric(f).type || f; fabTypeCache.set(f, c); return c;
   }
-  function fltActive(F) { F = F || state.flt; return !!(F.color || F.num || F.fabric || F.rack || F.floor); }
+  function fltActive(F) { F = F || state.flt; return !!(F.color || F.num || F.fabric || F.kind || F.rack || F.floor); }
+  function fltEmpty() { return { color: "", num: "", fabric: "", kind: "", rack: "", floor: "" }; }
   function fltMatch(r, F, skip) {
     if (F.color && skip !== "color" && fold(splitColor(r.color).base) !== fold(F.color)) return false;
     if (F.num && skip !== "num" && skip !== "color" && fold(splitColor(r.color).num) !== fold(F.num)) return false;
     if (F.fabric && skip !== "fabric" && fold(fabType(r.fabric)) !== fold(F.fabric)) return false;
+    if (F.kind && skip !== "kind" && skip !== "fabric" && fold(r.fabric) !== fold(F.kind)) return false;
     if (F.rack && skip !== "rack" && fold(r.rack) !== fold(F.rack)) return false;
     if (F.floor && skip !== "rack" && fold(r.floor) !== fold(F.floor)) return false;
     return true;
@@ -1424,25 +1428,27 @@ form { display: grid; gap: 16px; }
   /* что есть на складе для каждого раздела фильтра (с учётом остальных условий) */
   function facets() {
     var F = state.flt, base = visibleBase(true);
-    var colors = new Map(), nums = new Map(), fabs = new Map();
+    var colors = new Map(), nums = new Map(), fabs = new Map(), kinds = new Map();
     base.forEach(function (it) {
       var r = it.r, sc = splitColor(r.color);
       if (sc.base && fltMatch(r, F, "color")) { var k = fold(sc.base), c = colors.get(k); if (!c) colors.set(k, c = { name: sc.base, n: 0 }); c.n++; }
       if (F.color && sc.num && fltMatch(r, F, "num")) { var kn = fold(sc.num), n = nums.get(kn); if (!n) nums.set(kn, n = { name: sc.num, n: 0 }); n.n++; }
       var ft = fabType(r.fabric);
       if (ft && fltMatch(r, F, "fabric")) { var kf = fold(ft), f = fabs.get(kf); if (!f) fabs.set(kf, f = { name: ft, n: 0 }); f.n++; }
+      if (F.fabric && r.fabric && fltMatch(r, F, "kind")) { var kk = fold(r.fabric), kd = kinds.get(kk); if (!kd) kinds.set(kk, kd = { name: r.fabric, n: 0 }); kd.n++; }
     });
     var cl = Array.from(colors.values()).sort(function (a, b) { return toneOf(a.name) - toneOf(b.name) || fold(a.name).localeCompare(fold(b.name)); });
     var nl = Array.from(nums.values()).sort(function (a, b) { return (parseFloat(a.name) || 0) - (parseFloat(b.name) || 0) || (a.name < b.name ? -1 : 1); });
     var fl = Array.from(fabs.values()).sort(function (a, b) { return b.n - a.n || fold(a.name).localeCompare(fold(b.name)); });
-    return { colors: cl, nums: nl, fabrics: fl };
+    var kl = Array.from(kinds.values()).sort(function (a, b) { return b.n - a.n || fold(a.name).localeCompare(fold(b.name)); });
+    return { colors: cl, nums: nl, fabrics: fl, kinds: kl };
   }
   function dotHtml(name) { var h = colorHex(name); return '<i class="dot weave"' + (h ? ' style="--c:' + h + '"' : "") + "></i>"; }
   function fchipsHtml() {
     var F = state.flt; if (!fltActive(F)) return "";
     var h = "";
     if (F.color) h += '<button type="button" class="fchip" data-fx="color">' + dotHtml(F.color) + "<span>" + esc(F.color) + (F.num ? " №" + esc(F.num) : "") + "</span><em>✕</em></button>";
-    if (F.fabric) h += '<button type="button" class="fchip" data-fx="fabric"><span>' + esc(F.fabric) + "</span><em>✕</em></button>";
+    if (F.fabric) h += '<button type="button" class="fchip" data-fx="fabric"><span>' + esc(F.kind || F.fabric) + "</span><em>✕</em></button>";
     if (F.rack || F.floor) h += '<button type="button" class="fchip" data-fx="rack"><span>' + (F.rack ? "стеллаж " + esc(F.rack) : "") + (F.floor ? (F.rack ? ", " : "") + "этаж " + esc(F.floor) : "") + "</span><em>✕</em></button>";
     return h + '<button type="button" class="fchip clear" data-fx="all">Сбросить</button>';
   }
@@ -1465,6 +1471,15 @@ form { display: grid; gap: 16px; }
       (fc.fabrics.length ? fc.fabrics.map(function (f) {
         return '<button type="button" class="ff-chip' + (fold(F.fabric) === fold(f.name) ? " on" : "") + '" data-ff-fab="' + esc(f.name) + '"><span>' + esc(f.name) + "</span><small>" + f.n + "</small></button>";
       }).join("") : '<p class="hint">Нет подходящих тканей.</p>') + "</div></div>";
+    if (F.fabric) {   // вторая ступень: какая именно ткань этого вида
+      var kq = fold(s.kq || ""), kinds = fc.kinds.filter(function (k) { return !kq || fold(k.name).indexOf(kq) !== -1 || fold(F.kind) === fold(k.name); });
+      h += '<div class="ff-sec"><h3>' + esc(F.fabric) + ': какая' + (F.kind ? '<button type="button" class="link-btn" data-ff-kind="">все</button>' : "") + "</h3>" +
+        (fc.kinds.length > 10 ? '<div class="field ff-q"><input id="ff-kq" type="search" placeholder="Например: полоска, шони, 2+1" autocomplete="off" value="' + esc(s.kq || "") + '"></div>' : "") +
+        '<div class="ff-chips" id="ffKinds">' + (kinds.length ? kinds.map(function (k) {
+          var short = k.name.slice(0, F.fabric.length).toLowerCase() === F.fabric.toLowerCase() ? k.name.slice(F.fabric.length).trim() || k.name : k.name;
+          return '<button type="button" class="ff-chip' + (fold(F.kind) === fold(k.name) ? " on" : "") + '" data-ff-kind="' + esc(k.name) + '"><span>' + esc(short) + "</span><small>" + k.n + "</small></button>";
+        }).join("") : '<p class="hint">Ничего не подходит.</p>') + "</div></div>";
+    }
     h += '<div class="ff-sec"><h3>Место</h3><div class="two"><div class="field"><label for="ff-rack">Стеллаж</label><input id="ff-rack" type="text" class="mono" value="' + esc(F.rack) + '" placeholder="любой"></div>' +
       '<div class="field"><label for="ff-floor">Этаж</label><input id="ff-floor" type="text" inputmode="numeric" class="mono" value="' + esc(F.floor) + '" placeholder="любой"></div></div></div>';
     var n = visibleBase().length;
@@ -1486,26 +1501,37 @@ form { display: grid; gap: 16px; }
 
   /* ---------- поиск словами: «кулир лимон», «меланж №3», «черный» ---------- */
   // русские корни → украинские (цвета и ткани в 1С записаны по-украински)
+  // корни: русский ↔ украинский (в 1С названия бывают и так, и так) и узоры. Работает в обе стороны
   var SYN = [["серебр", "сриб"], ["бел", "бил"], ["сер", "сир"], ["черн", "чорн"], ["красн", "червон"], ["желт", "жовт"], ["розов", "рожев"],
-    ["голуб", "блакит"], ["оранж", "помаранч"], ["горчи", "гирчи"], ["сирен", "бузок"], ["изумруд", "смарагд"], ["светл", "свитл"], ["бледн", "блид"],
+    ["голуб", "блакит"], ["оранж", "помаранч"], ["горчи", "гирчи"], ["сирен", "бузк"], ["изумруд", "смарагд"], ["светл", "свитл"], ["бледн", "блид"],
+    ["темн", "темн"], ["зелен", "зелен"], ["коричн", "коричн"], ["фиолет", "фиолет"], ["бирюз", "бирюз"], ["молоч", "молочн"], ["молок", "молок"],
     ["двунит", "двонит"], ["трехнит", "тринит"], ["начес", "начис"], ["сетк", "ситк"], ["мех", "хутр"], ["воротн", "комир"], ["полотен", "рушник"],
-    ["плащев", "плащив"], ["лен", "льон"], ["мят", "мят"], ["кож", "кож"]];
-  var ENDS = /(ого|его|ому|ему|ими|ий|ой|ая|яя|ое|ее|ие|ую|юю|ом|ем|их|а|я|и|е|о|у|ю|ь)$/;
+    ["плащев", "плащив"], ["лен", "льон"], ["кож", "кож"], ["полос", "смуж"], ["полоск", "смужк"], ["клетк", "клитин"], ["клетч", "клитин"],
+    ["горош", "горох"], ["цвет", "квит"], ["хлоп", "бавовн"], ["шерст", "вовн"], ["шелк", "шовк"], ["узор", "визерун"], ["цветн", "кольоров"]];
+  // служебные слова в запросе ничего не ищут: «синий с красным», «ткань габардин»
+  var STOP = /^(с|со|з|зи|из|и|й|та|в|у|на|для|под|цвет|цвета|цвету|колир|кольору|ткань|ткани|тканина|тканини|оттенок|видтинок|рулон|рулони|рулоны)$/;
+  var ENDS = /(ыми|ими|ого|его|ому|ему|ая|яя|ое|ее|ые|ие|ую|юю|ий|ый|ой|ей|ом|ем|им|ым|их|ых|ах|ях|ам|ям|ою|ею|а|я|ы|и|е|о|у|ю|ь)$/;
   function stem(w) {
-    if (w.length < 5) return w;
+    if (w.length < 4 || /\d/.test(w)) return w;
     var s = w.replace(ENDS, "");
     if (/нн$/.test(s)) s = s.slice(0, -1);
     return s.length >= 3 ? s : w;
   }
   function textQuery(q) {
     var words = [], nums = [];
-    String(q).split(/\s+/).forEach(function (t) {
+    q = String(q).replace(/(\d)\s*\+\s*(\d)/g, "$1+$2");   // «2 + 1» = «2+1»
+    q.split(/[\s,;]+|(?=[а-яіїєґa-z])-(?=[а-яіїєґa-z])/i).forEach(function (t) {
       if (!t) return;
       var m = /^№\s*(\S+)$/.exec(t) || (/^\d+$/.test(t) ? [t, t] : null);
       if (m) { nums.push({ v: m[1].toLowerCase(), shadeOnly: t.charAt(0) === "№" }); return; }
       if (t === "№") return;
-      var f = fold(t), st = stem(f), alts = [st];
-      SYN.forEach(function (p) { if (st.indexOf(p[0]) === 0) alts.push(p[1] + st.slice(p[0].length)); if (st.indexOf(p[0]) === 0 && p[0].length >= 3) alts.push(p[1]); });
+      var f = fold(t); if (STOP.test(f)) return;
+      var st = stem(f), alts = [st];
+      SYN.forEach(function (p) {
+        [[p[0], p[1]], [p[1], p[0]]].forEach(function (ab) {
+          if (st.indexOf(ab[0]) === 0) { alts.push(ab[1] + st.slice(ab[0].length)); if (ab[0].length >= 3) alts.push(ab[1]); }
+        });
+      });
       words.push(alts);
     });
     return { words: words, nums: nums };
@@ -2704,6 +2730,7 @@ form { display: grid; gap: 16px; }
     });
   }
   function ordersChanged() {
+    OR.bannerSig = bannerSig();
     OR.byRoll = new Map();
     OR.map.forEach(function (o) {
       (o.order_items || []).forEach(function (it) {
@@ -2890,7 +2917,8 @@ form { display: grid; gap: 16px; }
     var today = ymd(new Date());
     REP.sel = new Set();
     // сразу отмечены текущие заказы (в работе); если их нет — выполненные сегодня
-    repOrders().forEach(function (o) { if (o.status !== "done") REP.sel.add(o.id); });
+    repOrders().forEach(function (o) { var f = orderFlags(o); if (o.status !== "done" && !f.tomorrow && !f.stale) REP.sel.add(o.id); });
+    if (!REP.sel.size) repOrders().forEach(function (o) { if (o.status !== "done") REP.sel.add(o.id); });
     if (!REP.sel.size) repOrders().forEach(function (o) { if (o.status === "done" && o.done_at && ymd(new Date(o.done_at)) === today) REP.sel.add(o.id); });
   }
   /* короткие названия, как пишут от руки */
@@ -3196,22 +3224,36 @@ form { display: grid; gap: 16px; }
     return t;
   }
   /* пометки: «срочно», «до 12:00», «на завтра» */
+  /* заказы собирают до 14:00: что пришло позже — на завтра (если не «срочно» и без срока) */
+  var ORDER_CUT = 14 * 60;
+  // выходные склада (0 — воскресенье … 5 — пятница, 6 — суббота): заказы переносятся на ближайший рабочий день
+  var OFF_DAYS = [5, 0];
+  var WD_SHORT = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function workDayFrom(d) { var x = new Date(d); for (var i = 0; i < 7 && OFF_DAYS.indexOf(x.getDay()) !== -1; i++) x = addDays(x, 1); return x; }
   function orderFlags(o) {
-    var key = o.text + "|" + o.notes + "|" + o.created_at;
+    var today = ymd(new Date()), key = o.text + "|" + o.notes + "|" + o.created_at + "|" + o.status + "|" + today + "|" + OR.bannerSig;
     if (o._flagsFor === key) return o._flags;
-    var txt = fold(orderAll(o)), f = { urgent: false, by: null, byText: "", tomorrow: false };
+    var txt = fold(orderAll(o)), f = { urgent: false, by: null, byText: "", tomorrow: false, stale: false, workDay: "", late: false };
     if (/срочн|сроч(но|ный)|терминов|негайно|asap|горит|горить|в первую очередь|в першу черг/.test(txt)) f.urgent = true;
     var m = /(^|[^a-zа-я])(до|к)\s*(\d{1,2})(?:[:.\-](\d{2}))?\s*(годин|час|ч(?![а-я])|ранку|утра|дня)?/.exec(txt), hh = m ? +m[3] : -1;
     if (m && hh >= 7 && hh <= 21 && (m[4] || m[5] || /(сьогодн|сегодн|сделать|зробити|собрать|зибрати|отгруз|видвантаж)/.test(txt))) { f.by = hh * 60 + (m[4] ? +m[4] : 0); f.byText = "до " + hh + ":" + (m[4] || "00"); }
     else if (/до\s*(обеда|обиду)/.test(txt)) { f.by = 13 * 60; f.byText = "до обеда"; }
     else if (/до\s*вечера|до\s*вечора/.test(txt)) { f.by = 18 * 60; f.byText = "до вечера"; }
-    // «на завтра»: в тексте или после отметки «ЗАКАЗЫ НА ЗАВТРА» в этой группе в тот же день. Назавтра заказ уже сегодняшний
-    var created = new Date(o.created_at), day = ymd(created), tmr = /(^|[^a-zа-я])(на\s*)?завтра/.test(txt) || afterTomorrowBanner(o, day);
-    if (tmr) { var d2 = new Date(created); d2.setDate(d2.getDate() + 1); f.tomorrow = ymd(new Date()) < ymd(d2); }
+    // рабочий день заказа: «на завтра» в тексте, после отметки «ЗАКАЗЫ НА ЗАВТРА» или после 14:00 — следующий день.
+    // «срочно» или срок «до 16:00» после 14:00 — всё равно сегодня
+    var created = new Date(o.created_at), day = ymd(created), mins = created.getHours() * 60 + created.getMinutes();
+    var said = /(^|[^a-zа-я])(на\s*)?завтра/.test(txt) || afterTomorrowBanner(o, day);
+    f.late = !said && mins >= ORDER_CUT && !(f.urgent || f.by != null);
+    var wd = workDayFrom(said || f.late ? addDays(created, 1) : created);   // пришёл в выходной — на ближайший рабочий день
+    f.workDay = ymd(wd); f.wdName = WD_SHORT[wd.getDay()];
+    f.tomorrow = f.workDay > today;
+    f.stale = f.workDay < today && o.status !== "done";   // остался с прошлых дней
     o._flagsFor = key; o._flags = f;
     return f;
   }
   function isBanner(o) { return /^Не заказ: на завтра/.test(o.skipped || ""); }
+  function bannerSig() { var n = 0, last = ""; OR.map.forEach(function (o) { if (isBanner(o)) { n++; if (o.created_at > last) last = o.created_at; } }); return n + "|" + last; }
   function afterTomorrowBanner(o, day) {
     if (isBanner(o)) return false;
     var t = Date.parse(o.created_at), hit = false;
@@ -3227,7 +3269,8 @@ form { display: grid; gap: 16px; }
     var f = orderFlags(o), h = "";
     if (f.urgent) h += '<span class="oflag urgent">Срочно</span>';
     if (f.byText) h += '<span class="oflag urgent">' + esc(f.byText) + "</span>";
-    if (f.tomorrow) h += '<span class="oflag tmr">На завтра</span>';
+    if (f.tomorrow) h += '<span class="oflag tmr"' + (f.late ? ' title="Пришёл после 14:00"' : "") + ">" + (f.workDay === ymd(addDays(new Date(), 1)) ? "На завтра" : "На " + f.wdName) + "</span>";
+    if (f.stale) { var wd = f.workDay.split("-"); h += '<span class="oflag old">с ' + wd[2] + "." + wd[1] + "</span>"; }
     return h;
   }
   var POST_RE = new RegExp([
@@ -3310,7 +3353,17 @@ form { display: grid; gap: 16px; }
     if (!OR.loaded) h += '<p class="empty">Загрузка заказов…</p>';
     else if (!list.length) h += '<p class="empty"><strong>' + (OR.tab === "active" ? "Заказов в работе нет" : "Выполненных пока нет") + "</strong>" +
       (OR.tab === "active" ? "Новые сообщения из групп Telegram появятся здесь сами." : "Здесь видны заказы, выполненные за последние 5 часов.") + "</p>";
-    else h += (OR.tab === "done" ? '<p class="hint">Выполненные за последние 5 часов. Заказ отмечается выполненным кнопками или реакцией на сообщение в Telegram.</p>' : "") + '<div class="o-list">' + list.slice(0, 120).map(orderCard).join("") + "</div>";
+    else {
+      var fresh = list, stale = [];
+      if (OR.tab === "active") { fresh = list.filter(function (o) { return !orderFlags(o).stale; }); stale = list.filter(function (o) { return orderFlags(o).stale; }); }
+      h += (OR.tab === "done" ? '<p class="hint">Выполненные за последние 5 часов. Заказ отмечается выполненным кнопками или реакцией на сообщение в Telegram.</p>' : "") +
+        (fresh.length ? '<div class="o-list">' + fresh.slice(0, 120).map(orderCard).join("") + "</div>" : '<p class="empty"><strong>На сегодня заказов нет</strong>Ниже — не закрытые с прошлых дней.</p>');
+      if (stale.length) {
+        h += '<button type="button" class="btn ghost o-stale" data-act="o-stale">' + (OR.showStale ? "Скрыть заказы с прошлых дней" : "Не закрыты с прошлых дней: " + stale.length + " · показать") + "</button>";
+        if (OR.showStale) h += '<p class="hint">Эти заказы пришли до прошлого рабочего дня и не отмечены выполненными. Если уже собраны — нажмите «Готово» или удалите.</p><div class="o-list">' + stale.slice(0, 120).map(orderCard).join("") + "</div>";
+      }
+      list = fresh.concat(OR.showStale ? stale : []);
+    }
     if (OR.loaded && nf) h += '<button type="button" class="btn ghost o-foreign" data-act="o-foreign">' + (OR.showForeign ? "Скрыть лишнее" : "Скрыто (доп. склад, рынок, не заказы): " + nf + " · показать") + "</button>";
     if (state.isAdmin && OR.loaded && OR.map.size) h += delAllHtml();
     box.innerHTML = h;
@@ -4448,11 +4501,14 @@ form { display: grid; gap: 16px; }
     var ffn = t.closest("[data-ff-num]");
     if (ffn) { var vn = ffn.getAttribute("data-ff-num"); state.flt.num = fold(vn) === fold(state.flt.num) ? "" : vn; fltChanged(true); return; }
     var fff = t.closest("[data-ff-fab]");
-    if (fff) { var vf = fff.getAttribute("data-ff-fab"); state.flt.fabric = fold(vf) === fold(state.flt.fabric) ? "" : vf; fltChanged(true); return; }
+    if (fff) { var vf = fff.getAttribute("data-ff-fab"); state.flt.fabric = fold(vf) === fold(state.flt.fabric) ? "" : vf; state.flt.kind = ""; if (state.sheet) state.sheet.kq = ""; fltChanged(true); return; }
+    var ffk = t.closest("[data-ff-kind]");
+    if (ffk) { var vk = ffk.getAttribute("data-ff-kind"); state.flt.kind = fold(vk) === fold(state.flt.kind) ? "" : vk; fltChanged(true); return; }
     var fx = t.closest("[data-fx]");
     if (fx) {
       var k = fx.getAttribute("data-fx");
-      if (k === "all") state.flt = { color: "", num: "", fabric: "", rack: "", floor: "" };
+      if (k === "all") state.flt = fltEmpty();
+      else if (k === "fabric") { state.flt.fabric = ""; state.flt.kind = ""; }
       else if (k === "color") { state.flt.color = ""; state.flt.num = ""; }
       else if (k === "rack") { state.flt.rack = ""; state.flt.floor = ""; }
       else state.flt[k] = "";
@@ -4513,6 +4569,7 @@ form { display: grid; gap: 16px; }
       case "orders-open": openOrders(); return;
       case "orders-close": closeOrders(); return;
       case "o-foreign": OR.showForeign = !OR.showForeign; drawOrders(); return;
+      case "o-stale": OR.showStale = !OR.showStale; drawOrders(); return;
       case "o-delall": delAllOpen(); return;
       case "o-delall-no": OR.delAll = 0; drawOrders(); return;
       case "o-delall-yes": delAllDo(); return;
@@ -4532,7 +4589,7 @@ form { display: grid; gap: 16px; }
       case "viewer-close": closeViewer(); return;
       case "oi-open": var rid2 = el.getAttribute("data-id"); if (state.rolls.has(rid2)) openSheet({ type: "detail", id: rid2 }); else toast("Рулона " + rid2 + " нет в базе.", true); return;
       case "flt-open": exitSelect(); openSheet({ type: "filter", cq: "" }); return;
-      case "flt-reset": state.flt = { color: "", num: "", fabric: "", rack: "", floor: "" }; if (state.sheet) state.sheet.cq = ""; fltChanged(true); return;
+      case "flt-reset": state.flt = fltEmpty(); if (state.sheet) state.sheet.cq = ""; fltChanged(true); return;
       case "nb-toggle": state.nb = !state.nb; lsSet("sklad_nb", state.nb ? "1" : null); state.seen.clear(); lastListHtml = null; render(); return;
       case "open-roll": openSheet({ type: "detail", id: el.getAttribute("data-id") }); return;
       case "mode-close": closeMode(); return;
@@ -4613,6 +4670,10 @@ form { display: grid; gap: 16px; }
       s.cq = e.target.value;
       var tmp = document.createElement("div"); tmp.innerHTML = filterSheetHtml(s);
       var nc = tmp.querySelector("#ffColors"), oc = $("#ffColors"); if (nc && oc) oc.innerHTML = nc.innerHTML;
+    } else if (id === "ff-kq") {
+      s.kq = e.target.value;
+      var tmk = document.createElement("div"); tmk.innerHTML = filterSheetHtml(s);
+      var nk = tmk.querySelector("#ffKinds"), ok2 = $("#ffKinds"); if (nk && ok2) ok2.innerHTML = nk.innerHTML;
     } else if (id === "ff-rack" || id === "ff-floor") {
       state.flt[id === "ff-rack" ? "rack" : "floor"] = e.target.value.trim(); fltChanged(false);
     }
